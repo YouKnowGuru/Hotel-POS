@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Hotel POS System",
   "scripts": {
-    "build": "npm --prefix hotelu1-main/frontend run build",
+    "build": "npm --prefix hotelu1-main/frontend install --legacy-peer-deps && npm --prefix hotelu1-main/frontend run build",
     "start": "npm --prefix hotelu1-main/frontend start",
     "dev": "npm --prefix hotelu1-main/frontend run dev",
     "frontend": "npm --prefix hotelu1-main/frontend start",
