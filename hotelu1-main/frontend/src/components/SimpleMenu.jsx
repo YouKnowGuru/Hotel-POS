@@ -35,6 +35,42 @@ const STATUS = {
   completed: { label: 'Paid',           Icon: CheckCircle2, c: '#22c55e', bg: 'rgba(34,197,94,0.08)',  pct: 100 },
 };
 
+// ---------------------------------------------------------------------------
+// Per-device session helpers
+// Each customer device gets a unique session key stored in localStorage.
+// Only order IDs that THIS device placed are tracked, so multiple phones
+// scanning the same table QR never see each other's order history.
+// ---------------------------------------------------------------------------
+function getSessionKey(tableId) {
+  return `qrSession:${formatTableName(tableId || '1')}`;
+}
+function getSessionOrdersKey(tableId) {
+  return `qrOrders:${formatTableName(tableId || '1')}`;
+}
+/** Returns or creates a stable session token for this device+table combo. */
+function ensureSession(tableId) {
+  const key = getSessionKey(tableId);
+  let token = localStorage.getItem(key);
+  if (!token) {
+    token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(key, token);
+  }
+  return token;
+}
+/** Get the Set of order IDs this device has placed. */
+function getLocalOrderIds(tableId) {
+  try {
+    const raw = localStorage.getItem(getSessionOrdersKey(tableId));
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+/** Persist a new order ID for this device. */
+function addLocalOrderId(tableId, orderId) {
+  const ids = getLocalOrderIds(tableId);
+  ids.add(Number(orderId));
+  localStorage.setItem(getSessionOrdersKey(tableId), JSON.stringify([...ids]));
+}
+
 export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings }) {
   const { format: fmt } = useCurrency(locationSettings);
   const [items, setItems] = useState([]);
@@ -62,6 +98,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const [submittingProof, setSubmittingProof] = useState(false);
   const searchRef = useRef(null);
   const cartBtnRef = useRef(null);
+
+  // Ensure this device has a session token (runs once on mount).
+  useEffect(() => { ensureSession(tableId); }, [tableId]);
 
   useEffect(() => { fetchAndCacheGlobalSettings().then(setSettings); }, []);
 
@@ -91,7 +130,15 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       const t = tableId || '1';
       const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}`);
       const d = await r.json();
-      if (Array.isArray(d)) setOrders(d.filter(o => tableIdMatches(t, o.table_name) && isActiveTableOrder(o)));
+      if (Array.isArray(d)) {
+        // Filter to only orders placed by THIS device so customers on the same
+        // table QR don't see each other's order history.
+        const localIds = getLocalOrderIds(t);
+        const myOrders = localIds.size > 0
+          ? d.filter(o => tableIdMatches(t, o.table_name) && isActiveTableOrder(o) && localIds.has(Number(o.id)))
+          : []; // new device — show nothing until an order is placed
+        setOrders(myOrders);
+      }
     } catch (_) { }
   }, [tableId]);
 
@@ -169,6 +216,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       });
       const order = await res.json();
       if (order.id) {
+        // Register this order ID with the current device's session so that
+        // fetchOrders will include it for THIS device only.
+        addLocalOrderId(tableId, order.id);
         localStorage.setItem(`paymentAccess:${order.id}`, order.paymentAccessToken || '');
         setCart([]); setCartOpen(false); setPaymentOrder(order); fetchOrders();
       }
