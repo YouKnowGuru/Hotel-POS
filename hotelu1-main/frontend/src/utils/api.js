@@ -7,11 +7,13 @@ export const getAPI_URL = () => {
   if (envUrl) return envUrl.replace(/\/$/, "");
   const protocol = window.location.protocol;
   const host = window.location.hostname;
+  if (host.includes("vercel.app")) {
+    return "https://hotel-pos-txtn.onrender.com";
+  }
   return `${protocol}//${host}:${BACKEND_PORT}`;
 };
 
-export const getSocketUrl = () =>
-  getAPI_URL().replace("https://", "wss://").replace("http://", "ws://");
+export const getSocketUrl = () => getAPI_URL();
 
 const handleUnauthorized = () => {
   localStorage.removeItem("token");
