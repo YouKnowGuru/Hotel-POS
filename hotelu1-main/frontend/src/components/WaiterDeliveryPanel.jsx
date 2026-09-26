@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { getAPI_URL, getSocketUrl, authFetch } from '../utils/api';
 import useCurrency from '../hooks/useCurrency';
-import { Bell, CheckCircle2, Clock, Utensils } from 'lucide-react';
+import { Bell, CheckCircle2, Clock, Utensils, Banknote } from 'lucide-react';
 
 const WaiterDeliveryPanel = ({ locationSettings }) => {
   const { format: fmt } = useCurrency(locationSettings);
@@ -72,18 +72,23 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
     };
   }, [fetchReadyOrders]);
 
-  const handleConfirmDelivery = async (orderId) => {
+  const handleConfirmDelivery = async (orderId, collectCash = false) => {
     setDelivering((p) => ({ ...p, [orderId]: true }));
     try {
       const res = await authFetch(`/api/orders/${orderId}/confirm-delivery`, {
         method: 'PUT',
         body: JSON.stringify({
           tax_rate: locationSettings?.taxRate || 0.05,
+          collect_cash: collectCash,
         }),
       });
       if (!res.ok) throw new Error('Failed');
       setReadyOrders((p) => p.filter((o) => o.id !== orderId));
-      showToast(`Order #${orderId} marked as served ✓`);
+      showToast(
+        collectCash
+          ? `Order #${orderId} delivered & cash collected ✓`
+          : `Order #${orderId} marked as served ✓`
+      );
     } catch {
       showToast('Could not confirm delivery. Try again.', 'error');
     } finally {
@@ -216,15 +221,46 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
                   </div>
                 </div>
 
-                {/* Action */}
-                <button
-                  onClick={() => handleConfirmDelivery(order.id)}
-                  disabled={isDelivering}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold shadow-sm hover:shadow-md transition disabled:opacity-60"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {isDelivering ? 'Marking served…' : 'Mark as Served'}
-                </button>
+                {/* Cash payment notice for waiter if cash pending */}
+                {order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
+                  <div className="mb-3 p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs">
+                    <span className="font-bold text-amber-800 flex items-center gap-1.5">
+                      <Banknote className="w-4 h-4 text-amber-600" /> Collect Cash:
+                    </span>
+                    <span className="font-bold text-amber-900 text-sm">{fmt(order.total)}</span>
+                  </div>
+                )}
+
+                {/* Actions */}
+                {order.payment_method === 'cash' && order.payment_status === 'cash_pending' ? (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleConfirmDelivery(order.id, true)}
+                      disabled={isDelivering}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold shadow-sm hover:bg-emerald-700 transition disabled:opacity-60"
+                    >
+                      <Banknote className="w-3.5 h-3.5" />
+                      {isDelivering ? 'Saving…' : `Collect ${fmt(order.total)} & Mark Served`}
+                    </button>
+                    <button
+                      onClick={() => handleConfirmDelivery(order.id, false)}
+                      disabled={isDelivering}
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-gray-200 bg-white text-gray-700 text-xs font-semibold hover:bg-gray-50 transition disabled:opacity-60"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 text-gray-400" />
+                      Mark Served Only (Customer Pays Later)
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleConfirmDelivery(order.id, false)}
+                    disabled={isDelivering}
+                    className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-bold shadow-sm hover:shadow-md transition disabled:opacity-60"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    {isDelivering ? 'Marking served…' : 'Mark as Served'}
+                  </button>
+                )}
               </div>
             );
           })}

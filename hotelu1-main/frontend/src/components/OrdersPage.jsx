@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   QrCode,
   CreditCard,
+  Banknote,
   X as XIcon,
 } from 'lucide-react';
 import { io } from 'socket.io-client';
@@ -83,12 +84,16 @@ const minsAgo = (t) =>
 const StatusPill = ({ status, dot = true }) => {
   const key = (status || '').toLowerCase();
   const c = STATUS_COLORS[key] || { bg: 'bg-gray-100', text: 'text-gray-600' };
+  let label = (status || 'pending').charAt(0).toUpperCase() + (status || 'pending').slice(1);
+  if (key === 'cash_pending') label = 'Cash Pending';
+  else if (key === 'verification_pending') label = 'Review Payment';
+  else if (key === 'awaiting_payment') label = 'Awaiting Payment';
   return (
     <span
       className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${c.bg} ${c.text}`}
     >
       {dot && <span className="w-1.5 h-1.5 rounded-full bg-current" />}
-      {(status || 'pending').charAt(0).toUpperCase() + (status || 'pending').slice(1)}
+      {label}
     </span>
   );
 };
@@ -647,6 +652,23 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
     }
   };
 
+  const handleCollectCash = async () => {
+    setReviewing(true);
+    setReviewError('');
+    try {
+      const res = await authFetch(`/api/orders/${order.id}/collect-cash`, {
+        method: 'PUT',
+      });
+      const data = await safeJson(res);
+      if (!res.ok) throw new Error(data.message || 'Could not record cash payment');
+      onPaymentReviewed?.();
+    } catch (e) {
+      setReviewError(e.message || 'Could not record cash payment');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
   // Build the printable receipt HTML for the current order. Used by
   // both the "Print Bill" and "View Bill" actions so dine-in and
   // takeaway bills always look identical to the thermal printout.
@@ -772,15 +794,35 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
         </div>
       )}
 
-      {/* Cash payment notice */}
+      {/* Cash payment notice & action */}
       {order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xl">💵</span>
             <p className="font-bold text-emerald-900">Cash Payment — Collect from Customer</p>
           </div>
-          <p className="text-sm text-emerald-800">This order is being prepared. The customer will pay <b>{fmt(order.total)}</b> in cash. Please collect payment when food is served.</p>
+          <p className="text-sm text-emerald-800">
+            This order is being prepared. The customer will pay <b>{fmt(order.total)}</b> in cash. Please collect payment when food is served.
+          </p>
           {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
+          <button
+            disabled={reviewing}
+            onClick={handleCollectCash}
+            className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
+          >
+            <Banknote className="w-4 h-4" />
+            {reviewing ? 'Recording…' : `Confirm Cash Collected (${fmt(order.total)})`}
+          </button>
+        </div>
+      )}
+
+      {order.payment_method === 'cash' && order.payment_status === 'paid' && (
+        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div>
+            <p className="font-bold text-emerald-900 text-sm">Cash Payment Collected ({fmt(order.total)})</p>
+            <p className="text-xs text-emerald-700">Cash payment has been received and verified.</p>
+          </div>
         </div>
       )}
 

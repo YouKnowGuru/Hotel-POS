@@ -1738,6 +1738,56 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
   }
 });
 
+// Mark cash payment as collected
+app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
+  try {
+    const allowedRoles = ["admin", "manager", "waiter", "cashier", "staff", "franchise", "subfranchise"];
+    if (!allowedRoles.includes(String(req.user?.role || "").toLowerCase())) {
+      return res.status(403).json({ message: "Only staff can confirm cash payments" });
+    }
+    const updateCashPayment = (order) => {
+      order.payment_status = "paid";
+      order.payment_method = "cash";
+      order.paid_at = new Date();
+      order.payment_verified_by = req.user?.id || null;
+      order.payment_verified_at = new Date();
+    };
+
+    if (!dbConnected) {
+      const order = mockOrders.find((o) => o.id === Number(req.params.id));
+      if (!order || !(await assertOrderInScope(req, order, res))) return;
+      updateCashPayment(order);
+      io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
+      io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
+      return res.json({ message: "Cash payment confirmed and recorded", order });
+    }
+
+    const order = await Order.findByPk(req.params.id, {
+      include: [{ model: OrderItem, as: "items" }],
+    });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!(await assertOrderInScope(req, order, res))) return;
+
+    updateCashPayment(order);
+    await order.save();
+
+    // Also update bill if exists
+    const bill = await Bill.findOne({ where: { orderId: order.id } });
+    if (bill) {
+      bill.bill_status = "paid";
+      bill.paid_at = new Date();
+      bill.payment_method = "cash";
+      await bill.save();
+    }
+
+    io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
+    io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
+    res.json({ message: "Cash payment confirmed and recorded", order });
+  } catch (err) {
+    res.status(500).json({ message: "Could not record cash payment", error: err.message });
+  }
+});
+
 app.put("/api/orders/:id", verifyToken, async (req, res) => {
   try {
     if (!dbConnected) {
@@ -2133,9 +2183,14 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
         order.status = "delivered";
         order.delivered_at = new Date();
         order.bill_generated = true;
+        if (req.body.collect_cash) {
+          order.payment_status = "paid";
+          order.payment_method = "cash";
+          order.paid_at = new Date().toISOString();
+        }
         
         // Emit socket event to update dashboard
-        io.emit('order_status_updated', { orderId: req.params.id, status: 'delivered' });
+        io.emit('order_status_updated', { orderId: req.params.id, status: 'delivered', payment_status: order.payment_status });
         
         return res.json({
           message: "Order delivered and bill generated",
@@ -2146,7 +2201,7 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { tax_rate } = req.body;
+    const { tax_rate, collect_cash } = req.body;
     const order = await Order.findByPk(id, {
       include: [{ model: OrderItem, as: "items" }],
     });
@@ -2163,10 +2218,17 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     order.status = "delivered";
     order.delivered_at = new Date();
     order.bill_generated = true;
+    if (collect_cash) {
+      order.payment_status = "paid";
+      order.payment_method = "cash";
+      order.paid_at = new Date();
+      order.payment_verified_by = req.user?.id || null;
+      order.payment_verified_at = new Date();
+    }
     await order.save();
 
     // Emit socket event to update dashboard
-    io.emit('order_status_updated', { orderId: id, status: 'delivered' });
+    io.emit('order_status_updated', { orderId: id, status: 'delivered', payment_status: order.payment_status });
 
     // Auto-generate bill using globally configured Tax & Discount
     const settings = await getTaxDiscountSettings();
@@ -2250,15 +2312,18 @@ app.get("/api/orders/status/delivered", verifyToken, async (req, res) => {
 // Complete order and mark bill as paid
 app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
   try {
+    const paymentMethod = req.body.payment_method || "cash";
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
       if (order) {
         order.status = "completed";
-        order.payment_method = req.body.payment_method || "cash";
+        order.payment_method = paymentMethod;
+        order.payment_status = "paid";
+        order.paid_at = new Date().toISOString();
         order.bill_generated = true; // Mark bill as generated to remove from live orders
         
         // Emit socket event to update dashboard
-        io.emit('order_status_updated', { orderId: req.params.id, status: 'completed' });
+        io.emit('order_status_updated', { orderId: req.params.id, status: 'completed', payment_status: 'paid' });
         
         return res.json({
           message: "Payment completed and order closed",
@@ -2269,26 +2334,29 @@ app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { payment_method } = req.body;
 
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
 
     order.status = "completed";
-    order.payment_method = payment_method || "cash";
+    order.payment_method = paymentMethod;
+    order.payment_status = "paid";
+    order.paid_at = new Date();
+    order.payment_verified_at = new Date();
+    order.payment_verified_by = req.user?.id || null;
     order.bill_generated = true; // Mark bill as generated to remove from live orders
     await order.save();
 
     // Emit socket event to update dashboard
-    io.emit('order_status_updated', { orderId: id, status: 'completed' });
+    io.emit('order_status_updated', { orderId: id, status: 'completed', payment_status: 'paid' });
 
     // Update bill status to paid
     const bill = await Bill.findOne({ where: { orderId: id } });
     if (bill) {
       bill.bill_status = "paid";
       bill.paid_at = new Date();
-      bill.payment_method = payment_method || "cash";
+      bill.payment_method = paymentMethod;
       await bill.save();
     }
 

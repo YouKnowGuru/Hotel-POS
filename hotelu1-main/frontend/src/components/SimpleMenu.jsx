@@ -583,12 +583,21 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                       ✓ Payment approved — your order is sent to the waiter.
                     </div>
                   )}
-            {o.payment_status === 'cash_pending' && (
+                  {o.payment_status === 'cash_pending' && (
                     <div style={{ marginTop: 10, background: 'rgba(245,158,11,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ fontSize: 20 }}>💵</span>
                       <div>
                         <p style={{ margin: 0, color: '#92400e', fontSize: 13, fontWeight: 700 }}>Pay with Cash</p>
                         <p style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>Your order is being prepared. Please pay <b>{fmt(o.total)}</b> to our staff.</p>
+                      </div>
+                    </div>
+                  )}
+                  {o.payment_status === 'paid' && o.payment_method === 'cash' && (
+                    <div style={{ marginTop: 10, background: 'rgba(16,185,129,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>✓</span>
+                      <div>
+                        <p style={{ margin: 0, color: '#065f46', fontSize: 13, fontWeight: 700 }}>Cash Payment Received</p>
+                        <p style={{ margin: 0, color: '#047857', fontSize: 11, marginTop: 2 }}>Cash payment of <b>{fmt(o.total)}</b> has been collected. Thank you!</p>
                       </div>
                     </div>
                   )}
