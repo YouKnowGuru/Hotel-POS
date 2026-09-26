@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Build outputs
+build/
+dist/
+**/build/
+**/dist/
+
+# Logs
+*.log
+**/*.log
+startup.err
+startup2.err
+restart_check.log
+**/*.err
+
+# IDE / Editor / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Internal AI / agent folders
+.agents/
+.claude/
+.freebuff/
+.mcp.json
+
+# Cache
+.cache/
+.eslintcache

@@ -1,0 +1,82 @@
+# Dependencies
+node_modules/
+# Lockfiles are committed for reproducible Vercel/Render builds
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Build and dist
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.temp
+.cache/
+node_modules/.cache/
+
+# React specific
+.eslintcache
+
+# Service worker
+*.worker.js
+service-worker.js
+sw.js
+
+# Documentation files (optional - uncomment if needed)
+# DOCUMENTATION_INDEX.md
+# QUICK_START_GUIDE.md
+# README.md
+
+# Local debug / one-off scripts
+backend/check-*.js
+backend/test-*.js
+backend/clear-demo-data.js
+backend/delete-all-menu.js
+*.backup
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules for both frontend and backend
+backend/node_modules/
+frontend/node_modules/

@@ -1,0 +1,60 @@
+-- SQL seed for menu_items table: 5 categories, 10 items each
+INSERT INTO menu_items (name, price, category, description) VALUES
+-- Starters
+('Starters Item 1', 55, 'Starters', 'Delicious starters item number 1'),
+('Starters Item 2', 60, 'Starters', 'Delicious starters item number 2'),
+('Starters Item 3', 65, 'Starters', 'Delicious starters item number 3'),
+('Starters Item 4', 70, 'Starters', 'Delicious starters item number 4'),
+('Starters Item 5', 75, 'Starters', 'Delicious starters item number 5'),
+('Starters Item 6', 80, 'Starters', 'Delicious starters item number 6'),
+('Starters Item 7', 85, 'Starters', 'Delicious starters item number 7'),
+('Starters Item 8', 90, 'Starters', 'Delicious starters item number 8'),
+('Starters Item 9', 95, 'Starters', 'Delicious starters item number 9'),
+('Starters Item 10', 100, 'Starters', 'Delicious starters item number 10'),
+-- Main Course
+('Main Course Item 1', 105, 'Main Course', 'Delicious main course item number 1'),
+('Main Course Item 2', 110, 'Main Course', 'Delicious main course item number 2'),
+('Main Course Item 3', 115, 'Main Course', 'Delicious main course item number 3'),
+('Main Course Item 4', 120, 'Main Course', 'Delicious main course item number 4'),
+('Main Course Item 5', 125, 'Main Course', 'Delicious main course item number 5'),
+('Main Course Item 6', 130, 'Main Course', 'Delicious main course item number 6'),
+('Main Course Item 7', 135, 'Main Course', 'Delicious main course item number 7'),
+('Main Course Item 8', 140, 'Main Course', 'Delicious main course item number 8'),
+('Main Course Item 9', 145, 'Main Course', 'Delicious main course item number 9'),
+('Main Course Item 10', 150, 'Main Course', 'Delicious main course item number 10'),
+-- Desserts
+('Desserts Item 1', 155, 'Desserts', 'Delicious desserts item number 1'),
+('Desserts Item 2', 160, 'Desserts', 'Delicious desserts item number 2'),
+('Desserts Item 3', 165, 'Desserts', 'Delicious desserts item number 3'),
+('Desserts Item 4', 170, 'Desserts', 'Delicious desserts item number 4'),
+('Desserts Item 5', 175, 'Desserts', 'Delicious desserts item number 5'),
+('Desserts Item 6', 180, 'Desserts', 'Delicious desserts item number 6'),
+('Desserts Item 7', 185, 'Desserts', 'Delicious desserts item number 7'),
+('Desserts Item 8', 190, 'Desserts', 'Delicious desserts item number 8'),
+('Desserts Item 9', 195, 'Desserts', 'Delicious desserts item number 9'),
+('Desserts Item 10', 200, 'Desserts', 'Delicious desserts item number 10'),
+-- Beverages
+('Beverages Item 1', 205, 'Beverages', 'Delicious beverages item number 1'),
+('Beverages Item 2', 210, 'Beverages', 'Delicious beverages item number 2'),
+('Beverages Item 3', 215, 'Beverages', 'Delicious beverages item number 3'),
+('Beverages Item 4', 220, 'Beverages', 'Delicious beverages item number 4'),
+('Beverages Item 5', 225, 'Beverages', 'Delicious beverages item number 5'),
+('Beverages Item 6', 230, 'Beverages', 'Delicious beverages item number 6'),
+('Beverages Item 7', 235, 'Beverages', 'Delicious beverages item number 7'),
+('Beverages Item 8', 240, 'Beverages', 'Delicious beverages item number 8'),
+('Beverages Item 9', 245, 'Beverages', 'Delicious beverages item number 9'),
+('Beverages Item 10', 250, 'Beverages', 'Delicious beverages item number 10'),
+-- Salads
+('Salads Item 1', 255, 'Salads', 'Delicious salads item number 1'),
+('Salads Item 2', 260, 'Salads', 'Delicious salads item number 2'),
+('Salads Item 3', 265, 'Salads', 'Delicious salads item number 3'),
+('Salads Item 4', 270, 'Salads', 'Delicious salads item number 4'),
+('Salads Item 5', 275, 'Salads', 'Delicious salads item number 5'),
+('Salads Item 6', 280, 'Salads', 'Delicious salads item number 6'),
+('Salads Item 7', 285, 'Salads', 'Delicious salads item number 7'),
+('Salads Item 8', 290, 'Salads', 'Delicious salads item number 8'),
+('Salads Item 9', 295, 'Salads', 'Delicious salads item number 9'),
+('Salads Item 10', 300, 'Salads', 'Delicious salads item number 10');
+
+-- Migration: Add bill_requested column to orders table
+ALTER TABLE orders ADD COLUMN bill_requested BOOLEAN DEFAULT FALSE; 

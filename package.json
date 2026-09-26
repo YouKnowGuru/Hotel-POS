@@ -1,0 +1,11 @@
+{
+  "name": "hotel-pos-system",
+  "version": "1.0.0",
+  "description": "Hotel POS System",
+  "scripts": {
+    "start": "npm --prefix hotelu1-main/frontend start",
+    "dev": "npm --prefix hotelu1-main/frontend run dev",
+    "frontend": "npm --prefix hotelu1-main/frontend start",
+    "backend": "npm --prefix hotelu1-main/backend start"
+  }
+}

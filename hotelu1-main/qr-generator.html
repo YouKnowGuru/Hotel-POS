@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator - Restaurant POS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            text-align: left;
+        }
+        .info-box strong {
+            color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        #qrcode {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+        #qrcode img {
+            margin: 0 auto;
+            display: block;
+        }
+        .download-btn {
+            margin-top: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        .url-display {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Restaurant QR Generator</h1>
+        <p>Generate QR codes for table ordering</p>
+        
+        <div class="info-box">
+            <strong>Your Server IP:</strong> 192.168.29.233<br>
+            <small>Make sure your phone is on the same WiFi network</small>
+        </div>
+
+        <div class="input-group">
+            <label for="tableNumber">Table Number</label>
+            <input type="text" id="tableNumber" placeholder="e.g., 1, 2, Takeaway" value="1">
+        </div>
+
+        <div class="input-group">
+            <label for="serverIP">Server IP Address</label>
+            <input type="text" id="serverIP" value="http://192.168.29.233:3000" placeholder="http://192.168.29.233:3000">
+        </div>
+
+        <button onclick="generateQR()">Generate QR Code</button>
+        
+        <div id="qrcode">
+            <div id="qr-container"></div>
+            <div class="url-display" id="urlDisplay"></div>
+            <button class="download-btn" onclick="downloadQR()">Download QR Code</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQR = null;
+
+        function generateQR() {
+            const tableNumber = document.getElementById('tableNumber').value || '1';
+            const serverIP = document.getElementById('serverIP').value || 'http://192.168.29.233:3000';
+            
+            const url = `${serverIP}/?tableId=${tableNumber}`;
+            
+            // Clear previous QR
+            const container = document.getElementById('qr-container');
+            container.innerHTML = '';
+            
+            // Generate new QR
+            currentQR = new QRCode(container, {
+                text: url,
+                width: 256,
+                height: 256,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            // Show the QR section
+            document.getElementById('qrcode').style.display = 'block';
+            document.getElementById('urlDisplay').textContent = url;
+        }
+
+        function downloadQR() {
+            const img = document.querySelector('#qr-container img');
+            if (img) {
+                const link = document.createElement('a');
+                link.download = `table-${document.getElementById('tableNumber').value || '1'}-qrcode.png`;
+                link.href = img.src;
+                link.click();
+            }
+        }
+
+        // Auto-generate on load
+        window.onload = function() {
+            generateQR();
+        };
+    </script>
+</body>
+</html>

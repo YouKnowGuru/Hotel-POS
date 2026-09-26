@@ -1,0 +1,13 @@
+# React Cache Management
+
+# Ignore cache files for git
+.eslintcache
+build/
+node_modules/.cache/
+*.worker.js
+service-worker.js
+sw.js
+
+# Development cache
+.DS_Store
+Thumbs.db

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Menu API Test</title>
+</head>
+<body>
+    <h1>Menu API Test</h1>
+    <button onclick="testMenuAPI()">Test Menu API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testMenuAPI() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const response = await fetch('http://localhost:3002/api/menu');
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <h3>Success! Found ${data.length} menu items:</h3>
+                    <ul>
+                        ${data.slice(0, 5).map(item => `<li>${item.name} - ${item.price} (${item.isAvailable ? 'Available' : 'Not Available'})</li>`).join('')}
+                    </ul>
+                    ${data.length > 5 ? `<p>... and ${data.length - 5} more items</p>` : ''}
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
