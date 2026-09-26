@@ -133,6 +133,16 @@ const strictLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+app.get("/", (_req, res) => {
+  res.json({
+    name: "Hotel POS System API",
+    status: "online",
+    database: dbConnected ? "connected" : "disconnected",
+    healthCheck: "/healthz",
+    message: "This is the backend API server. Please access the application through your Vercel frontend URL.",
+  });
+});
+
 app.get("/healthz", (_req, res) => {
   res.json({ status: "ok", db: dbConnected, time: new Date().toISOString() });
 });
