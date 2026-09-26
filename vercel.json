@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix hotelu1-main/frontend install --legacy-peer-deps && npm --prefix hotelu1-main/frontend run build",
+  "outputDirectory": "hotelu1-main/frontend/build",
+  "framework": "create-react-app",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
