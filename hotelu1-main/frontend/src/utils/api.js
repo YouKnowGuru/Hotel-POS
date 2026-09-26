@@ -1,7 +1,8 @@
 const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";
 
-/** Backend base URL — works on localhost and LAN (mobile QR). */
 export const getAPI_URL = () => {
+  const override = typeof window !== "undefined" ? localStorage.getItem("apiUrl") : null;
+  if (override) return override.replace(/\/$/, "");
   const envUrl = process.env.REACT_APP_API_URL;
   if (envUrl) return envUrl.replace(/\/$/, "");
   const protocol = window.location.protocol;
