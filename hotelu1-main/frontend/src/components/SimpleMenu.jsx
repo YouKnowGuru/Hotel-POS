@@ -670,18 +670,23 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                         <h4 style={s.cardName}>{item.name}</h4>
                         {item.description && <p style={s.cardDesc}>{item.description}</p>}
                         <div style={s.cardFoot}>
-                          <span style={{ ...s.cardPrice, color: g1 }}>{fmt(item.price)}</span>
-                          {inCart ? (
-                            <div style={s.qtyRowSm}>
-                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
+                          {/* Row 1: price + add button (add-mode) OR just price (qty-mode) */}
+                          <div style={s.cardFootRow}>
+                            <span style={{ ...s.cardPrice, color: g1 }}>{fmt(item.price)}</span>
+                            {!inCart && (
+                              <button className="sm-add-btn" style={{ ...s.addBtn, background: `linear-gradient(135deg,${g1},${g2})` }} onClick={e => addToCart(item, e)}>
+                                <Plus size={15} />
+                                {ripple?.id === item.id && <span style={{ ...s.ripple, left: ripple.x, top: ripple.y }} />}
+                              </button>
+                            )}
+                          </div>
+                          {/* Row 2: qty controls (qty-mode only — always fits, no overflow) */}
+                          {inCart && (
+                            <div style={{ ...s.qtyRowSm, justifyContent: 'center', gap: 12 }}>
+                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}55`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
                               <span style={{ ...s.qtyNumSm, color: g1 }}>{inCart.qty}</span>
-                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1, background: `${g1}10` }} onClick={() => updQty(item.id, inCart.qty + 1)}><Plus size={12} /></button>
+                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}55`, color: g1, background: `${g1}12` }} onClick={() => updQty(item.id, inCart.qty + 1)}><Plus size={12} /></button>
                             </div>
-                          ) : (
-                            <button className="sm-add-btn" style={{ ...s.addBtn, background: `linear-gradient(135deg,${g1},${g2})` }} onClick={e => addToCart(item, e)}>
-                              <Plus size={15} />
-                              {ripple?.id === item.id && <span style={{ ...s.ripple, left: ripple.x, top: ripple.y }} />}
-                            </button>
                           )}
                         </div>
                       </div>
@@ -1046,19 +1051,22 @@ const s = {
   cardImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
   cardCat: { position: 'absolute', top: 8, left: 8, padding: '3px 9px', borderRadius: 50, fontSize: 9, fontWeight: 800, color: '#fff', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.18)' },
   popularBadge: { position: 'absolute', top: 8, right: 8, padding: '3px 9px', borderRadius: 50, fontSize: 9, fontWeight: 800, color: '#fff', background: 'linear-gradient(135deg,#f97316,#ef4444)', display: 'flex', alignItems: 'center', gap: 3, boxShadow: '0 2px 8px rgba(239,68,68,0.35)' },
-  cardBody: { padding: '11px 13px 13px' },
-  cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px' },
+  cardBody: { padding: '11px 13px 13px', minWidth: 0 },
+  cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   cardDesc: { margin: '0 0 9px', fontSize: 11, color: '#64748b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-  cardFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  // When in add-mode: price left, + button right (single row)
+  // When in qty-mode: price on top, qty controls below — avoids any overflow
+  cardFoot: { display: 'flex', flexDirection: 'column', gap: 6 },
+  cardFootRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
   cardPrice: { fontSize: 15, fontWeight: 900, letterSpacing: '-0.3px', whiteSpace: 'nowrap' },
-  addBtn: { width: 34, height: 34, borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.22)', touchAction: 'manipulation' },
+  addBtn: { width: 34, height: 34, borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.22)', touchAction: 'manipulation', flexShrink: 0 },
 
   qtyRow: { display: 'flex', alignItems: 'center', gap: 10 },
   qtyBtn: { width: 32, height: 32, borderRadius: 10, border: '1.5px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e293b', transition: 'all 0.15s' },
   qtyNum: { fontSize: 15, fontWeight: 800, color: '#0f172a', minWidth: 22, textAlign: 'center' },
   qtyRowSm: { display: 'flex', alignItems: 'center', gap: 4 },
-  qtyBtnSm: { width: 26, height: 26, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' },
-  qtyNumSm: { fontSize: 12, fontWeight: 800, minWidth: 16, textAlign: 'center' },
+  qtyBtnSm: { width: 28, height: 28, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
+  qtyNumSm: { fontSize: 13, fontWeight: 800, minWidth: 18, textAlign: 'center' },
 
   ripple: { position: 'absolute', width: 70, height: 70, background: 'rgba(255,255,255,0.3)', borderRadius: '50%', transform: 'translate(-50%,-50%) scale(0)', animation: 'ripple 0.5s ease-out', pointerEvents: 'none' },
 
