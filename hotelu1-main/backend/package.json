@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "build": "echo Backend build ready",
     "start": "node server.js"
   },
   "engines": {
