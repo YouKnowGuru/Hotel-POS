@@ -32,7 +32,8 @@ import { loadRestaurantInfo } from '../utils/receiptPrint';
 const isOrderPaid = (o) => {
   const s = String(o?.status || '').toLowerCase();
   const b = String(o?.bill_status || '').toLowerCase();
-  return s === 'completed' || s === 'paid' || b === 'paid' || !!o?.paid_at;
+  const p = String(o?.payment_status || '').toLowerCase();
+  return s === 'completed' || s === 'paid' || b === 'paid' || p === 'paid' || !!o?.paid_at;
 };
 
 const getOrderDate = (o) =>
