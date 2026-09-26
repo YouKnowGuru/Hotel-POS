@@ -117,11 +117,16 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   useEffect(() => {
     if (!paymentOrder) return;
     setPaymentQr('');
+    setPaymentError('');
     fetch(`${getAPI_URL()}/api/settings?key=payment_qr_image`)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
-        if (data?.value && /^data:image\/(png|jpe?g|webp);base64,/i.test(data.value)) setPaymentQr(data.value);
-        else setPaymentError('Payment QR is not configured. Please ask restaurant staff for assistance.');
+        const val = data?.value;
+        if (val && (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(val) || /^(https?:\/\/|\/)/i.test(val))) {
+          setPaymentQr(val);
+        } else {
+          setPaymentError('Payment QR is not configured. Please ask restaurant staff for assistance.');
+        }
       })
       .catch(() => setPaymentError('Could not load the restaurant payment QR.'));
   }, [paymentOrder]);
@@ -348,24 +353,48 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       )}
 
       {paymentOrder && (
-        <div className="fixed inset-0 z-[500] bg-black/55 overflow-y-auto overscroll-contain p-3 sm:p-6 flex justify-center">
-          <div className="w-full max-w-md self-start sm:self-center my-0 sm:my-4 bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6">
-            <div className="text-center">
+        <div
+          className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-center justify-center"
+          onClick={(e) => { if (e.target === e.currentTarget) setPaymentOrder(null); }}
+        >
+          <div className="w-full max-w-md my-auto bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-5 sm:p-6 relative">
+            <button
+              onClick={() => setPaymentOrder(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+            <div className="text-center pt-1">
               <div className="text-3xl mb-2">🔒</div>
               <h2 className="text-xl font-extrabold text-gray-900">Pay before we prepare your order</h2>
               <p className="text-sm text-gray-500 mt-1">Order #{paymentOrder.id} · Total <b className="text-orange-600">{fmt(paymentOrder.total)}</b></p>
             </div>
             <div className="mt-4 sm:mt-5 rounded-2xl bg-orange-50 border border-orange-100 p-3 sm:p-4 text-center">
-              {paymentQr ? <img src={paymentQr} alt="Payment QR code" className="w-48 h-48 sm:w-56 sm:h-56 max-w-full mx-auto bg-white p-2 rounded-xl" /> : <p className="py-16 text-sm text-gray-500">Loading payment QR…</p>}
+              {paymentQr ? (
+                <img src={paymentQr} alt="Payment QR code" className="w-48 h-48 sm:w-56 sm:h-56 max-w-full mx-auto bg-white p-2 rounded-xl shadow-sm object-contain" />
+              ) : (
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <div className="w-7 h-7 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-sm text-gray-500">Loading payment QR…</p>
+                </div>
+              )}
               <p className="text-xs text-gray-600 mt-3">Scan with your payment app, pay the exact amount, then upload the confirmation screenshot.</p>
             </div>
             <label className="block text-sm font-semibold text-gray-700 mt-4">Payment screenshot</label>
-            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => selectProof(e.target.files?.[0])}
-              className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-3 file:py-2 file:font-semibold file:text-orange-700" />
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => selectProof(e.target.files?.[0])}
+              className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-100 file:px-3 file:py-2 file:font-semibold file:text-orange-700"
+            />
             {proofImage && <p className="mt-2 text-xs font-medium text-emerald-600">✓ Screenshot attached</p>}
             {paymentError && <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-600">{paymentError}</p>}
-            <button onClick={submitPaymentProof} disabled={submittingProof}
-              className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 text-sm font-bold text-white shadow hover:shadow-md disabled:opacity-60">
+            <button
+              onClick={submitPaymentProof}
+              disabled={submittingProof}
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 py-3 text-sm font-bold text-white shadow hover:shadow-md disabled:opacity-60 transition active:scale-[0.99]"
+            >
               {submittingProof ? 'Submitting proof…' : 'Submit payment for review'}
             </button>
             <p className="mt-3 text-center text-xs text-gray-500">Your order is sent to the waiter only after admin approval.</p>
@@ -680,23 +709,18 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                         <h4 style={s.cardName}>{item.name}</h4>
                         {item.description && <p style={s.cardDesc}>{item.description}</p>}
                         <div style={s.cardFoot}>
-                          {/* Row 1: price + add button (add-mode) OR just price (qty-mode) */}
-                          <div style={s.cardFootRow}>
-                            <span style={{ ...s.cardPrice, color: g1 }}>{fmt(item.price)}</span>
-                            {!inCart && (
-                              <button className="sm-add-btn" style={{ ...s.addBtn, background: `linear-gradient(135deg,${g1},${g2})` }} onClick={e => addToCart(item, e)}>
-                                <Plus size={15} />
-                                {ripple?.id === item.id && <span style={{ ...s.ripple, left: ripple.x, top: ripple.y }} />}
-                              </button>
-                            )}
-                          </div>
-                          {/* Row 2: qty controls (qty-mode only — always fits, no overflow) */}
-                          {inCart && (
-                            <div style={{ ...s.qtyRowSm, justifyContent: 'center', gap: 12 }}>
-                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}55`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
+                          <span style={{ ...s.cardPrice, color: g1 }}>{fmt(item.price)}</span>
+                          {inCart ? (
+                            <div style={s.qtyRowSm}>
+                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
                               <span style={{ ...s.qtyNumSm, color: g1 }}>{inCart.qty}</span>
-                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}55`, color: g1, background: `${g1}12` }} onClick={() => updQty(item.id, inCart.qty + 1)}><Plus size={12} /></button>
+                              <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1, background: `${g1}10` }} onClick={() => updQty(item.id, inCart.qty + 1)}><Plus size={12} /></button>
                             </div>
+                          ) : (
+                            <button className="sm-add-btn" style={{ ...s.addBtn, background: `linear-gradient(135deg,${g1},${g2})` }} onClick={e => addToCart(item, e)}>
+                              <Plus size={15} />
+                              {ripple?.id === item.id && <span style={{ ...s.ripple, left: ripple.x, top: ripple.y }} />}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -1064,23 +1088,20 @@ const s = {
   cardBody: { padding: '11px 13px 13px', minWidth: 0 },
   cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
   cardDesc: { margin: '0 0 9px', fontSize: 11, color: '#64748b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
-  // When in add-mode: price left, + button right (single row)
-  // When in qty-mode: price on top, qty controls below — avoids any overflow
-  cardFoot: { display: 'flex', flexDirection: 'column', gap: 6 },
-  cardFootRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
+  cardFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, minWidth: 0 },
   cardPrice: { fontSize: 15, fontWeight: 900, letterSpacing: '-0.3px', whiteSpace: 'nowrap' },
   addBtn: { width: 34, height: 34, borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 14px rgba(0,0,0,0.22)', touchAction: 'manipulation', flexShrink: 0 },
 
   qtyRow: { display: 'flex', alignItems: 'center', gap: 10 },
   qtyBtn: { width: 32, height: 32, borderRadius: 10, border: '1.5px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e293b', transition: 'all 0.15s' },
   qtyNum: { fontSize: 15, fontWeight: 800, color: '#0f172a', minWidth: 22, textAlign: 'center' },
-  qtyRowSm: { display: 'flex', alignItems: 'center', gap: 4 },
-  qtyBtnSm: { width: 28, height: 28, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
-  qtyNumSm: { fontSize: 13, fontWeight: 800, minWidth: 18, textAlign: 'center' },
+  qtyRowSm: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
+  qtyBtnSm: { width: 26, height: 26, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
+  qtyNumSm: { fontSize: 12, fontWeight: 800, minWidth: 16, textAlign: 'center' },
 
   ripple: { position: 'absolute', width: 70, height: 70, background: 'rgba(255,255,255,0.3)', borderRadius: '50%', transform: 'translate(-50%,-50%) scale(0)', animation: 'ripple 0.5s ease-out', pointerEvents: 'none' },
 
-  floatBar: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'linear-gradient(135deg,#ff3cac,#784ba0)', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: '0 -4px 32px rgba(255,60,172,0.4)', borderRadius: '20px 20px 0 0', margin: '0 8px', animation: 'slideUp 0.35s cubic-bezier(0.4,0,0.2,1)' },
+  floatBar: { position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: 'linear-gradient(135deg,#ff3cac,#784ba0)', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', boxShadow: '0 -4px 32px rgba(255,60,172,0.4)', borderRadius: '20px 20px 0 0', maxWidth: 640, margin: '0 auto', animation: 'slideUp 0.35s cubic-bezier(0.4,0,0.2,1)' },
   floatLeft: { display: 'flex', alignItems: 'center', gap: 10 },
   floatCartIcon: { width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   floatCount: { fontWeight: 700, fontSize: 13, color: '#fff', margin: 0, lineHeight: 1.2 },
@@ -1090,8 +1111,8 @@ const s = {
   floatTotal: { fontWeight: 900, fontSize: 17, color: '#fff' },
   floatArrow: { width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' },
 
-  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)', zIndex: 60, display: 'flex', alignItems: 'flex-end' },
-  drawer: { background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.1)' },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' },
+  drawer: { background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 640, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 48px rgba(0,0,0,0.2)', animation: 'slideUp 0.3s cubic-bezier(0.4,0,0.2,1)' },
   drawerHandle: { width: 36, height: 4, borderRadius: 4, background: 'rgba(0,0,0,0.08)', margin: '12px auto 0' },
   drawerHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid rgba(0,0,0,0.04)' },
   drawerIcon: { width: 38, height: 38, borderRadius: 12, background: 'linear-gradient(135deg,#ff3cac,#784ba0)', display: 'flex', alignItems: 'center', justifyContent: 'center' },

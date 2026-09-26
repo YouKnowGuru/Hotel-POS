@@ -25,7 +25,7 @@ const SPLASH_CSS = `
 
   @keyframes splashIn     { from{opacity:0} to{opacity:1} }
   @keyframes splashOut    { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(1.06)} }
-  @keyframes menuIn       { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes menuIn       { from{opacity:0} to{opacity:1} }
 
   @keyframes logoEntry    { 0%{opacity:0;transform:scale(0.4) rotate(-15deg)}
                             60%{opacity:1;transform:scale(1.1) rotate(4deg)}
@@ -66,7 +66,8 @@ const SPLASH_CSS = `
   @keyframes noiseMove    { from{transform:translate(0,0)} to{transform:translate(-64px,-64px)} }
 
   .qr-splash-exit { animation: splashOut 0.65s cubic-bezier(0.4,0,1,1) forwards !important; }
-  .qr-menu-enter  { animation: menuIn 0.6s cubic-bezier(0.22,1,0.36,1) both; }
+  .qr-menu-enter  { animation: menuIn 0.4s ease-out both; }
+  @keyframes menuIn { from{opacity:0} to{opacity:1} }
 `;
 
 /* ─── SVG noise texture (subtle film grain) ─────────────────────── */
@@ -512,7 +513,7 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
           </div>
         </div>
       ) : (
-        <main className={`flex-1 ${splashDone ? 'qr-menu-enter' : ''}`}>
+        <main className="flex-1">
           <SimpleMenu
             tableId={tableId}
             onOrderPlaced={handleOrderPlaced}
