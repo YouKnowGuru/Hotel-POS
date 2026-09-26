@@ -104,6 +104,16 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
 
   useEffect(() => { fetchAndCacheGlobalSettings().then(setSettings); }, []);
 
+  // Lock body scroll when the cart drawer is open so the page doesn't
+  // scroll behind the fixed overlay when the user taps the cart bar.
+  useEffect(() => {
+    if (cartOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [cartOpen]);
+
   useEffect(() => {
     if (!paymentOrder) return;
     setPaymentQr('');
@@ -1088,7 +1098,7 @@ const s = {
   drawerTitle: { margin: 0, fontSize: 16, fontWeight: 800, color: '#0f172a' },
   drawerSub: { margin: '1px 0 0', fontSize: 11, color: '#94a3b8' },
   drawerClose: { background: 'rgba(0,0,0,0.04)', border: 'none', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
-  drawerScroll: { flex: 1, overflowY: 'auto', padding: '4px 20px' },
+  drawerScroll: { flex: 1, overflowY: 'auto', padding: '4px 20px', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' },
 
   cartItem: { display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.03)', position: 'relative', animation: 'fadeUp 0.3s ease both' },
   cartAccent: { position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', width: 3, height: 28, borderRadius: 3 },
