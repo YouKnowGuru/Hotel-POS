@@ -255,7 +255,7 @@ const App = () => {
           <NoAccessMessage />
         );
       case 'payroll':
-        return allow('payroll', []) ? (
+        return allow('payroll', ['waiter', 'cashier']) ? (
           <PayrollSystem currentUser={currentUser} />
         ) : (
           <NoAccessMessage />
@@ -538,11 +538,9 @@ const App = () => {
 
           <Route path="/payroll" element={
             <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'manager']}>
-                <MenuLayout>
-                  <PayrollSystem currentUser={currentUser} />
-                </MenuLayout>
-              </RoleBasedRoute>
+              <MenuLayout>
+                <PayrollSystem currentUser={currentUser} />
+              </MenuLayout>
             </ProtectedRoute>
           } />
 

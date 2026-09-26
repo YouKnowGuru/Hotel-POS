@@ -49,6 +49,7 @@ const MODULES = [
   { id: 'customers', label: 'Customers (CRM)' },
   { id: 'staff_directory', label: 'Staff Directory' },
   { id: 'attendance', label: 'Attendance' },
+  { id: 'payroll', label: 'Payroll' },
 ];
 
 const ROLE_META = {
@@ -119,6 +120,7 @@ const DEFAULT_ROLE_MATRIX = {
     customers: true,
     staff_directory: true,
     attendance: true,
+    payroll: true,
   },
   waiter: {
     dashboard: true,
@@ -137,6 +139,7 @@ const DEFAULT_ROLE_MATRIX = {
     customers: false,
     staff_directory: false,
     attendance: true,
+    payroll: true,
   },
 
   cashier: {
@@ -156,6 +159,7 @@ const DEFAULT_ROLE_MATRIX = {
     customers: true,
     staff_directory: false,
     attendance: true,
+    payroll: true,
   },
 };
 

@@ -479,11 +479,11 @@ const Sidebar = ({
             />
           </li>
 
-          {(role === 'admin' || role === 'manager') && (
+          {canSee('payroll') && (
             <li>
               <NavItem
                 icon={Banknote}
-                label="Payroll"
+                label={role === 'admin' || role === 'manager' ? 'Payroll' : 'My Salary'}
                 active={activeTab === 'payroll'}
                 onClick={() => handleTabClick('payroll')}
               />

@@ -4176,6 +4176,22 @@ app.get('/api/payroll/staff-config', authenticate, async (req, res) => {
   }
 });
 
+// GET /api/payroll/my-config - current user's own salary configuration (private to each employee)
+app.get('/api/payroll/my-config', authenticate, async (req, res) => {
+  try {
+    const setting = await Settings.findOne({ where: { key: 'payroll_staff_config' } });
+    if (!setting || !setting.value) return res.json({ config: null });
+    let all = setting.value;
+    if (typeof all === 'string') {
+      try { all = JSON.parse(all); } catch { all = {}; }
+    }
+    const myCfg = all[req.user.id] || null;
+    res.json({ config: myCfg });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching my salary config', error: err.message });
+  }
+});
+
 // PUT /api/payroll/staff-config - save salary config for each user
 app.put('/api/payroll/staff-config', authenticate, async (req, res) => {
   try {

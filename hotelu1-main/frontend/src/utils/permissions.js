@@ -80,7 +80,7 @@ export const DEFAULT_ROLE_MATRIX = {
     customers: false,
     staff_directory: false,
     attendance: true,
-    payroll: false,
+    payroll: true,
   },
 
   cashier: {
@@ -100,7 +100,7 @@ export const DEFAULT_ROLE_MATRIX = {
     customers: true,
     staff_directory: false,
     attendance: true,
-    payroll: false,
+    payroll: true,
   },
 };
 

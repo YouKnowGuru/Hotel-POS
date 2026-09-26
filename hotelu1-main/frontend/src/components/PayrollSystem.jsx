@@ -1351,6 +1351,7 @@ const PayrollSystem = ({ currentUser }) => {
   const [users,       setUsers]       = useState([]);
   const [staffConfig, setStaffConfig] = useState({});
   const [summary,     setSummary]     = useState(null);
+  const [myConfig,    setMyConfig]    = useState(null);
   const [loading,     setLoading]     = useState(true);
   const [toast,       setToast]       = useState(null);
 
@@ -1382,8 +1383,9 @@ const PayrollSystem = ({ currentUser }) => {
         isAdmin ? fetch(`${API}/api/users`, { headers }) : null,
         isAdmin ? fetch(`${API}/api/payroll/staff-config`, { headers }) : null,
         fetch(`${API}/api/payroll/my`, { headers }),
+        fetch(`${API}/api/payroll/my-config`, { headers }),
       ];
-      const [recRes, summRes, usersRes, cfgRes, myRes] = await Promise.all(calls);
+      const [recRes, summRes, usersRes, cfgRes, myRes, myCfgRes] = await Promise.all(calls);
 
       if (recRes?.ok)   setRecords(await recRes.json());
       if (summRes?.ok)  setSummary(await summRes.json());
@@ -1395,6 +1397,7 @@ const PayrollSystem = ({ currentUser }) => {
         setStaffConfig(c || {});
       }
       if (myRes?.ok) setMySlips(await myRes.json());
+      if (myCfgRes?.ok) { const d = await myCfgRes.json(); setMyConfig(d.config || null); }
     } catch {
       showToast('Failed to load payroll data', 'error');
     }
@@ -1538,9 +1541,13 @@ const PayrollSystem = ({ currentUser }) => {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.03em' }}>
-            <span style={{ background: `linear-gradient(135deg,${GOLD},#F59E0B)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Payroll</span> Management
+            <span style={{ background: `linear-gradient(135deg,${GOLD},#F59E0B)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {isAdmin ? 'Payroll' : 'My Salary &'}
+            </span> {isAdmin ? 'Management' : 'Payslips'}
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: isDark ? '#94A3B8' : '#64748B' }}>Staff salary processing, payslips & financial analytics</p>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: isDark ? '#94A3B8' : '#64748B' }}>
+            {isAdmin ? 'Staff salary processing, payslips & financial analytics' : 'Your private salary structure, monthly earnings & itemized payslips'}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <ThemeToggle />
@@ -1590,27 +1597,29 @@ const PayrollSystem = ({ currentUser }) => {
       </div>
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex', gap: 4, marginBottom: 24,
-        background: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
-        padding: 4, borderRadius: 14, width: 'fit-content',
-        border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
-      }}>
-        {(isAdmin ? ['overview', 'records'] : []).concat(['myslips']).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              padding: '8px 18px', borderRadius: 10, border: 'none',
-              background: tab === t ? `linear-gradient(135deg,${GOLD},#A16207)` : 'transparent',
-              color: tab === t ? '#fff' : (isDark ? '#94A3B8' : '#64748B'),
-              fontWeight: tab === t ? 700 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
-            }}
-          >
-            {t === 'overview' ? '📊 Overview' : t === 'records' ? '📋 Records' : '💼 My Payslips'}
-          </button>
-        ))}
-      </div>
+      {isAdmin && (
+        <div style={{
+          display: 'flex', gap: 4, marginBottom: 24,
+          background: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
+          padding: 4, borderRadius: 14, width: 'fit-content',
+          border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
+        }}>
+          {['overview', 'records', 'myslips'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              style={{
+                padding: '8px 18px', borderRadius: 10, border: 'none',
+                background: tab === t ? `linear-gradient(135deg,${GOLD},#A16207)` : 'transparent',
+                color: tab === t ? '#fff' : (isDark ? '#94A3B8' : '#64748B'),
+                fontWeight: tab === t ? 700 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            >
+              {t === 'overview' ? '📊 Overview' : t === 'records' ? '📋 Records' : '💼 My Payslips'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ═══════════ OVERVIEW ═══════════ */}
       {tab === 'overview' && isAdmin && (
@@ -1891,9 +1900,67 @@ const PayrollSystem = ({ currentUser }) => {
       {/* ═══════════ MY PAYSLIPS ═══════════ */}
       {tab === 'myslips' && (
         <>
+          {/* Base Salary Structure Card for Employee */}
+          {myConfig && (
+            <div style={{ ...getGlass(isDark), padding: '20px 24px', marginBottom: 24, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: `${GOLD}15`, filter: 'blur(30px)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: isDark ? GOLD : '#B45309', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Configured Salary Structure
+                  </div>
+                  <h3 style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                    {currentUser?.name || currentUser?.username} ({currentUser?.role})
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>
+                    Base rate and standard monthly allowances
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, color: isDark ? '#94A3B8' : '#64748B' }}>Base Monthly Salary</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: isDark ? GOLD : '#B45309' }}>
+                    {fmt(myConfig.basic_salary)}
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                {parseFloat(myConfig.hra || 0) > 0 && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>HRA</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981' }}>{fmt(myConfig.hra)}</div>
+                  </div>
+                )}
+                {parseFloat(myConfig.transport || 0) > 0 && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Transport</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981' }}>{fmt(myConfig.transport)}</div>
+                  </div>
+                )}
+                {parseFloat(myConfig.meals || 0) > 0 && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Meals</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981' }}>{fmt(myConfig.meals)}</div>
+                  </div>
+                )}
+                {parseFloat(myConfig.medical || 0) > 0 && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Medical</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#10B981' }}>{fmt(myConfig.medical)}</div>
+                  </div>
+                )}
+                {parseFloat(myConfig.overtime_rate || 0) > 0 && (
+                  <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>Overtime Rate</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#3B82F6' }}>{myConfig.overtime_rate}x</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div style={{ marginBottom: 20 }}>
-            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>My Payslips</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>Your salary history — click any card to view & print</p>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>My Payslips History</h2>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>Your confidential salary slips — click any card to view & print</p>
           </div>
           {mySlips.length === 0 ? (
             <div style={{ ...getGlass(isDark), padding: 60, textAlign: 'center' }}>
