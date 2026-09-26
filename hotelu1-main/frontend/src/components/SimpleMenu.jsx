@@ -3,7 +3,7 @@ import {
   ShoppingBag, Plus, Minus, X, CheckCircle2,
   Search, Zap, ArrowRight, Sparkles, Timer, Utensils,
   Soup, Pizza, Coffee, Cookie, IceCream,
-  Trash2, ChevronRight, Star, Flame, Receipt, Clock,
+  Trash2, ChevronRight, Star, Flame, Receipt, Clock, Banknote, QrCode,
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
@@ -96,6 +96,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const [proofImage, setProofImage] = useState('');
   const [paymentError, setPaymentError] = useState('');
   const [submittingProof, setSubmittingProof] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'qr'
+  const [boomMsg, setBoomMsg] = useState({ title: '', sub: '' });
   const searchRef = useRef(null);
   const cartBtnRef = useRef(null);
 
@@ -220,22 +222,32 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       const s = await fetchAndCacheGlobalSettings();
       const sub = cart.reduce((a, i) => a + i.price * i.qty, 0);
       const t = calculateOrderTotals(sub, s);
+      const isCash = paymentMethod === 'cash';
       const res = await fetch(`${getAPI_URL()}/api/orders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           table_name: formatTableName(tableId),
           items: cart.map(i => ({ menuItemId: i.id, name: i.name, quantity: i.qty, price: i.price })),
           subtotal: t.subtotal, discount: t.discountPercent, discountAmount: t.discountAmount,
-          taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total, type: 'DINE_IN', payment_first: true,
+          taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total, type: 'DINE_IN',
+          payment_first: true,
+          payment_method: isCash ? 'cash' : 'qr',
         }),
       });
       const order = await res.json();
       if (order.id) {
-        // Register this order ID with the current device's session so that
-        // fetchOrders will include it for THIS device only.
         addLocalOrderId(tableId, order.id);
         localStorage.setItem(`paymentAccess:${order.id}`, order.paymentAccessToken || '');
-        setCart([]); setCartOpen(false); setPaymentOrder(order); fetchOrders();
+        setCart([]); setCartOpen(false);
+        if (isCash) {
+          // Cash order — no QR needed, just show success toast
+          setBoomMsg({ title: 'Order placed! 💵', sub: 'Please pay cash to our staff when served.' });
+          setBoom(true); setTimeout(() => setBoom(false), 3500);
+          if (onOrderPlaced) onOrderPlaced({ ...order, payment_method: 'cash' });
+        } else {
+          setPaymentOrder(order);
+        }
+        fetchOrders();
       }
     } catch (_) { }
     setPlacing(false);
@@ -265,7 +277,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Could not submit payment proof');
-      setPaymentOrder(null); setBoom(true); setTimeout(() => setBoom(false), 3500); fetchOrders();
+      setPaymentOrder(null);
+      setBoomMsg({ title: 'Payment proof submitted!', sub: 'Waiting for admin review' });
+      setBoom(true); setTimeout(() => setBoom(false), 3500); fetchOrders();
       if (onOrderPlaced) onOrderPlaced({ ...paymentOrder, payment_status: 'verification_pending' });
     } catch (e) { setPaymentError(e.message || 'Could not submit payment proof'); }
     finally { setSubmittingProof(false); }
@@ -352,7 +366,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
         </div>
       )}
 
-      {paymentOrder && (
+      {/* Payment method chooser — shown for cash orders only (no QR modal needed) */}
+      {paymentOrder && paymentOrder.payment_method !== 'cash' && (
         <div
           className="fixed inset-0 z-[500] bg-black/60 backdrop-blur-sm overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-center justify-center"
           onClick={(e) => { if (e.target === e.currentTarget) setPaymentOrder(null); }}
@@ -416,8 +431,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
             </div>
             <div style={s.toastIcon}>✅</div>
             <div>
-              <p style={s.toastTitle}>Payment proof submitted!</p>
-              <p style={s.toastSub}>Waiting for admin review</p>
+              <p style={s.toastTitle}>{boomMsg.title || 'Payment proof submitted!'}</p>
+              <p style={s.toastSub}>{boomMsg.sub || 'Waiting for admin review'}</p>
             </div>
           </div>
         </div>
@@ -459,12 +474,15 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
             // QR payment approval is not the same as completing the food
             // order. Keep the kitchen status visible until food is served.
             const isPaid = o.status === 'completed' || o.bill?.bill_status === 'paid';
-            const paymentApproved = o.payment_status === 'paid' || o.payment_method === 'qr_payment';
+            const isCashOrder = o.payment_method === 'cash' || o.payment_status === 'cash_pending';
+            const paymentApproved = o.payment_status === 'paid' || o.payment_method === 'qr_payment' || isCashOrder;
             const isDelivered = o.status === 'delivered';
             const billRequested = o.bill_requested;
             const showBillStatus = isDelivered || isPaid;
             const paymentWaiting = ['awaiting_payment', 'verification_pending', 'rejected'].includes(o.payment_status);
-            const cfg = o.payment_status === 'awaiting_payment'
+            const cfg = o.payment_status === 'cash_pending'
+              ? { label: 'Cash Order — Cooking', Icon: Banknote, c: '#10b981', bg: 'rgba(16,185,129,0.08)', pct: 30 }
+              : o.payment_status === 'awaiting_payment'
               ? { label: 'Payment Required', Icon: Receipt, c: '#f97316', bg: 'rgba(249,115,22,0.08)', pct: 5 }
               : o.payment_status === 'verification_pending'
                 ? { label: 'Payment Under Review', Icon: Clock, c: '#f59e0b', bg: 'rgba(245,158,11,0.08)', pct: 12 }
@@ -565,7 +583,16 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                       ✓ Payment approved — your order is sent to the waiter.
                     </div>
                   )}
-                  {paymentWaiting && o.payment_status !== 'verification_pending' && (
+            {o.payment_status === 'cash_pending' && (
+                    <div style={{ marginTop: 10, background: 'rgba(245,158,11,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>💵</span>
+                      <div>
+                        <p style={{ margin: 0, color: '#92400e', fontSize: 13, fontWeight: 700 }}>Pay with Cash</p>
+                        <p style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>Your order is being prepared. Please pay <b>{fmt(o.total)}</b> to our staff.</p>
+                      </div>
+                    </div>
+                  )}
+                  {paymentWaiting && o.payment_status !== 'verification_pending' && o.payment_status !== 'cash_pending' && (
                     <button className="sm-pay-btn" style={{ ...s.billReqBtn, marginTop: 10, justifyContent: 'center' }} onClick={() => openPayment(o)}>
                       {o.payment_status === 'rejected' ? 'Submit corrected payment proof' : 'Pay now'}
                     </button>
@@ -789,9 +816,45 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                     <span style={s.billTotalVal}>{fmt(totals.total)}</span>
                   </div>
                 </div>
-                <p style={s.payNote}>Payment processed at the counter</p>
-                <button className="sm-order-btn" style={{ ...s.orderBtn, ...(placing ? { opacity: 0.5, pointerEvents: 'none' } : {}) }} onClick={placeOrder} disabled={placing}>
-                  {placing ? <><div style={s.spinner} /> Placing Order...</> : <><Zap size={17} /> Place Order <ArrowRight size={17} /></>}
+
+                {/* ── Payment method selector ── */}
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '14px 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+                  {[
+                    { id: 'cash', label: 'Pay with Cash', sub: 'Pay our staff directly', Icon: Banknote, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
+                    { id: 'qr',   label: 'Pay Online',    sub: 'Scan QR & upload proof', Icon: QrCode,   color: '#f97316', bg: 'rgba(249,115,22,0.08)',  border: 'rgba(249,115,22,0.3)'  },
+                  ].map(({ id, label, sub, Icon, color, bg, border }) => {
+                    const active = paymentMethod === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => setPaymentMethod(id)}
+                        style={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+                          padding: '10px 12px', borderRadius: 14, border: `2px solid ${active ? border : 'rgba(0,0,0,0.06)'}`,
+                          background: active ? bg : '#fafafa', cursor: 'pointer', textAlign: 'left',
+                          transition: 'all 0.2s', boxShadow: active ? `0 4px 14px ${color}22` : 'none',
+                          transform: active ? 'scale(1.02)' : 'scale(1)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Icon size={15} color={active ? color : '#94a3b8'} />
+                          <span style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
+                        </div>
+                        <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
+                        {active && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color }}>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button className="sm-order-btn" style={{ ...s.orderBtn, ...(placing ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing}>
+                  {placing
+                    ? <><div style={s.spinner} /> Placing Order...</>
+                    : paymentMethod === 'cash'
+                      ? <><Banknote size={17} /> Place Order — Pay Cash <ArrowRight size={17} /></>
+                      : <><QrCode size={17} /> Place Order — Pay Online <ArrowRight size={17} /></>
+                  }
                 </button>
               </div>
             )}

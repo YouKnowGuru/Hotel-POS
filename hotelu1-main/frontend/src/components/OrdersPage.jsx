@@ -51,6 +51,7 @@ const STATUS_TABS = [
 const STATUS_COLORS = {
   awaiting_payment: { bg: 'bg-orange-50', text: 'text-orange-600' },
   verification_pending: { bg: 'bg-amber-50', text: 'text-amber-600' },
+  cash_pending: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
   rejected: { bg: 'bg-rose-50', text: 'text-rose-600' },
   pending: { bg: 'bg-amber-50', text: 'text-amber-600' },
   preparing: { bg: 'bg-orange-50', text: 'text-orange-600' },
@@ -604,6 +605,15 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [reviewError, setReviewError] = useState('');
 
+  // Safely parse JSON from a fetch response; falls back to text on non-JSON.
+  const safeJson = async (res) => {
+    const ct = res.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return res.json();
+    const text = await res.text();
+    // If server returned HTML (e.g. 502/503 error page), surface a readable message.
+    return { message: text.replace(/<[^>]*>/g, '').trim().slice(0, 200) || 'Server error' };
+  };
+
   const reviewPayment = async (decision) => {
     if (decision === 'reject' && !rejectionReason.trim()) {
       setReviewError('Enter a reason before rejecting this payment.'); return;
@@ -613,7 +623,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
       const res = await authFetch(`/api/orders/${order.id}/payment-verification`, {
         method: 'PUT', body: JSON.stringify({ decision, rejectionReason }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.message || 'Could not update payment');
       onPaymentReviewed?.();
     } catch (e) { setReviewError(e.message || 'Could not update payment'); }
@@ -627,7 +637,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
       const res = await authFetch(`/api/orders/${order.id}/approve`, {
         method: 'PUT',
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.message || 'Could not approve order');
       onPaymentReviewed?.();
     } catch (e) {
@@ -733,7 +743,11 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
             Payment
           </p>
           <p className="text-sm font-semibold text-gray-800">
-            {order.payment_method || (paid ? 'Cash' : 'Pending')}
+            {order.payment_method === 'cash'
+              ? 'Cash'
+              : order.payment_method
+              ? String(order.payment_method).toUpperCase()
+              : paid ? 'Cash' : 'Pending'}
           </p>
         </div>
       </div>
@@ -758,8 +772,26 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
         </div>
       )}
 
-      {/* Pending Order Approval for Admin (Chef removed: goes directly to waiter) */}
-      {status === 'pending' && order.payment_status !== 'verification_pending' && (
+      {/* Cash payment notice */}
+      {order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
+        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xl">💵</span>
+            <p className="font-bold text-emerald-900">Cash Payment — Collect from Customer</p>
+          </div>
+          <p className="text-sm text-emerald-800">This order is being prepared. The customer will pay <b>{fmt(order.total)}</b> in cash. Please collect payment when food is served.</p>
+          {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
+        </div>
+      )}
+
+      {/* Pending Order Approval for Admin.
+           - Shown only for non-cash, non-QR-payment-pending orders.
+           - Cash orders (cash_pending) go directly to the kitchen and need no approval.
+           - QR payment orders (verification_pending) use the payment review panel above. */}
+      {status === 'pending'
+        && order.payment_status !== 'verification_pending'
+        && order.payment_status !== 'cash_pending'
+        && order.payment_method !== 'cash' && (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
           <p className="font-bold text-emerald-900">Order Awaiting Approval</p>
           <p className="mt-1 text-sm text-emerald-800">

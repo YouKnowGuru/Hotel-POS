@@ -1501,7 +1501,8 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     }
     const settings = await getTaxDiscountSettings();
     const paymentFirst = req.body.payment_first === true;
-    const paymentAccessToken = paymentFirst ? crypto.randomBytes(24).toString('hex') : null;
+    const isCashPayment = req.body.payment_method === 'cash';
+    const paymentAccessToken = paymentFirst && !isCashPayment ? crypto.randomBytes(24).toString('hex') : null;
     const subtotal =
       req.body.subtotal != null
         ? Number(req.body.subtotal)
@@ -1514,7 +1515,8 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         table_name,
         items,
         status: "pending",
-        payment_status: paymentFirst ? "awaiting_payment" : null,
+        payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
+        payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
         payment_access_token: paymentAccessToken,
         type: type || "DINE_IN",
         parentOrderId,
@@ -1524,8 +1526,8 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         ...totals,
       };
       mockOrders.push(newOrder);
-      // An unpaid QR order must never alert the kitchen.
-      if (!paymentFirst) io.emit("order_created");
+      // Cash orders and non-payment-first orders go straight to the kitchen.
+      if (!paymentFirst || isCashPayment) io.emit("order_created");
       const responseOrder = { ...newOrder, paymentAccessToken };
       delete responseOrder.payment_access_token;
       return res.json(responseOrder);
@@ -1540,7 +1542,8 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       subfranchise_id: linkedSubFranchiseId,
       timestamp: new Date(),
       token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
-      payment_status: paymentFirst ? "awaiting_payment" : null,
+      payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
+      payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
       payment_access_token: paymentAccessToken,
     });
     if (items && Array.isArray(items)) {
@@ -1565,7 +1568,7 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     const orderWithItems = await Order.findByPk(newOrder.id, {
       include: [{ model: OrderItem, as: "items" }],
     });
-    if (!paymentFirst) io.emit("order_created");
+    if (!paymentFirst || isCashPayment) io.emit("order_created");
     const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
     responseOrder.paymentAccessToken = paymentAccessToken;
     delete responseOrder.payment_access_token;
