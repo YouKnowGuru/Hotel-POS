@@ -12,6 +12,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/User");
 const MenuItem = require("./models/MenuItem");
 const Order = require("./models/Order");
+const DiningTable = require("./models/DiningTable");
 const OrderItem = require("./models/OrderItem");
 const Inventory = require("./models/Inventory");
 const Permission = require("./models/Permission");
@@ -557,7 +558,7 @@ async function startServer() {
     console.log("Database connected successfully");
     
     // Create missing tables only (never alter:true — breaks users indexes)
-    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll];
+    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable];
     for (const model of allModels) {
       try { await model.sync(); } catch (e) { console.warn(`Sync warning for ${model.tableName}: ${e.message}`); }
     }
@@ -576,7 +577,7 @@ async function startServer() {
         permission_id INT NOT NULL
       ) ENGINE=InnoDB`);
     } catch (_) {}
-    await runSafeMigrations(sequelize, { SubFranchise });
+    await runSafeMigrations(sequelize, { SubFranchise, DiningTable });
     console.log("Database synchronized successfully");
 
     dbConnected = true;
@@ -2413,6 +2414,145 @@ app.get("/api/orders/live-count", optionalToken, async (req, res) => {
   }
 });
 
+// ── Dining table registry (single source of truth for QR + Table Mgmt) ──
+
+// Same rules as franchiseManageAuth (declared further down for the
+// subfranchise routes); duplicated here because the table routes live above
+// that declaration and referencing a const early throws.
+const tableManageAuth = (req, res, next) => {
+  if (!req.user || !["admin", "franchise"].includes(req.user.role)) {
+    return res
+      .status(403)
+      .json({ message: "Only admin or franchise owner can manage tables" });
+  }
+  next();
+};
+
+// List tables. Public read of number/floor/capacity only (the QR menu uses
+// it to render the floor picker); staff callers get the full row set
+// including is_reserved/is_active and branch scoping.
+app.get("/api/tables", async (req, res) => {
+  try {
+    if (!dbConnected) return res.json([]);
+    const attrs = ["id", "table_number", "label", "floor", "capacity", "is_reserved", "is_active", "subfranchise_id"];
+    const isStaff = !!req.user;
+    const rows = await DiningTable.findAll({
+      where: isStaff ? {} : { is_active: true },
+      attributes: isStaff ? attrs : ["id", "table_number", "label", "floor", "capacity", "subfranchise_id"],
+      order: [["id", "ASC"]],
+    });
+    res.json(rows);
+  } catch (err) {
+    console.error("Error listing tables:", err);
+    res.status(500).json({ message: "Error listing tables" });
+  }
+});
+
+app.post("/api/tables", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const raw = String(req.body.table_number || "").trim().toUpperCase();
+    const tableNumber = raw ? (raw.startsWith("T") ? raw : `T${raw}`) : "";
+    if (!/^T[A-Z0-9_-]{1,10}$/.test(tableNumber)) {
+      return res.status(400).json({ message: "Table number must be 1-10 letters/digits (e.g. 5, A1)" });
+    }
+    const capacity = Math.round(Number(req.body.capacity));
+    if (!Number.isFinite(capacity) || capacity < 1 || capacity > 30) {
+      return res.status(400).json({ message: "Capacity must be between 1 and 30" });
+    }
+    const floor = String(req.body.floor || "ground").slice(0, 20);
+    const label = req.body.label ? String(req.body.label).slice(0, 50) : null;
+    const subfranchiseId = req.body.subfranchise_id != null ? Number(req.body.subfranchise_id) : null;
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (!locIds.includes(subfranchiseId)) {
+        return res.status(403).json({ message: "You can only add tables to your own locations" });
+      }
+    }
+    const exists = await DiningTable.findOne({ where: { table_number: tableNumber, subfranchise_id: subfranchiseId } });
+    if (exists) {
+      return res.status(409).json({ message: `Table ${tableNumber} already exists` });
+    }
+    const table = await DiningTable.create({
+      table_number: tableNumber,
+      label,
+      floor,
+      capacity,
+      subfranchise_id: subfranchiseId,
+    });
+    res.status(201).json({ message: `Table ${tableNumber} added`, table });
+  } catch (err) {
+    console.error("Error creating table:", err);
+    res.status(500).json({ message: "Error creating table" });
+  }
+});
+
+app.put("/api/tables/:id", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const table = await DiningTable.findByPk(req.params.id);
+    if (!table) return res.status(404).json({ message: "Table not found" });
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (!locIds.includes(table.subfranchise_id)) {
+        return res.status(403).json({ message: "This table belongs to another location" });
+      }
+    }
+    const UPDATABLE = ["label", "floor", "capacity", "is_reserved", "is_active"];
+    for (const key of UPDATABLE) {
+      if (req.body[key] === undefined) continue;
+      if (key === "capacity") {
+        const c = Math.round(Number(req.body.capacity));
+        if (!Number.isFinite(c) || c < 1 || c > 30) {
+          return res.status(400).json({ message: "Capacity must be between 1 and 30" });
+        }
+        table.capacity = c;
+      } else if (key === "floor") {
+        table.floor = String(req.body.floor || "ground").slice(0, 20);
+      } else if (key === "label") {
+        table.label = req.body.label ? String(req.body.label).slice(0, 50) : null;
+      } else {
+        table[key] = !!req.body[key];
+      }
+    }
+    await table.save();
+    res.json({ message: "Table updated", table });
+  } catch (err) {
+    console.error("Error updating table:", err);
+    res.status(500).json({ message: "Error updating table" });
+  }
+});
+
+app.delete("/api/tables/:id", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const table = await DiningTable.findByPk(req.params.id);
+    if (!table) return res.status(404).json({ message: "Table not found" });
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (!locIds.includes(table.subfranchise_id)) {
+        return res.status(403).json({ message: "This table belongs to another location" });
+      }
+    }
+    // Refuse to delete a table that still has an open session — stickers
+    // already printed would go dead and seated guests would be orphaned.
+    const openOrders = await Order.count({
+      where: {
+        table_name: { [Op.in]: tableNameVariants(table.table_number) },
+        type: { [Op.like]: "DINE_IN" },
+        status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+      },
+    });
+    if (openOrders > 0) {
+      return res.status(409).json({ message: `Table ${table.table_number} has ${openOrders} open order(s). Close the session first.` });
+    }
+    // Soft-delete: keep the row so historic orders keep resolving to a table.
+    table.is_active = false;
+    await table.save();
+    res.json({ message: `Table ${table.table_number} removed` });
+  } catch (err) {
+    console.error("Error deleting table:", err);
+    res.status(500).json({ message: "Error deleting table" });
+  }
+});
+
 // Public table-side status for the QR guest flow. Anyone holding the table
 // QR can read whether THAT table is free; nothing about other tables, no
 // PII, no totals — just enough to greet or politely turn guests away.
@@ -2450,10 +2590,25 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
       },
       attributes: ["id", "guests", "client_session"],
     });
+    // Reserved flag comes from the table registry so staff can mark a table
+    // reserved and every guest scanning its QR sees it immediately.
+    let reserved = false;
+    let capacity = null;
+    try {
+      const reg = await DiningTable.findOne({
+        where: { table_number: String(tableId).toUpperCase().startsWith("T") ? String(tableId).toUpperCase() : `T${String(tableId)}` },
+        attributes: ["is_reserved", "capacity", "is_active"],
+      });
+      if (reg) {
+        reserved = !!reg.is_reserved;
+        capacity = reg.capacity;
+      }
+    } catch (_) { /* registry optional */ }
     const guests = open.reduce((s, o) => s + (Number(o.guests) || 0), 0);
     res.json({
-      status: open.length > 0 ? "occupied" : "free",
+      status: open.length > 0 ? "occupied" : reserved ? "reserved" : "free",
       guests,
+      capacity,
       mine: !!(callerSession && open.some((o) => o.client_session === callerSession)),
     });
   } catch (err) {

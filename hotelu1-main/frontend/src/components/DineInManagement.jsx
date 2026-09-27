@@ -79,6 +79,8 @@ const STATUS_CONFIG = {
   },
 };
 
+// Fallback only — the live floor plan comes from the backend registry
+// (GET /api/tables) so QR Management and this page always agree.
 const initialTables = [
   { id: 'T1', capacity: 4, floor: 'ground', status: 'available' },
   { id: 'T2', capacity: 2, floor: 'ground', status: 'available' },
@@ -201,6 +203,33 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
     return () => clearTimeout(timer);
   }, []);
 
+  // Load the floor plan from the backend registry (single source of truth
+  // shared with QR Management). Falls back to the hardcoded list offline.
+  const fetchTables = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/tables');
+      if (!res.ok) return;
+      const list = await res.json();
+      if (!Array.isArray(list) || list.length === 0) return;
+      setTables((prev) =>
+        list
+          .filter((t) => t.is_active !== false)
+          .map((t) => {
+            const known = prev.find((p) => p.id === t.table_number);
+            return {
+              id: t.table_number,
+              capacity: t.capacity || 4,
+              floor: t.floor || 'ground',
+              // keep any staff-driven status already computed locally
+              status: known ? known.status : 'available',
+            };
+          })
+      );
+    } catch (_) { /* offline: keep current list */ }
+  }, []);
+
+  useEffect(() => { fetchTables(); }, [fetchTables]);
+
   /* ---------------------------- handlers ---------------------------- */
   const handleTableClick = (table) => {
     setSelectedTable(table);
@@ -301,23 +330,33 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
     }
   };
 
-  const handleAddTable = () => {
-    const existingNumbers = tables
-      .map((t) => parseInt(String(t.id).replace(/^T/i, ''), 10))
-      .filter((n) => !Number.isNaN(n));
-    const nextNum = (existingNumbers.length ? Math.max(...existingNumbers) : 0) + 1;
-    setTables((prev) => [
-      ...prev,
-      {
-        id: `T${nextNum}`,
-        capacity: Math.max(2, Math.min(20, Number(newTable.capacity) || 4)),
-        floor: newTable.floor || 'ground',
-        status: 'available',
-      },
-    ]);
-    setShowAddTable(false);
-    setNewTable({ capacity: 4, floor: 'ground' });
-    setNotification({ message: `Table T${nextNum} added.`, type: 'success' });
+  const handleAddTable = async () => {
+    try {
+      // Persist to the registry so QR Management can immediately generate a
+      // sticker for this table and the occupancy guard knows it exists.
+      const existingNumbers = tables
+        .map((t) => parseInt(String(t.id).replace(/^T/i, ''), 10))
+        .filter((n) => !Number.isNaN(n));
+      const nextNum = (existingNumbers.length ? Math.max(...existingNumbers) : 0) + 1;
+      const res = await authFetch('/api/tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table_number: String(nextNum),
+          capacity: Math.max(1, Math.min(30, Number(newTable.capacity) || 4)),
+          floor: newTable.floor || 'ground',
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not add table');
+      await fetchTables();
+      setShowAddTable(false);
+      setNewTable({ capacity: 4, floor: 'ground' });
+      setNotification({ message: data.message || `Table T${nextNum} added.`, type: 'success' });
+    } catch (error) {
+      console.error('Error adding table:', error);
+      setNotification({ message: error.message || 'Error adding table.', type: 'error' });
+    }
     setTimeout(() => setNotification(null), 2500);
   };
 

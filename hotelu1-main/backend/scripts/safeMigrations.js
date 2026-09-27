@@ -182,6 +182,73 @@ async function runSafeMigrations(sequelize, models = {}) {
       }
     }
 
+    // ── Dining tables (single source of truth for floor plan + QR codes) ──
+    if (!tableNames.includes("dining_tables")) {
+      await qi.createTable("dining_tables", {
+        id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+        table_number: { type: DataTypes.STRING(20), allowNull: false },
+        label: { type: DataTypes.STRING(50), allowNull: true },
+        floor: { type: DataTypes.STRING(20), allowNull: false, defaultValue: "ground" },
+        capacity: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 4 },
+        is_reserved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        subfranchise_id: { type: DataTypes.INTEGER, allowNull: true },
+      });
+      console.log("Migration: created dining_tables table");
+      // Seed the default floor plan (matches the previous hardcoded UI list)
+      // so existing deployments see exactly the same tables after upgrade.
+      const DiningTable = models.DiningTable;
+      if (DiningTable) {
+        const ground = [4, 2, 6, 4, 8, 2];
+        const first = [4, 4, 6, 2, 4, 10];
+        const rows = [
+          ...ground.map((c, i) => ({ table_number: `T${i + 1}`, floor: "ground", capacity: c })),
+          ...first.map((c, i) => ({ table_number: `T${i + 7}`, floor: "first", capacity: c })),
+        ];
+        try {
+          await DiningTable.bulkCreate(rows);
+          console.log(`Migration: seeded ${rows.length} dining tables`);
+        } catch (e) {
+          console.warn("Migration: dining_tables seed skipped:", e.message);
+        }
+      }
+    }
+    if (tableNames.includes("dining_tables")) {
+      const dtDesc = await qi.describeTable("dining_tables");
+      const dtCols = {
+        label: { type: DataTypes.STRING(50), allowNull: true },
+        is_reserved: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        is_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+      };
+      for (const [col, def] of Object.entries(dtCols)) {
+        if (!dtDesc[col]) {
+          await qi.addColumn("dining_tables", col, def);
+          console.log(`Migration: added dining_tables.${col}`);
+        }
+      }
+      // Seed the default floor plan when the registry is empty. This can
+      // happen on first boot (model.sync created the empty table before
+      // migrations ran) or after a manual wipe.
+      const DiningTable = models.DiningTable;
+      if (DiningTable) {
+        try {
+          const count = await DiningTable.count();
+          if (count === 0) {
+            const ground = [4, 2, 6, 4, 8, 2];
+            const first = [4, 4, 6, 2, 4, 10];
+            const rows = [
+              ...ground.map((c, i) => ({ table_number: `T${i + 1}`, floor: "ground", capacity: c })),
+              ...first.map((c, i) => ({ table_number: `T${i + 7}`, floor: "first", capacity: c })),
+            ];
+            await DiningTable.bulkCreate(rows);
+            console.log(`Migration: seeded ${rows.length} dining tables`);
+          }
+        } catch (e) {
+          console.warn("Migration: dining_tables seed skipped:", e.message);
+        }
+      }
+    }
+
     if (!tableNames.includes("user_permissions")) {
       await qi.createTable("user_permissions", {
         id: {

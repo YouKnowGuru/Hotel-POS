@@ -62,6 +62,7 @@ const QRManagement = ({ locationSettings }) => {
   const [notification, setNotification] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [tableCodes, setTableCodes] = useState([]);
+  const [registeredTables, setRegisteredTables] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
   const [menu, setMenu] = useState([]);
 
@@ -162,28 +163,68 @@ const QRManagement = ({ locationSettings }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // Load persisted table codes (or seed)
-  useEffect(() => {
+  // Registry-driven table list — the same source Table Management uses, so
+  // a sticker can only be generated for a table that actually exists.
+  const fetchRegisteredTables = useCallback(async () => {
     try {
-      const saved = JSON.parse(localStorage.getItem('qrTableCodes') || '[]');
-      if (Array.isArray(saved) && saved.length > 0) {
-        setTableCodes(saved);
-        return;
-      }
-    } catch (_) {
-      /* ignore */
-    }
-    const seed = Array.from({ length: 3 }, (_, i) => ({
-      id: i + 1,
-      tableNumber: String(i + 1),
-      floor: 'ground',
-      style: i === 2 ? 'black' : 'orange',
-      embedLogo: true,
-      createdAt: Date.now() - (i + 1) * 86400000,
-    }));
-    setTableCodes(seed);
-    localStorage.setItem('qrTableCodes', JSON.stringify(seed));
+      const res = await authFetch('/api/tables');
+      if (!res.ok) return;
+      const list = await res.json();
+      if (Array.isArray(list)) setRegisteredTables(list.filter((t) => t.is_active !== false));
+    } catch (_) { /* keep current */ }
   }, []);
+
+  useEffect(() => { fetchRegisteredTables(); }, [fetchRegisteredTables]);
+
+  // Generate Sticker now registers the table in the backend (idempotent),
+  // then the local sticker list is kept for styling info.
+  const handleGenerateSticker = async () => {
+    try {
+      const res = await authFetch('/api/tables', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table_number: String(tableNumber),
+          floor,
+          capacity: 4,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok && res.status !== 409) {
+        throw new Error(data.message || 'Could not register table');
+      }
+      fetchRegisteredTables();
+      const exists = tableCodes.some(
+        (t) => String(t.tableNumber) === String(tableNumber) && t.floor === floor
+      );
+      if (!exists) {
+        const next = [
+          ...tableCodes,
+          {
+            id: Date.now(),
+            tableNumber: String(tableNumber),
+            floor,
+            style,
+            embedLogo,
+            createdAt: Date.now(),
+          },
+        ];
+        setTableCodes(next);
+        localStorage.setItem('qrTableCodes', JSON.stringify(next));
+      }
+      setNotification({
+        message:
+          res.status === 409
+            ? `Table #${tableNumber} already registered — sticker saved.`
+            : data.message || `Sticker generated for Table #${tableNumber}`,
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Error generating sticker:', error);
+      setNotification({ message: error.message || 'Error generating sticker.', type: 'error' });
+    }
+    setTimeout(() => setNotification(null), 2500);
+  };
 
   // QR script
   useEffect(() => {
@@ -247,38 +288,6 @@ const QRManagement = ({ locationSettings }) => {
       setNotification({ message: 'Failed to copy link', type: 'error' });
     }
     setTimeout(() => setNotification(null), 2000);
-  };
-
-  const handleGenerateSticker = () => {
-    const exists = tableCodes.some(
-      (t) => String(t.tableNumber) === String(tableNumber) && t.floor === floor
-    );
-    if (exists) {
-      setNotification({
-        message: `Sticker for Table #${tableNumber} on this floor already exists.`,
-        type: 'info',
-      });
-      setTimeout(() => setNotification(null), 2500);
-      return;
-    }
-    const next = [
-      ...tableCodes,
-      {
-        id: Date.now(),
-        tableNumber: String(tableNumber),
-        floor,
-        style,
-        embedLogo,
-        createdAt: Date.now(),
-      },
-    ];
-    setTableCodes(next);
-    localStorage.setItem('qrTableCodes', JSON.stringify(next));
-    setNotification({
-      message: `Sticker generated for Table #${tableNumber}`,
-      type: 'success',
-    });
-    setTimeout(() => setNotification(null), 2500);
   };
 
   const handleDownloadQR = (overrideTable) => {
@@ -478,13 +487,20 @@ const QRManagement = ({ locationSettings }) => {
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">
                 Table Selection
               </p>
-              <input
-                type="text"
-                value={tableNumber}
+              <select
+                value={registeredTables.some((t) => t.table_number === tableNumber) ? tableNumber : ''}
                 onChange={(e) => setTableNumber(e.target.value)}
-                placeholder="Table #"
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm bg-white"
-              />
+              >
+                <option value="" disabled>
+                  {registeredTables.length === 0 ? 'Loading tables…' : 'Select table'}
+                </option>
+                {registeredTables.map((t) => (
+                  <option key={t.id} value={t.table_number}>
+                    {t.table_number} · {t.capacity} seats · {t.floor === 'first' ? 'First Floor' : 'Ground Floor'}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">
