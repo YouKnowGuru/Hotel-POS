@@ -25,6 +25,10 @@ const Order = sequelize.define(
     // Captured by staff when the order is placed; drives the guest count
     // shown on Table Management cards.
     guests: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
+    // Anonymous QR-device session token. Lets the table-occupancy guard
+    // tell "the same phone adding more items" apart from "a stranger who
+    // scanned the same table QR". Never returned in public payloads.
+    client_session: { type: DataTypes.STRING(100), allowNull: true, defaultValue: null },
     token: { type: DataTypes.STRING, allowNull: true }, // For takeaway orders
     bill_requested: { type: DataTypes.BOOLEAN, defaultValue: false },
     delivered_at: { type: DataTypes.DATE, allowNull: true },

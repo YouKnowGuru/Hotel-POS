@@ -1749,6 +1749,15 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     } else {
       guests = null;
     }
+    // Anonymous QR device session (opaque token from the guest's phone).
+    // Never trusted for anything except "same device placed a previous open
+    // order at this table" checks; capped in size.
+    let clientSession = req.body.client_session;
+    if (typeof clientSession === "string" && clientSession.length > 0) {
+      clientSession = clientSession.slice(0, 100);
+    } else {
+      clientSession = null;
+    }
     for (const item of items) {
       const qty = Number(item.quantity || item.qty);
       if (!item.name || typeof item.name !== "string" || item.name.length > 120) {
@@ -1790,10 +1799,20 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
             type: { [Op.like]: "DINE_IN" },
             status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
           },
-          attributes: ["id", "table_name", "guests", "status", "type"],
+          attributes: ["id", "table_name", "guests", "status", "type", "client_session"],
         });
       }
-      if (openSessions.length > 0) {
+      // Same device that owns the open session → let them add more items
+      // (second round of drinks, dessert…). A different/absent session on an
+      // occupied table → politely refuse. Sessions are opaque tokens stored
+      // per device+table, so guests who pay & return later get a new session
+      // only after staff closed the old session.
+      const sameDevice =
+        clientSession &&
+        openSessions.some(
+          (o) => o.client_session && o.client_session === clientSession
+        );
+      if (openSessions.length > 0 && !sameDevice) {
         return res.status(409).json({
           message:
             "This table already has an active order. Please ask our staff for help — they can add items to the existing order.",
@@ -1814,6 +1833,7 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         items: normalizedItems,
         status: "pending",
         guests,
+        client_session: clientSession,
         payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
         payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
         payment_access_token: paymentAccessToken,
@@ -1844,6 +1864,7 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
             status: "pending",
             type: type || "DINE_IN",
             guests: guests || null,
+            client_session: clientSession,
             parentOrderId,
             subfranchise_id: linkedSubFranchiseId,
             timestamp: new Date(),
@@ -2401,17 +2422,40 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
     if (!tableId || String(tableId).length > 40) {
       return res.status(400).json({ message: "Invalid table id" });
     }
+    // The caller's device session (if any). Used ONLY to compute the boolean
+    // `mine` below — the raw token never echoes back.
+    const callerSession =
+      typeof req.query.session === "string" && req.query.session
+        ? req.query.session.slice(0, 100)
+        : null;
     if (!dbConnected) {
-      return res.json(tableSessionState(mockOrders, tableId));
+      const open = mockOrders.filter(
+        (o) =>
+          orderMatchesTableId(o, tableId) &&
+          String(o.type || "").toUpperCase() === "DINE_IN" &&
+          !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status)
+      );
+      const guests = open.reduce((s, o) => s + (Number(o.guests) || 0), 0);
+      return res.json({
+        status: open.length > 0 ? "occupied" : "free",
+        guests,
+        mine: !!(callerSession && open.some((o) => o.client_session === callerSession)),
+      });
     }
-    const orders = await Order.findAll({
+    const open = await Order.findAll({
       where: {
+        table_name: { [Op.in]: tableNameVariants(tableId) },
         type: { [Op.like]: "DINE_IN" },
         status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
       },
-      attributes: ["id", "table_name", "guests", "status", "type"],
+      attributes: ["id", "guests", "client_session"],
     });
-    res.json(tableSessionState(orders, tableId));
+    const guests = open.reduce((s, o) => s + (Number(o.guests) || 0), 0);
+    res.json({
+      status: open.length > 0 ? "occupied" : "free",
+      guests,
+      mine: !!(callerSession && open.some((o) => o.client_session === callerSession)),
+    });
   } catch (err) {
     console.error("Error fetching table status:", err);
     res.status(500).json({ message: "Error fetching table status" });

@@ -141,6 +141,8 @@ async function runSafeMigrations(sequelize, models = {}) {
         // Guest count captured by staff at order time (dine-in table
         // management shows it on the table card).
         guests: { type: DataTypes.INTEGER, allowNull: true },
+        // Anonymous QR device-session token (see Order.client_session).
+        client_session: { type: DataTypes.STRING(100), allowNull: true },
       };
       for (const [column, definition] of Object.entries(legacyOrderColumns)) {
         if (!ordersDesc[column]) {

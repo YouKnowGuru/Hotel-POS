@@ -73,10 +73,11 @@ function addLocalOrderId(tableId, orderId) {
 
 export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings }) {
   const { format: fmt } = useCurrency(locationSettings);
-  // Table-side status from the server: free | occupied. When the table is
-  // part of the way through a session (guests seated / waiting to pay /
-  // being cleaned), new QR orders are refused with a friendly banner.
+  // Table-side status from the server: free | occupied, plus `mine` — true
+  // when the open session belongs to THIS device, so the guest who just
+  // ordered never sees the "table occupied" warning on their own phone.
   const [tableStatus, setTableStatus] = useState('free');
+  const [tableMine, setTableMine] = useState(false);
   const [items, setItems] = useState([]);
   const [cats, setCats] = useState([]);
   const [cat, setCat] = useState('');
@@ -102,6 +103,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const [submittingProof, setSubmittingProof] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cash'); // 'cash' | 'qr'
   const [boomMsg, setBoomMsg] = useState({ title: '', sub: '' });
+  // Guest count for this QR order (default 2), asked in the cart drawer.
+  const [guestCount, setGuestCount] = useState(2);
   const searchRef = useRef(null);
   const cartBtnRef = useRef(null);
 
@@ -150,10 +153,16 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
     try {
       const t = tableId || '1';
       // Table-side occupancy check (best effort — if it fails we assume the
-      // table is free and let the server-side order guard decide).
-      fetch(`${getAPI_URL()}/api/tables/${encodeURIComponent(formatTableName(t))}/status`)
+      // table is free and let the server-side order guard decide). The
+      // device session marks "this phone owns the open order", so the
+      // current guest is never blocked or warned on their own screen.
+      const mySession = ensureSession(t);
+      fetch(`${getAPI_URL()}/api/tables/${encodeURIComponent(formatTableName(t))}/status?session=${encodeURIComponent(mySession)}`)
         .then(r => r.ok ? r.json() : null)
-        .then(st => setTableStatus(st?.status === 'occupied' ? 'occupied' : 'free'))
+        .then(st => {
+          setTableStatus(st?.status === 'occupied' ? 'occupied' : 'free');
+          setTableMine(!!st?.mine);
+        })
         .catch(() => {});
       const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}`);
       const d = await r.json();
@@ -228,7 +237,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const placeOrder = async () => {
     if (!cart.length || placing) return;
     // Double-check the table session client-side; the server enforces it too.
-    if (tableStatus === 'occupied') {
+    // Only blocks when the table is occupied by a DIFFERENT device — the
+    // guest who placed the open order can always add more items.
+    if (tableStatus === 'occupied' && !tableMine) {
       setPaymentError('This table is currently occupied. Please ask our staff for help.');
       return;
     }
@@ -249,7 +260,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
           table_name: formatTableName(tableId),
           items: cart.map(i => ({ menuItemId: i.id, name: i.name, quantity: i.qty, price: i.price })),
           subtotal: t.subtotal, discount: t.discountPercent, discountAmount: t.discountAmount,
-          taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total, type: 'DINE_IN',
+          taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total,          type: 'DINE_IN',
+          guests: Math.max(1, Math.min(50, Math.round(Number(guestCount) || 1))),
+          client_session: ensureSession(tableId),
           subfranchise_id: locId ? Number(locId) : undefined,
           payment_first: true,
           payment_method: isCash ? 'cash' : 'qr',
@@ -257,7 +270,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
       });
       const order = await res.json().catch(() => null);
       if (!res.ok || !order || !order.id) {
-        if (res.status === 409) setTableStatus('occupied');
+        if (res.status === 409) { setTableStatus('occupied'); setTableMine(false); }
         setPaymentError(order?.message || 'Could not place the order. Please try again.');
         setPlacing(false);
         return;
@@ -492,8 +505,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
         </div>
       </header>
 
-      {/* Table occupied banner — guests scanning a QR on a seated/cleaning table */}
-      {tableStatus === 'occupied' && (
+      {/* Table occupied banner — ONLY for devices that don't own the open
+          order. The guest who just ordered never sees this on their phone. */}
+      {tableStatus === 'occupied' && !tableMine && (
         <div className="sm-tracker" style={s.trackerSection}>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 16, padding: '12px 14px' }}>
             <span style={{ fontSize: 22 }}>🪑</span>
@@ -905,8 +919,41 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                   })}
                 </div>
 
-                <button className="sm-order-btn" style={{ ...s.orderBtn, ...((placing || tableStatus === 'occupied') ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing || tableStatus === 'occupied'}>
-                  {tableStatus === 'occupied'
+                {/* Guests at this table — shown before payment selection */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, padding: '10px 14px', marginBottom: 14 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#1e40af' }}>
+                    <Utensils size={14} /> Guests at table
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => setGuestCount(g => Math.max(1, Number(g) - 1))}
+                      style={{ width: 30, height: 30, borderRadius: 15, background: '#fff', border: '1px solid rgba(59,130,246,0.35)', color: '#2563eb', fontWeight: 700, fontSize: 16, lineHeight: 1, cursor: 'pointer' }}
+                      aria-label="Fewer guests"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={guestCount}
+                      onChange={(e) => setGuestCount(e.target.value === '' ? '' : Math.max(1, Math.min(50, Math.round(Number(e.target.value) || 1))))}
+                      style={{ width: 48, textAlign: 'center', fontWeight: 700, color: '#0f172a', background: '#fff', border: '1px solid rgba(59,130,246,0.35)', borderRadius: 8, padding: '4px 0' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setGuestCount(g => Math.min(50, Number(g) + 1))}
+                      style={{ width: 30, height: 30, borderRadius: 15, background: '#fff', border: '1px solid rgba(59,130,246,0.35)', color: '#2563eb', fontWeight: 700, fontSize: 16, lineHeight: 1, cursor: 'pointer' }}
+                      aria-label="More guests"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <button className="sm-order-btn" style={{ ...s.orderBtn, ...((placing || (tableStatus === 'occupied' && !tableMine)) ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing || (tableStatus === 'occupied' && !tableMine)}>
+                  {tableStatus === 'occupied' && !tableMine
                     ? <><Utensils size={17} /> Table Occupied — Ask Staff</>
                     : placing
                       ? <><div style={s.spinner} /> Placing Order...</>
