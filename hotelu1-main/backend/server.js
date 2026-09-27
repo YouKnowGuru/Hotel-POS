@@ -28,6 +28,14 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const app = express();
+// Behind a reverse proxy (Render, Vercel fronts, nginx) the TCP peer is the
+// proxy, not the client. Without this, express-rate-limit either throws
+// ERR_ERL_UNEXPECTED_X_FORWARDED_FOR or buckets ALL clients into one shared
+// limiter keyed on the proxy IP — i.e. one attacker locks out every staff
+// login and every customer order. Render fronts the app with exactly one
+// proxy hop, so "1" is the right value there; override with TRUST_PROXY if
+// the topology differs.
+app.set("trust proxy", process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 1);
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -48,9 +56,6 @@ const isOriginAllowed = (origin) => {
   if (!origin) return true;
   if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) return true;
   if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)) {
-    return true;
-  }
-  if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
     return true;
   }
   return false;
@@ -107,6 +112,11 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // while allowing a normal phone screenshot (the client also validates 3 MB).
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
+// Enable ETag responses. Express computes a strong ETag for JSON bodies, so
+// the many short-interval GET polls from admin/waiter/customer panels get a
+// tiny 304 instead of re-downloading the full orders list every few seconds
+// when nothing changed. Writes (POST/PUT) are unaffected.
+app.set("etag", "strong");
 
 // Rate limiting
 const loginLimiter = rateLimit({
@@ -117,13 +127,10 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 60,
-  message: { success: false, message: "Too many requests, please try again later" },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// NOTE: an "apiLimiter" (60 req/min global) used to be defined here but was
+// never mounted — dead code. If a global cap is wanted, mount it explicitly
+// with app.use("/api/", apiLimiter) and re-check the KDS/customer polling
+// budgets first.
 
 const strictLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
@@ -574,33 +581,47 @@ async function startServer() {
 
     dbConnected = true;
     
-    // Seed demo users only if they don't already exist (don't overwrite passwords)
-    const demoUsersList = [
-      { username: "admin", password: "admin", role: "admin", name: "Administrator" },
-      { username: "manager", password: "pass2", role: "manager", name: "Manager User" },
-      { username: "waiter", password: "pass", role: "waiter", name: "Waiter User" },
-    ];
-    
-    for (const demoUser of demoUsersList) {
-      try {
-        const existing = await User.findOne({ where: { username: demoUser.username } });
-        if (!existing) {
-          const hashedPassword = await bcrypt.hash(demoUser.password, 10);
-          await User.create({
-            username: demoUser.username,
-            password: hashedPassword,
-            role: demoUser.role,
-            name: demoUser.name,
-          });
-          console.log(`Created demo user: ${demoUser.username}`);
+    // SECURITY: demo users (admin/admin, manager/pass2, waiter/pass) are only
+    // seeded in non-production. Seeding them in production — and printing
+    // them on the public login page — was a full system takeover.
+    if (process.env.NODE_ENV !== "production" || process.env.SEED_DEMO_USERS === "true") {
+      const demoUsersList = [
+        { username: "admin", password: "admin", role: "admin", name: "Administrator" },
+        { username: "manager", password: "pass2", role: "manager", name: "Manager User" },
+        { username: "waiter", password: "pass", role: "waiter", name: "Waiter User" },
+      ];
+      
+      for (const demoUser of demoUsersList) {
+        try {
+          const existing = await User.findOne({ where: { username: demoUser.username } });
+          if (!existing) {
+            const hashedPassword = await bcrypt.hash(demoUser.password, 10);
+            await User.create({
+              username: demoUser.username,
+              password: hashedPassword,
+              role: demoUser.role,
+              name: demoUser.name,
+            });
+            console.log(`Created demo user: ${demoUser.username}`);
+          }
+        } catch (err) {
+          console.error(`Error with demo user ${demoUser.username}:`, err.message);
         }
-      } catch (err) {
-        console.error(`Error with demo user ${demoUser.username}:`, err.message);
       }
     }
   } catch (error) {
     console.error("Database connection failed:", error.message);
-    console.warn("Server starting without database connection - using fallback authentication");
+    if (process.env.NODE_ENV === "production") {
+      // SECURITY + reliability: in production a DB outage must not silently
+      // downgrade the whole platform to in-memory demo data that vanishes on
+      // restart and accepts admin/admin logins. Fail hard so the platform
+      // health check goes red and Render restarts us once the DB is back.
+      console.error("FATAL: database unreachable in production. Exiting. (Set FAIL_OPEN_WITHOUT_DB=true to keep serving degraded demo mode.)");
+      if (process.env.FAIL_OPEN_WITHOUT_DB !== "true") {
+        process.exit(1);
+      }
+    }
+    console.warn("Server starting without database connection (degraded demo mode)");
     dbConnected = false;
   }
   
@@ -680,6 +701,109 @@ async function resolveOrderSubFranchiseId(req, bodySubfranchiseId) {
 }
 
 const BRANCH_STAFF_ROLES = ["manager", "waiter", "cashier"];
+
+// Base64 payment screenshots are ~600 KB each and are embedded in order rows.
+// Sending them in the /api/orders list (polled by EVERY panel every few
+// seconds) and in socket payloads made responses megabytes heavy and was the
+// main source of API slowness. They are stripped from all list/socket
+// responses; admins/reviewers fetch the image on demand via
+// GET /api/orders/:id/proof-image. `has_payment_proof` lets the UI know an
+// image exists without shipping the bytes.
+function stripProofImages(orders) {
+  const list = Array.isArray(orders) ? orders : [orders];
+  return list.map((o) => {
+    if (!o || typeof o !== "object") return o;
+    // Convert Sequelize instances to plain objects. Setting has_payment_proof
+    // on a model instance puts it outside dataValues, so JSON.stringify drops
+    // the flag and staff panels never learn a screenshot exists. Plain
+    // objects also guarantee the two secrets below are really gone from the
+    // response instead of being overridden only on the wrapper.
+    const p = typeof o.get === "function" ? o.get({ plain: true }) : o;
+    p.has_payment_proof = !!(p.payment_proof_image || o.payment_proof_image);
+    // SECURITY: never serialize the proof bytes or the payment access
+    // token. The access token authorizes attaching a payment screenshot
+    // to an order; leaking it inside GET /api/orders (which is reachable
+    // anonymously) would let anyone hijack the payment step.
+    p.payment_proof_image = null;
+    p.payment_access_token = null;
+    return p;
+  });
+}
+
+// Fields an unauthenticated QR customer is allowed to see. Anything with
+// customer PII or payment credentials must stay out of anonymous responses.
+const PUBLIC_ORDER_FIELDS = [
+  "id",
+  "table_name",
+  "status",
+  "type",
+  "token",
+  "total",
+  "subtotal",
+  "taxPercent",
+  "taxAmount",
+  "discountPercent",
+  "discountAmount",
+  "timestamp",
+  "bill_requested",
+  "bill_generated",
+  "payment_method",
+  "payment_status",
+  "payment_rejection_reason",
+  "ready_at",
+  "delivered_at",
+  "bill",
+  "items",
+  "subfranchise_id",
+];
+
+/**
+ * Broadcast a staff event to authenticated sockets only. Anonymous QR
+ * customers must not observe other tables' order activity; sockets without
+ * a valid token get a payload-free signal instead.
+ */
+function emitStaffEvent(event, payload) {
+  for (const socket of io.of("/").sockets.values()) {
+    if (socket.user) {
+      socket.emit(event, payload);
+    } else {
+      socket.emit(event);
+    }
+  }
+}
+
+/** Reduce an order (plain object) to the public projection, preserving items. */
+function toPublicOrder(o) {
+  if (!o || typeof o !== "object") return o;
+  const { items, bill } = o;
+  const out = {};
+  for (const k of PUBLIC_ORDER_FIELDS) {
+    if (o[k] !== undefined) out[k] = o[k];
+  }
+  out.has_payment_proof = !!o.has_payment_proof;
+  if (Array.isArray(items)) {
+    out.items = items.map((it) => ({
+      id: it.id,
+      name: it.name,
+      quantity: it.quantity ?? it.qty,
+      qty: it.qty ?? it.quantity,
+      price: it.price,
+    }));
+  }
+  if (bill && typeof bill === "object") {
+    out.bill = {
+      id: bill.id,
+      total: bill.total,
+      subtotal: bill.subtotal,
+      tax: bill.tax,
+      bill_status: bill.bill_status,
+      payment_method: bill.payment_method,
+      generated_at: bill.generated_at,
+      paid_at: bill.paid_at,
+    };
+  }
+  return out;
+}
 
 function isMainBranchStaff(role) {
   return role && ["admin", "manager", "waiter", "cashier"].includes(role);
@@ -887,6 +1011,10 @@ async function initMockUsers() {
 const mockUserPermissions = {};
 
 // Middleware to verify JWT token (supports Authorization header and httpOnly cookie)
+// Tokens carry a tokenVersion. When a user's authorization changes (role,
+// branch, password, deletion) we bump the stored version so older tokens are
+// rejected immediately — previously a deleted or demoted account kept full
+// access for up to 24h.
 const verifyToken = (req, res, next) => {
   let token = req.headers.authorization?.split(" ")[1];
   if (!token && req.cookies?.token) {
@@ -898,6 +1026,21 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
+    // Revocation check — best effort. Only enforced for DB-backed accounts;
+    // demo/mock accounts (dbConnected=false, tokenVersion 0) always pass.
+    if (dbConnected && decoded.id != null) {
+      User.findByPk(decoded.id, { attributes: ["id", "tokenVersion"] })
+        .then((row) => {
+          if (!row || Number(row.tokenVersion || 0) !== Number(decoded.tokenVersion || 0)) {
+            return res
+              .status(401)
+              .json({ success: false, message: "Session revoked — please sign in again" });
+          }
+          next();
+        })
+        .catch(() => next()); // DB hiccup: don't lock out the whole app
+      return;
+    }
     next();
   } catch (err) {
     return res.status(401).json({ success: false, message: "Invalid or expired token" });
@@ -924,13 +1067,60 @@ const optionalToken = (req, res, next) => {
 // Login Endpoint
 app.post("/api/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
+  if (typeof username !== "string" || typeof password !== "string" || !username || !password) {
+    return res.status(400).json({ success: false, message: "Username and password are required" });
+  }
   console.log("Login attempt:", { username, password: "***" });
   
   try {
-    // Try database authentication first if connected
-    if (dbConnected) {
-      try {
-        const user = await User.findOne({ where: { username } });
+    // SECURITY: when the database is unreachable we do NOT fall back to the
+    // in-memory demo users. A production outage must not turn into a
+    // working admin/admin login; staff see an explicit "service unavailable"
+    // message instead of a misleading "wrong password".
+    if (!dbConnected) {
+      if (process.env.NODE_ENV === "production") {
+        return res.status(503).json({
+          success: false,
+          message: "Service temporarily unavailable — database connection failed. Please try again shortly.",
+        });
+      }
+      const mockUser = mockUsers.find((u) => u.username === username);
+      const mockPasswordMatch = mockUser ? await bcrypt.compare(password, mockUser.password) : false;
+      if (mockUser && mockPasswordMatch) {
+        const branch = await loadBranchMeta(mockUser.subfranchise_id || null);
+        const userData = {
+          id: mockUser.id,
+          username: mockUser.username,
+          role: mockUser.role,
+          name: mockUser.name,
+          subfranchise_id: mockUser.subfranchise_id || null,
+          branch,
+        };
+        const token = jwt.sign(
+          {
+            id: mockUser.id,
+            username: mockUser.username,
+            role: mockUser.role,
+            name: mockUser.name,
+            subfranchise_id: mockUser.subfranchise_id || null,
+            tokenVersion: 0,
+          },
+          JWT_SECRET,
+          { expiresIn: "24h" }
+        );
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "strict",
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+        console.log("Login successful with mock user:", username);
+        return res.json({ success: true, user: userData, token });
+      }
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
+    }
+    try {
+      const user = await User.findOne({ where: { username } });
         if (user) {
           // Always use bcrypt compare
           let passwordMatch = false;
@@ -959,6 +1149,7 @@ app.post("/api/login", loginLimiter, async (req, res) => {
                 role: user.role,
                 name: user.name,
                 subfranchise_id: user.subfranchise_id || null,
+                tokenVersion: user.tokenVersion || 0,
               },
               JWT_SECRET,
               { expiresIn: "24h" }
@@ -991,59 +1182,13 @@ app.post("/api/login", loginLimiter, async (req, res) => {
             message: "Invalid credentials" 
           });
         }
-      } catch (dbError) {
-        console.log("Database authentication error:", dbError.message);
-        return res.status(401).json({ 
-          success: false,
-          message: "Invalid credentials" 
-        });
-      }
-    }
-    
-    // Only use mockUsers fallback when database is NOT connected
-    const mockUser = mockUsers.find(u => u.username === username);
-    const mockPasswordMatch = mockUser ? await bcrypt.compare(password, mockUser.password) : false;
-    if (mockUser && mockPasswordMatch) {
-      const branch = await loadBranchMeta(mockUser.subfranchise_id || null);
-      const userData = {
-        id: mockUser.id,
-        username: mockUser.username,
-        role: mockUser.role,
-        name: mockUser.name,
-        subfranchise_id: mockUser.subfranchise_id || null,
-        branch,
-      };
-      const token = jwt.sign(
-        {
-          id: mockUser.id,
-          username: mockUser.username,
-          role: mockUser.role,
-          name: mockUser.name,
-          subfranchise_id: mockUser.subfranchise_id || null,
-        },
-        JWT_SECRET,
-        { expiresIn: "24h" }
-      );
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-      console.log("Login successful with mock user:", username);
-      return res.json({
-        success: true,
-        user: userData,
-        token,
+    } catch (dbError) {
+      console.log("Database authentication error:", dbError.message);
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid credentials" 
       });
     }
-    
-    console.log("Invalid credentials for user:", username);
-    return res.status(401).json({ 
-      success: false,
-      message: "Invalid credentials" 
-    });
-    
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ 
@@ -1100,11 +1245,13 @@ app.get("/api/menu", optionalToken, async (req, res) => {
     if (!dbConnected) {
       return res.json(mockMenuItems);
     }
-    const menuItems = await MenuItem.findAll();
+    // Soft-deleted items stay in the DB for historical order integrity but
+    // must never appear in the catalogue.
+    const menuItems = await MenuItem.findAll({ where: { isDeleted: false } });
     res.json(menuItems);
   } catch (error) {
-    console.error("Database error in /api/menu, falling back to mockMenuItems:", error.message);
-    res.json(mockMenuItems);
+    console.error("Database error in /api/menu:", error.message);
+    res.status(500).json({ message: "Could not load menu" });
   }
 });
 
@@ -1133,18 +1280,8 @@ app.post("/api/menu", verifyToken, async (req, res) => {
     const newItem = await MenuItem.create({ name, price, category, description, image, isAvailable });
     res.status(201).json(newItem);
   } catch (err) {
-    console.error("Error creating menu item in DB, saving to mockMenuItems:", err.message);
-    const newItem = {
-      id: getNextMockId(mockMenuItems),
-      name: req.body.name,
-      price: Number(req.body.price),
-      category: req.body.category,
-      description: req.body.description || "",
-      image: req.body.image || null,
-      isAvailable: req.body.isAvailable !== undefined ? req.body.isAvailable : true,
-    };
-    mockMenuItems.push(newItem);
-    res.status(201).json(newItem);
+    console.error("Error creating menu item:", err.message);
+    res.status(500).json({ message: "Error creating menu item", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
   }
 });
 
@@ -1181,14 +1318,8 @@ app.put("/api/menu/:id", verifyToken, async (req, res) => {
       res.status(404).json({ message: "Menu item not found" });
     }
   } catch (err) {
-    console.error("Error updating menu item in DB, fallback to mockMenuItems:", err.message);
-    const id = parseInt(req.params.id);
-    const item = mockMenuItems.find((m) => m.id === id);
-    if (item) {
-      Object.assign(item, req.body);
-      return res.json({ message: "Menu item updated", item });
-    }
-    res.status(500).json({ message: "Error updating menu item", error: err.message });
+    console.error("Error updating menu item:", err.message);
+    res.status(500).json({ message: "Error updating menu item", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
   }
 });
 
@@ -1208,13 +1339,16 @@ app.delete("/api/menu/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Menu item not found" });
     }
     const { id } = req.params;
-    
-    // First, delete any order items that reference this menu item
-    await OrderItem.destroy({ where: { menuItemId: id } });
-    
-    // Then delete the menu item
-    const deleted = await MenuItem.destroy({ where: { id } });
-    if (deleted) {
+    // DATA INTEGRITY: soft delete. Destroying the menu item used to also
+    // destroy every historical order line item that referenced it, silently
+    // shrinking past bills and revenue reports. Old orders keep their
+    // items; the item simply disappears from the catalogue.
+    const [updated] = await MenuItem.update(
+      { isDeleted: true, isAvailable: false },
+      { where: { id, isDeleted: false } }
+    );
+    if (updated) {
+      io.emit("menu_updated", { id: Number(id) });
       res.json({ message: "Menu item deleted successfully" });
     } else {
       res.status(404).json({ message: "Menu item not found" });
@@ -1281,6 +1415,22 @@ function orderMatchesTableId(order, tableId) {
   return names.some(
     (n) => String(order.table_name).toLowerCase() === String(n).toLowerCase()
   );
+}
+
+// Which table-side state does an order imply for the QR guest flow? Only
+// OPEN sessions (guests still seated / waiting to pay) block the table.
+// awaiting_payment is still an open session (guests haven't paid yet);
+// rejected/verification_pending payments still belong to seated guests.
+function tableSessionState(orders, tableId) {
+  const open = (orders || []).filter(
+    (o) =>
+      orderMatchesTableId(o, tableId) &&
+      String(o.type || "").toUpperCase() === "DINE_IN" &&
+      !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status)
+  );
+  if (open.length === 0) return { status: "free", guests: 0 };
+  const guests = open.reduce((s, o) => s + (Number(o.guests) || 0), 0);
+  return { status: "occupied", guests, openOrders: open.length };
 }
 
 function scopeOrdersForUser(orders, user, query = {}) {
@@ -1358,12 +1508,20 @@ app.get("/api/orders", optionalToken, async (req, res) => {
         });
       }
       
-      res.json(filteredOrders);
+      res.json(stripProofImages(filteredOrders));
       return;
     }
     
     let whereClause = {};
-    if (status) whereClause.status = status;
+    if (status) {
+      // Comma-separated lists are used by live panels to fetch exactly the
+      // statuses they render (e.g. status=pending,preparing,ready).
+      const statuses = String(status)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      whereClause.status = statuses.length > 1 ? { [Op.in]: statuses } : statuses[0];
+    }
     if (type) whereClause.type = type;
     if (table_name) whereClause.table_name = table_name;
     if (tableId) {
@@ -1388,7 +1546,11 @@ app.get("/api/orders", optionalToken, async (req, res) => {
         [Op.lte]: new Date(endDate + 'T23:59:59'),
       };
     }
-    
+    // Hard cap on any single fetch. Admin/history screens pass explicit
+    // date windows; live panels poll small windows. Without a cap a
+    // forgotten "all dates" export eventually pulls the entire table
+    // (with items and bills) on every poll.
+    const limit = Math.min(parseInt(req.query.limit, 10) || 500, 1000);
     const orders = await Order.findAll({
       where: whereClause,
       include: [
@@ -1396,8 +1558,15 @@ app.get("/api/orders", optionalToken, async (req, res) => {
         { model: Bill, as: "bill", required: false },
       ],
       order: [["timestamp", "DESC"]],
+      limit,
     });
-    res.json(orders);
+    const strippedOrders = stripProofImages(orders);
+    if (!req.user) {
+      // SECURITY: anonymous (QR customer) callers get a minimal projection.
+      // No customer PII, no payment credentials, no other tables' extras.
+      return res.json(strippedOrders.map(toPublicOrder));
+    }
+    res.json(strippedOrders);
   } catch (err) {
     console.error("Error in /api/orders:", err);
     res.status(500).json({
@@ -1417,19 +1586,36 @@ const generateTakeawayToken = () => {
 async function getTaxDiscountSettings() {
   const defaults = { taxPercent: 5, discountPercent: 0 };
   if (!dbConnected) return defaults;
+  // Serve tax/discount settings from an in-process cache. These rows are
+  // read on EVERY order create/update and bill generate, so hitting the DB
+  // each time added avoidable latency to exactly the endpoints customers
+  // and staff feel most. Cache is invalidated when admin saves settings.
+  if (taxDiscountCache.value && Date.now() - taxDiscountCache.at < 60_000) {
+    return taxDiscountCache.value;
+  }
   try {
     const allSettings = await Settings.findAll();
     const map = {};
     allSettings.forEach((s) => {
       map[s.key] = JSON.parse(s.value);
     });
-    return {
+    const value = {
       taxPercent: Number(map.taxPercent) || defaults.taxPercent,
       discountPercent: Number(map.discountPercent) || defaults.discountPercent,
     };
+    taxDiscountCache.value = value;
+    taxDiscountCache.at = Date.now();
+    return value;
   } catch (_) {
     return defaults;
   }
+}
+
+// In-process cache for the tax/discount settings row.
+const taxDiscountCache = { value: null, at: 0 };
+function invalidateTaxDiscountCache() {
+  taxDiscountCache.value = null;
+  taxDiscountCache.at = 0;
 }
 
 function getItemsSubtotal(items = []) {
@@ -1438,6 +1624,39 @@ function getItemsSubtotal(items = []) {
       sum + (Number(item.price) || 0) * (item.quantity || item.qty || 1),
     0
   );
+}
+
+/**
+ * Recompute the subtotal from OUR menu-item prices (DB), not the client's.
+ * Every line item must resolve to a known menu item; if any item is unmatched
+ * (or there are no items) the whole order is rejected by the caller — we never
+ * fall back to client-declared prices, or an anonymous guest could invent any
+ * total they like.
+ * Returns { subtotal, lines } or null when verification fails.
+ */
+async function getVerifiedSubtotal(items = []) {
+  if (!dbConnected || !Array.isArray(items) || items.length === 0) return null;
+  const ids = [];
+  const qtyById = new Map();
+  for (const item of items) {
+    const menuItemId = Number(item.productId || item.menuItemId);
+    const qty = Number(item.quantity || item.qty);
+    if (!menuItemId || !Number.isFinite(menuItemId) || !Number.isFinite(qty) || qty <= 0) return null;
+    ids.push(menuItemId);
+    qtyById.set(menuItemId, (qtyById.get(menuItemId) || 0) + qty);
+  }
+  if (ids.length !== items.length) return null; // duplicate ids across lines
+  // One query for all items (previously N+1 findByPk per item).
+  const menuItems = await MenuItem.findAll({ where: { id: { [Op.in]: [...new Set(ids)] } } });
+  if (menuItems.length !== new Set(ids).size) return null; // an id doesn't exist
+  const priceById = new Map(menuItems.map((m) => [Number(m.id), Number(m.price)]));
+  let sum = 0;
+  for (const [menuItemId, qty] of qtyById) {
+    const price = priceById.get(menuItemId);
+    if (!Number.isFinite(price)) return null;
+    sum += price * qty;
+  }
+  return { subtotal: sum, priceById };
 }
 
 function calculateOrderTotals(subtotal, settings) {
@@ -1503,18 +1722,98 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     const paymentFirst = req.body.payment_first === true;
     const isCashPayment = req.body.payment_method === 'cash';
     const paymentAccessToken = paymentFirst && !isCashPayment ? crypto.randomBytes(24).toString('hex') : null;
-    const subtotal =
-      req.body.subtotal != null
-        ? Number(req.body.subtotal)
-        : getItemsSubtotal(items || []);
-    const totals = calculateOrderTotals(subtotal, settings);
+
+    // SECURITY: never trust client-sent money values. Every line item must
+    // resolve to a real menu item; prices and the subtotal are recomputed
+    // server-side. Unmatched items, empty carts or non-positive quantities
+    // are rejected outright (previously they silently fell back to the
+    // client's declared subtotal, letting a guest order anything at any
+    // price).
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "Order must contain at least one item" });
+    }
+    if (items.length > 200) {
+      return res.status(400).json({ message: "Too many items in a single order" });
+    }
+    if (!table_name || typeof table_name !== "string" || table_name.trim().length === 0 || table_name.length > 80) {
+      return res.status(400).json({ message: "A valid table or customer identifier is required" });
+    }
+    // Dine-in guest count, captured by staff when seating the table. Clamped
+    // to a sane range; QR/takeaway callers simply omit it.
+    let guests = req.body.guests;
+    if (guests !== undefined && guests !== null && guests !== "") {
+      guests = Math.round(Number(guests));
+      if (!Number.isFinite(guests) || guests < 1 || guests > 50) {
+        return res.status(400).json({ message: "Guest count must be between 1 and 50" });
+      }
+    } else {
+      guests = null;
+    }
+    for (const item of items) {
+      const qty = Number(item.quantity || item.qty);
+      if (!item.name || typeof item.name !== "string" || item.name.length > 120) {
+        return res.status(400).json({ message: "Each item needs a valid name" });
+      }
+      if (!Number.isFinite(qty) || qty <= 0 || qty > 1000) {
+        return res.status(400).json({ message: "Item quantity must be between 1 and 1000" });
+      }
+      if (item.productId == null && item.menuItemId == null) {
+        return res.status(400).json({ message: "Unrecognized menu item — please refresh the menu and try again" });
+      }
+    }
+    const verified = await getVerifiedSubtotal(items);
+    if (!verified) {
+      return res.status(400).json({ message: "One or more items are unavailable or unrecognized. Please refresh the menu and try again." });
+    }
+    const totals = calculateOrderTotals(verified.subtotal, settings);
+
+    // QR table guard: a table with an open dine-in session (guests seated,
+    // food served, or bill unpaid) must not accept new orders from another
+    // guest scanning the same table QR. Staff place additional orders for
+    // the seated guests through the staff panels, which are authenticated
+    // and exempt from this guard.
+    const isQrTableOrder =
+      String(type || "").toUpperCase() === "DINE_IN" && !req.user;
+    if (isQrTableOrder) {
+      let openSessions = [];
+      if (!dbConnected) {
+        openSessions = mockOrders.filter(
+          (o) =>
+            orderMatchesTableId(o, table_name) &&
+            String(o.type || "").toUpperCase() === "DINE_IN" &&
+            !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status)
+        );
+      } else {
+        openSessions = await Order.findAll({
+          where: {
+            table_name: { [Op.in]: tableNameVariants(table_name) },
+            type: { [Op.like]: "DINE_IN" },
+            status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+          },
+          attributes: ["id", "table_name", "guests", "status", "type"],
+        });
+      }
+      if (openSessions.length > 0) {
+        return res.status(409).json({
+          message:
+            "This table already has an active order. Please ask our staff for help — they can add items to the existing order.",
+        });
+      }
+    }
 
     if (!dbConnected) {
+      const normalizedItems = items.map((item) => {
+        const menuItemId = Number(item.productId || item.menuItemId);
+        const qty = Number(item.quantity || item.qty) || 1;
+        const price = verified.priceById.get(menuItemId) ?? 0;
+        return { id: menuItemId, menuItemId, name: item.name, quantity: qty, qty, price };
+      });
       const newOrder = {
         id: getNextMockId(mockOrders),
         table_name,
-        items,
+        items: normalizedItems,
         status: "pending",
+        guests,
         payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
         payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
         payment_access_token: paymentAccessToken,
@@ -1533,41 +1832,51 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       return res.json(responseOrder);
     }
 
-    const newOrder = await Order.create({
-      table_name,
-      total: totals.total,
-      status: "pending",
-      type: type || "DINE_IN",
-      parentOrderId,
-      subfranchise_id: linkedSubFranchiseId,
-      timestamp: new Date(),
-      token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
-      payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
-      payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
-      payment_access_token: paymentAccessToken,
-    });
-    if (items && Array.isArray(items)) {
-      for (const item of items) {
-        let verifiedPrice = Number(item.price) || 0;
-        const menuItemId = item.productId || item.menuItemId;
-        if (menuItemId && dbConnected) {
-          const menuItem = await MenuItem.findByPk(menuItemId);
-          if (menuItem) {
-            verifiedPrice = Number(menuItem.price);
-          }
-        }
-        await OrderItem.create({
-          orderId: newOrder.id,
-          menuItemId: menuItemId || null,
-          name: item.name,
-          quantity: item.quantity || item.qty || 1,
-          price: verifiedPrice,
+    // Header + line items are created atomically. A partial order (header
+    // without items, or a truncated item list) corrupts bills and reports.
+    let orderWithItems;
+    try {
+      orderWithItems = await sequelize.transaction(async (t) => {
+        const newOrder = await Order.create(
+          {
+            table_name,
+            total: totals.total,
+            status: "pending",
+            type: type || "DINE_IN",
+            guests: guests || null,
+            parentOrderId,
+            subfranchise_id: linkedSubFranchiseId,
+            timestamp: new Date(),
+            token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
+            payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
+            payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
+            payment_access_token: paymentAccessToken,
+          },
+          { transaction: t }
+        );
+        await OrderItem.bulkCreate(
+          items.map((item) => {
+            const menuItemId = Number(item.productId || item.menuItemId);
+            const qty = Number(item.quantity || item.qty) || 1;
+            return {
+              orderId: newOrder.id,
+              menuItemId,
+              name: item.name,
+              quantity: qty,
+              price: verified.priceById.get(menuItemId) ?? 0,
+            };
+          }),
+          { transaction: t }
+        );
+        return Order.findByPk(newOrder.id, {
+          include: [{ model: OrderItem, as: "items" }],
+          transaction: t,
         });
-      }
+      });
+    } catch (txErr) {
+      console.error("Order transaction failed:", txErr.message);
+      return res.status(500).json({ message: "Could not save the order. Please try again." });
     }
-    const orderWithItems = await Order.findByPk(newOrder.id, {
-      include: [{ model: OrderItem, as: "items" }],
-    });
     if (!paymentFirst || isCashPayment) io.emit("order_created");
     const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
     responseOrder.paymentAccessToken = paymentAccessToken;
@@ -1582,12 +1891,42 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
   }
 });
 
+// On-demand payment proof image. Staff request the screenshot only when they
+// actually review a payment, instead of the server pushing hundreds of KB of
+// base64 inside every orders-list poll.
+app.get("/api/orders/:id/proof-image", verifyToken, async (req, res) => {
+  try {
+    const allowedRoles = ["admin", "manager", "franchise", "subfranchise"];
+    if (!allowedRoles.includes(String(req.user?.role || "").toLowerCase())) {
+      return res.status(403).json({ message: "Only payment reviewers can view proof images" });
+    }
+    let image = null;
+    if (!dbConnected) {
+      const order = mockOrders.find((o) => o.id === Number(req.params.id));
+      image = order ? order.payment_proof_image : null;
+    } else {
+      const order = await Order.findByPk(req.params.id, {
+        attributes: ["id", "payment_proof_image", "subfranchise_id"],
+      });
+      if (!order) return res.status(404).json({ message: "Order not found" });
+      if (!(await assertOrderInScope(req, order, res))) return;
+      image = order.payment_proof_image;
+    }
+    if (!image) return res.status(404).json({ message: "No payment proof on this order" });
+    res.json({ orderId: Number(req.params.id), proofImage: image });
+  } catch (err) {
+    res.status(500).json({ message: "Could not load payment proof" });
+  }
+});
+
 // Public endpoint used by the QR customer page. The one-time access token is
 // returned only when the order is created, so knowing an order number alone is
 // not enough to attach a payment screenshot to someone else's order.
 // When a QR-menu customer refreshes their browser, this endpoint restores the
 // payment session only for the same table and only while payment is still due.
-app.get("/api/orders/:id/payment-session", async (req, res) => {
+// Rate-limited (strictLimiter): order IDs are sequential and table ids are
+// guessable, so an unthrottled token oracle is a harvesting primitive.
+app.get("/api/orders/:id/payment-session", strictLimiter, async (req, res) => {
   try {
     const tableId = req.query.tableId;
     if (!tableId) return res.status(400).json({ message: "Table is required" });
@@ -1671,24 +2010,26 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
       const order = mockOrders.find((o) => o.id === Number(req.params.id));
       if (!order || !(await assertOrderInScope(req, order, res))) return;
       const problem = update(order); if (problem) return res.status(409).json({ message: problem });
+      const strippedOrder = stripProofImages(order)[0];
       io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: order.payment_status });
       if (decision === "approve") {
-        io.emit("new_order", order);
+        emitStaffEvent("new_order", strippedOrder);
         io.emit("order_created");
       }
-      return res.json({ message: `Payment ${decision}d`, order });
+      return res.json({ message: `Payment ${decision}d`, order: strippedOrder });
     }
     const order = await Order.findByPk(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
     const problem = update(order); if (problem) return res.status(409).json({ message: problem });
     await order.save();
+    const strippedOrder = stripProofImages(order)[0];
     io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: order.payment_status });
     if (decision === "approve") {
-      io.emit("new_order", order);
+      emitStaffEvent("new_order", strippedOrder);
       io.emit("order_created");
     }
-    res.json({ message: `Payment ${decision}d`, order });
+    res.json({ message: `Payment ${decision}d`, order: strippedOrder });
   } catch (err) {
     res.status(500).json({ message: "Could not verify payment" });
   }
@@ -1711,10 +2052,11 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
         order.payment_verified_by = req.user.id;
         order.payment_verified_at = new Date();
       }
+      const strippedOrder = stripProofImages(order)[0];
       io.emit("order_status_updated", { orderId: order.id, status: "ready" });
-      io.emit("new_order", order);
+      emitStaffEvent("new_order", strippedOrder);
       io.emit("order_created");
-      return res.json({ message: "Order approved and sent to waiter", order });
+      return res.json({ message: "Order approved and sent to waiter", order: strippedOrder });
     }
     const order = await Order.findByPk(req.params.id, {
       include: [{ model: OrderItem, as: "items" }],
@@ -1729,10 +2071,11 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
       order.payment_verified_at = new Date();
     }
     await order.save();
+    const strippedOrder = stripProofImages(order)[0];
     io.emit("order_status_updated", { orderId: order.id, status: "ready" });
-    io.emit("new_order", order);
+    emitStaffEvent("new_order", strippedOrder);
     io.emit("order_created");
-    res.json({ message: "Order approved and sent to waiter", order });
+    res.json({ message: "Order approved and sent to waiter", order: strippedOrder });
   } catch (err) {
     res.status(500).json({ message: "Could not approve order" });
   }
@@ -1751,15 +2094,29 @@ app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
       order.paid_at = new Date();
       order.payment_verified_by = req.user?.id || null;
       order.payment_verified_at = new Date();
+      // Cash orders never pass through the kitchen/approval flow (they go
+      // straight to the kitchen as "pending"), so confirming the cash also
+      // dispatches the order to the waiter. Without this the order stayed
+      // in "pending" forever and never appeared on the Waiter Panel.
+      if (String(order.status || "").toLowerCase() === "pending") {
+        order.status = "ready";
+        order.ready_at = new Date();
+      }
     };
 
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === Number(req.params.id));
       if (!order || !(await assertOrderInScope(req, order, res))) return;
+      const prevStatus = order.status;
       updateCashPayment(order);
+      const strippedOrder = stripProofImages(order)[0];
       io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
       io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
-      return res.json({ message: "Cash payment confirmed and recorded", order });
+      if (prevStatus !== order.status) {
+        emitStaffEvent("new_order", strippedOrder);
+        io.emit("order_created");
+      }
+      return res.json({ message: "Cash payment confirmed and recorded", order: strippedOrder });
     }
 
     const order = await Order.findByPk(req.params.id, {
@@ -1768,6 +2125,7 @@ app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
 
+    const prevStatus = order.status;
     updateCashPayment(order);
     await order.save();
 
@@ -1780,11 +2138,17 @@ app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
       await bill.save();
     }
 
+    const strippedOrder = stripProofImages(order)[0];
     io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
     io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
-    res.json({ message: "Cash payment confirmed and recorded", order });
+    if (prevStatus !== order.status) {
+      emitStaffEvent("new_order", strippedOrder);
+      io.emit("order_created");
+    }
+
+    res.json({ message: "Cash payment confirmed and recorded", order: strippedOrder });
   } catch (err) {
-    res.status(500).json({ message: "Could not record cash payment", error: err.message });
+    res.status(500).json({ message: "Could not record cash payment", error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -1814,15 +2178,26 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
             if (!order.chef_name && req.user?.name) order.chef_name = req.user.name;
           }
         }
-        if (total !== undefined) order.total = total;
+        if (total !== undefined && !items) {
+          // Demo mode: keep legacy behaviour only when no item list was sent.
+          // (With items, the total is recomputed from them below.)
+          order.total = Number(total) || order.total;
+        }
         if (items && Array.isArray(items)) {
           order.items = items;
+          order.total = items.reduce(
+            (s, it) => s + (Number(it.price) || 0) * (it.quantity || it.qty || 1),
+            0
+          );
         }
 
         if (status && prevStatus !== status) {
+          // Mock orders are already plain objects, so in-place stripping is
+          // reflected in the res.json(order) below.
+          stripProofImages(order);
           io.emit('order_status_updated', { orderId: req.params.id, status: status });
           if (String(status).toLowerCase() === 'ready') {
-            io.emit('new_order', order);
+            emitStaffEvent('new_order', order);
             io.emit('order_created');
           }
         }
@@ -1832,7 +2207,7 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
     const { id } = req.params;
-    const { status, items, total } = req.body;
+    const { status, items } = req.body;
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
@@ -1868,46 +2243,75 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
         if (!order.chef_name && req.user?.name) order.chef_name = req.user.name;
       }
     }
-    if (total !== undefined) order.total = total;
-    await order.save();
-    
-    // Optionally update items if provided
-    if (items && Array.isArray(items)) {
-      await OrderItem.destroy({ where: { orderId: id } });
-      for (const item of items) {
-        let verifiedPrice = Number(item.price) || 0;
-        const menuItemId = item.productId || item.menuItemId;
-        if (menuItemId && dbConnected) {
-          const menuItem = await MenuItem.findByPk(menuItemId);
-          if (menuItem) {
-            verifiedPrice = Number(menuItem.price);
+
+    // SECURITY: the client's `total` is ignored — money values are always
+    // recomputed from stored items + configured tax/discount. Trusting the
+    // client let any staff account (waiter included) set any total on any
+    // in-scope order, and receipts/reports would happily print it.
+    if (items !== undefined) {
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ message: "items must be an array" });
+      }
+      let verifiedItems = null;
+      let subtotal = 0;
+      if (items.length > 0) {
+        for (const item of items) {
+          const menuItemId = Number(item.productId || item.menuItemId);
+          const qty = Number(item.quantity || item.qty);
+          if (!menuItemId || !Number.isFinite(qty) || qty <= 0) {
+            return res.status(400).json({ message: "Each item needs a valid menu item and quantity" });
           }
         }
-        await OrderItem.create({
-          orderId: id,
-          menuItemId: menuItemId || null,
-          name: item.name,
-          quantity: item.quantity || item.qty || 1,
-          price: verifiedPrice,
-        });
+        const verified = await getVerifiedSubtotal(items);
+        if (!verified) {
+          return res.status(400).json({ message: "One or more items are unavailable or unrecognized. Refresh and try again." });
+        }
+        verifiedItems = items;
+        subtotal = verified.subtotal;
       }
+      const settings = await getTaxDiscountSettings();
+      const totals = calculateOrderTotals(subtotal, settings);
+      order.total = totals.total;
+      // Replace line items + reprice the header atomically so a failure
+      // mid-loop can never leave an order with zero items.
+      await sequelize.transaction(async (t) => {
+        await order.save({ transaction: t });
+        await OrderItem.destroy({ where: { orderId: id }, transaction: t });
+        if (verifiedItems && verifiedItems.length > 0) {
+          await OrderItem.bulkCreate(
+            verifiedItems.map((item) => {
+              const menuItemId = Number(item.productId || item.menuItemId);
+              return {
+                orderId: id,
+                menuItemId,
+                name: item.name,
+                quantity: Number(item.quantity || item.qty) || 1,
+                price: verified.priceById.get(menuItemId) ?? 0,
+              };
+            }),
+            { transaction: t }
+          );
+        }
+      });
+    } else {
+      await order.save();
     }
     
     // Emit socket event for all orders when status is changing.
     // (Use prevStatusForKitchen captured above; reading order.status here
     // would be wrong since we already mutated it.)
     if (status && prevStatusForKitchen !== status) {
+      const strippedForSocket = stripProofImages(order)[0];
       io.emit('order_status_updated', { orderId: id, status: status });
       if (String(status).toLowerCase() === 'ready') {
-        io.emit('new_order', order);
+        emitStaffEvent('new_order', strippedForSocket);
         io.emit('order_created');
       }
     }
     const updatedOrder = await Order.findByPk(id, {
       include: [{ model: OrderItem, as: "items" }],
     });
-    
-    res.json({ message: "Order updated", order: updatedOrder });
+    res.json({ message: "Order updated", order: stripProofImages(updatedOrder)[0] });
   } catch (err) {
     res
       .status(500)
@@ -1923,7 +2327,7 @@ app.put("/api/orders/:id/not-available", verifyToken, async (req, res) => {
       if (order) {
         order.status = "NOT_AVAILABLE";
         io.emit("order_status_updated", { orderId: req.params.id, status: "NOT_AVAILABLE" });
-        return res.json({ message: "Order marked as not available", order });
+        return res.json({ message: "Order marked as not available", order: stripProofImages(order)[0] });
       }
       return res.status(404).json({ message: "Order not found" });
     }
@@ -1941,8 +2345,8 @@ app.put("/api/orders/:id/not-available", verifyToken, async (req, res) => {
     const updatedOrder = await Order.findByPk(id, {
       include: [{ model: OrderItem, as: "items" }],
     });
-    
-    res.json({ message: "Order marked as not available", order: updatedOrder });
+
+    res.json({ message: "Order marked as not available", order: stripProofImages(updatedOrder)[0] });
   } catch (err) {
     res
       .status(500)
@@ -1985,6 +2389,32 @@ app.get("/api/orders/live-count", optionalToken, async (req, res) => {
   } catch (err) {
     console.error("Error fetching live orders count:", err);
     res.status(500).json({ message: "Error fetching live orders count", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
+  }
+});
+
+// Public table-side status for the QR guest flow. Anyone holding the table
+// QR can read whether THAT table is free; nothing about other tables, no
+// PII, no totals — just enough to greet or politely turn guests away.
+app.get("/api/tables/:tableId/status", async (req, res) => {
+  try {
+    const tableId = req.params.tableId;
+    if (!tableId || String(tableId).length > 40) {
+      return res.status(400).json({ message: "Invalid table id" });
+    }
+    if (!dbConnected) {
+      return res.json(tableSessionState(mockOrders, tableId));
+    }
+    const orders = await Order.findAll({
+      where: {
+        type: { [Op.like]: "DINE_IN" },
+        status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+      },
+      attributes: ["id", "table_name", "guests", "status", "type"],
+    });
+    res.json(tableSessionState(orders, tableId));
+  } catch (err) {
+    console.error("Error fetching table status:", err);
+    res.status(500).json({ message: "Error fetching table status" });
   }
 });
 
@@ -2066,13 +2496,13 @@ app.delete("/api/orders/:id", verifyToken, async (req, res) => {
 });
 
 // Request Bill Endpoint - Works for both authenticated and QR customers
-app.put("/api/orders/:id/request-bill", optionalToken, async (req, res) => {
+app.put("/api/orders/:id/request-bill", strictLimiter, optionalToken, async (req, res) => {
   try {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
       if (order) {
         order.bill_requested = true;
-        return res.json({ message: "Bill requested", order });
+        return res.json({ message: "Bill requested", order: stripProofImages(order)[0] });
       }
       return res.status(404).json({ message: "Order not found" });
     }
@@ -2080,6 +2510,13 @@ app.put("/api/orders/:id/request-bill", optionalToken, async (req, res) => {
     const order = await Order.findByPk(id, { include: [{ model: OrderItem, as: "items" }] });
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (req.user && !(await assertOrderInScope(req, order, res))) return;
+    // This endpoint is reachable without a token (customers request the bill
+    // from the QR menu), so only allow it for orders that are still active —
+    // anything already delivered/completed must not be touched by callers
+    // who only know an order number. Strict rate limiting caps abuse too.
+    if (["delivered", "completed", "NOT_AVAILABLE"].includes(order.status)) {
+      return res.status(409).json({ message: "This order is already closed" });
+    }
     order.bill_requested = true;
     await order.save();
 
@@ -2102,7 +2539,7 @@ app.put("/api/orders/:id/request-bill", optionalToken, async (req, res) => {
     }
 
     io.emit('order_status_updated', { orderId: parseInt(id), status: order.status, bill_requested: true });
-    res.json({ message: "Bill requested", order, bill });
+    res.json({ message: "Bill requested", order: stripProofImages(order)[0], bill });
   } catch (err) {
     res
       .status(500)
@@ -2267,6 +2704,12 @@ app.get("/api/orders/:id/bill", verifyToken, async (req, res) => {
     }
 
     const { id } = req.params;
+    // Scope check: without it any staff account could read any order's bill
+    // by iterating sequential IDs.
+    const order = await Order.findByPk(id, { attributes: ["id", "subfranchise_id"] });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!(await assertOrderInScope(req, order, res))) return;
+
     const bill = await Bill.findOne({ where: { orderId: id } });
 
     if (!bill) {
@@ -2300,7 +2743,7 @@ app.get("/api/orders/status/delivered", verifyToken, async (req, res) => {
       order: [["delivered_at", "DESC"]],
     });
 
-    res.json(orders);
+    res.json(stripProofImages(orders));
   } catch (err) {
     res.status(500).json({
       message: "Error retrieving delivered orders",
@@ -2817,6 +3260,7 @@ app.put("/api/users/:id", verifyToken, async (req, res) => {
       user.username = username;
     }
 
+    const prevRole = user.role;
     if (role) user.role = role;
     if (name) user.name = name;
     if (password) {
@@ -2825,6 +3269,16 @@ app.put("/api/users/:id", verifyToken, async (req, res) => {
     const { subfranchise_id: linkLocationId } = req.body;
     if (linkLocationId !== undefined) {
       user.subfranchise_id = linkLocationId || null;
+    }
+
+    // Revoke the target user's existing sessions whenever their
+    // authorization changes (role / branch / password).
+    const authChanged =
+      (role && role !== prevRole) ||
+      (linkLocationId !== undefined) ||
+      !!password;
+    if (authChanged) {
+      user.tokenVersion = (user.tokenVersion || 0) + 1;
     }
 
     await user.save();
@@ -2897,6 +3351,8 @@ app.delete("/api/users/:id", verifyToken, async (req, res) => {
     }
 
     const deletedId = user.id;
+    // Bump before destroy so any concurrently-issued tokens also fail the
+    // version check (the row is gone, so findByPk returns null → revoked).
     await user.destroy();
     io.emit("user_deleted", { id: deletedId });
 
@@ -3314,30 +3770,14 @@ app.put("/api/users/:id/permissions", verifyToken, async (req, res) => {
       });
     }
 
-    const role = await Role.findOne({ where: { name: targetUser.role } });
-    if (!role) {
-      return res.status(404).json({ message: "Role not found for user" });
-    }
-
-    await RolePermission.destroy({ where: { roleId: role.id } });
-
-    if (permissions && permissions.length > 0) {
-      for (const permName of permissions) {
-        const permission = await Permission.findOne({ where: { name: permName } });
-        if (permission) {
-          await RolePermission.create({
-            roleId: role.id,
-            permissionId: permission.id,
-          });
-        }
-      }
-    }
-
-    res.json({
-      message: "Permissions updated successfully",
-      userId: id,
-      role: targetUser.role,
-      permissions: permissions || [],
+    // DATA INTEGRITY: staff roles are shared by every user with that role.
+    // This endpoint used to destroy and rewrite the role's whole permission
+    // set, so "editing one user" silently changed every waiter/manager in
+    // the company. Role permissions belong to the role editor
+    // (PUT /api/roles/:id/permissions).
+    return res.status(409).json({
+      message:
+        "This user inherits permissions from their role. Edit the role's permissions instead (Roles & Permissions).",
     });
   } catch (err) {
     console.error("Error updating user permissions:", err);
@@ -3349,10 +3789,26 @@ app.put("/api/users/:id/permissions", verifyToken, async (req, res) => {
 // SETTINGS API ENDPOINTS
 // ============================================================================
 
+// SECURITY: the settings table holds internal-only rows (payroll salary
+// config, permission matrices…). Only keys the public QR menu / login page
+// legitimately need pre-auth may be served without a token; everything else
+// requires staff auth. The previous behaviour returned the ENTIRE table to
+// anonymous callers — which published every employee's salary data.
+const PUBLIC_SETTING_KEYS = new Set([
+  "taxPercent",
+  "discountPercent",
+  "globalTaxDiscount",
+  "siteBranding",
+  "payment_qr_image",
+  "restaurantName",
+]);
+
 // Get all settings or a specific setting by key (publicly readable so QR menu can get tax rates)
 app.get("/api/settings", optionalToken, async (req, res) => {
   try {
     const { key } = req.query;
+    const isAdminOrManager =
+      req.user && ["admin", "manager", "franchise", "subfranchise"].includes(req.user.role);
     
     if (!dbConnected) {
       // Fallback to defaults in demo mode
@@ -3367,6 +3823,9 @@ app.get("/api/settings", optionalToken, async (req, res) => {
     }
     
     if (key) {
+      if (!PUBLIC_SETTING_KEYS.has(key) && !isAdminOrManager) {
+        return res.status(403).json({ message: "Not allowed to read this setting" });
+      }
       const setting = await Settings.findOne({ where: { key } });
       if (setting) {
         let parsedValue;
@@ -3377,6 +3836,17 @@ app.get("/api/settings", optionalToken, async (req, res) => {
       // successful null avoids noisy browser 404s for defaults such as the
       // tax configuration and the admin-uploaded payment QR.
       return res.json({ key, value: null });
+    }
+    
+    if (!isAdminOrManager) {
+      const publicDefaults = { taxPercent: 5, discountPercent: 0 };
+      const allSettings = await Settings.findAll({
+        where: { key: { [Op.in]: [...PUBLIC_SETTING_KEYS] } },
+      });
+      allSettings.forEach(s => {
+        try { publicDefaults[s.key] = JSON.parse(s.value); } catch { publicDefaults[s.key] = s.value; }
+      });
+      return res.json(publicDefaults);
     }
     
     const allSettings = await Settings.findAll();
@@ -3415,6 +3885,7 @@ app.put("/api/settings", verifyToken, async (req, res) => {
       description: description || '',
       updated_at: new Date()
     });
+    invalidateTaxDiscountCache();
     
     res.json({
       message: created ? "Setting created" : "Setting updated",
@@ -3451,6 +3922,7 @@ app.put("/api/settings/batch", verifyToken, async (req, res) => {
       });
       results.push({ key, value, created });
     }
+    invalidateTaxDiscountCache();
     
     res.json({
       message: "Settings updated successfully",
@@ -3636,12 +4108,17 @@ app.post("/api/subfranchises", verifyToken, franchiseManageAuth, async (req, res
       return res.status(201).json(row);
     }
 
-    const created = await SubFranchise.create(sfData);
-    if (login_username && login_password) {
+    // Validate the optional branch-login username BEFORE creating the
+    // location, otherwise a duplicate username leaves an orphaned location
+    // row behind (the old code returned 409 after the write).
+    if (login_username) {
       const existing = await User.findOne({ where: { username: login_username } });
       if (existing) {
         return res.status(409).json({ message: "Login username already exists" });
       }
+    }
+    const created = await SubFranchise.create(sfData);
+    if (login_username && login_password) {
       const sfUser = await User.create({
         username: login_username,
         password: await bcrypt.hash(login_password, 10),
@@ -3681,6 +4158,14 @@ app.put("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (req, 
       Number(row.owner_user_id) !== Number(req.user.id)
     ) {
       return res.status(403).json({ message: "You can only edit your own locations" });
+    }
+    // Mass-assignment guard: only admins may transfer ownership, and
+    // location identity fields (code) are immutable via this route.
+    if (req.user.role === "franchise") {
+      delete updates.owner_user_id;
+      delete updates.code;
+    } else if (updates.code && updates.code !== row.code) {
+      return res.status(400).json({ message: "Location code cannot be changed" });
     }
     await row.update(updates);
 
@@ -3849,6 +4334,10 @@ app.get("/api/staff", verifyToken, async (req, res) => {
     } else if (req.user.role === "franchise") {
       const ids = await getFranchiseLocationIds(req.user);
       visibleBranchIds = ids.map(Number);
+    } else if (isBranchAssignedStaff(req.user)) {
+      // Branch-assigned staff (e.g. a branch manager) only see their own
+      // restaurant, not the entire company directory.
+      visibleBranchIds = [Number(req.user.subfranchise_id)];
     }
 
     const filteredBranches = visibleBranchIds
@@ -3898,13 +4387,26 @@ function diffHours(start, end) {
   return Math.max(0, (new Date(end) - new Date(start)) / 3600000);
 }
 
-// Helper: scope attendance where-clause by user role
+// Helper: scope attendance where-clause by user role.
+// Branch-assigned staff (incl. managers) only see their own restaurant's
+// records; main-branch staff see HQ rows; franchise owners see their
+// locations. Previously a branch manager could read every branch's
+// attendance by leaving the filters unset.
 async function scopedAttendanceWhere(req) {
   const where = {};
-  if (req.user.role === 'subfranchise') {
-    where.subfranchise_id = req.user.subfranchise_id;
-  } else if (!['admin', 'manager', 'franchise'].includes(req.user.role)) {
-    where.user_id = req.user.id;
+  const user = req.user;
+  if (user.role === 'subfranchise') {
+    where.subfranchise_id = user.subfranchise_id;
+  } else if (isBranchAssignedStaff(user)) {
+    where.subfranchise_id = user.subfranchise_id;
+  } else if (user.role === 'franchise') {
+    const locIds = await getFranchiseLocationIds(user);
+    where.subfranchise_id = locIds.length > 0 ? { [Op.in]: locIds } : -1;
+  } else if (!['admin', 'manager'].includes(user.role)) {
+    where.user_id = user.id;
+  } else if (user.role === 'manager') {
+    // Main-branch manager (no branch assignment) → HQ rows only.
+    where.subfranchise_id = { [Op.is]: null };
   }
   return where;
 }
@@ -3933,7 +4435,7 @@ app.get('/api/attendance', authenticate, async (req, res) => {
     res.json(records);
   } catch (err) {
     console.error('Attendance GET error:', err);
-    res.status(500).json({ message: 'Error fetching attendance', error: err.message });
+    res.status(500).json({ message: 'Error fetching attendance', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -3944,7 +4446,7 @@ app.get('/api/attendance/me/status', authenticate, async (req, res) => {
     const record = await Attendance.findOne({ where: { user_id: req.user.id, date: today }, order: [['clock_in', 'DESC']] });
     res.json(record || { status: 'not_clocked_in', date: today });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching status', error: err.message });
+    res.status(500).json({ message: 'Error fetching status', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -3957,7 +4459,7 @@ app.get('/api/attendance/today', authenticate, async (req, res) => {
     const records = await Attendance.findAll({ where, order: [['clock_in', 'ASC']] });
     res.json(records);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching today attendance', error: err.message });
+    res.status(500).json({ message: 'Error fetching today attendance', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -3983,7 +4485,7 @@ app.get('/api/attendance/summary', authenticate, async (req, res) => {
       total_overtime: records.reduce((s, r) => s + (r.overtime_hours || 0), 0).toFixed(2),
     });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching summary', error: err.message });
+    res.status(500).json({ message: 'Error fetching summary', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -3997,7 +4499,7 @@ app.get('/api/attendance/:id', authenticate, async (req, res) => {
     }
     res.json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching record', error: err.message });
+    res.status(500).json({ message: 'Error fetching record', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4028,7 +4530,7 @@ app.post('/api/attendance/clock-in', authenticate, async (req, res) => {
     res.status(201).json({ message: 'Clocked in successfully', record, isLate });
   } catch (err) {
     console.error('Clock-in error:', err);
-    res.status(500).json({ message: 'Error clocking in', error: err.message });
+    res.status(500).json({ message: 'Error clocking in', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4057,7 +4559,7 @@ app.post('/api/attendance/clock-out', authenticate, async (req, res) => {
     res.json({ message: 'Clocked out successfully', record, summary: { totalHours: totalHours.toFixed(2), netHours: netHours.toFixed(2), overtimeHours: overtimeHours.toFixed(2) } });
   } catch (err) {
     console.error('Clock-out error:', err);
-    res.status(500).json({ message: 'Error clocking out', error: err.message });
+    res.status(500).json({ message: 'Error clocking out', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4071,7 +4573,7 @@ app.post('/api/attendance/break-start', authenticate, async (req, res) => {
     await record.update({ break_start: new Date(), break_end: null });
     res.json({ message: 'Break started', record });
   } catch (err) {
-    res.status(500).json({ message: 'Error starting break', error: err.message });
+    res.status(500).json({ message: 'Error starting break', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4086,7 +4588,7 @@ app.post('/api/attendance/break-end', authenticate, async (req, res) => {
     await record.update({ break_end: new Date(), break_hours: parseFloat(breakHours.toFixed(2)) });
     res.json({ message: 'Break ended', record });
   } catch (err) {
-    res.status(500).json({ message: 'Error ending break', error: err.message });
+    res.status(500).json({ message: 'Error ending break', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4114,17 +4616,28 @@ app.post('/api/attendance', authenticate, async (req, res) => {
     res.status(201).json(record);
   } catch (err) {
     console.error('Attendance create error:', err);
-    res.status(500).json({ message: 'Error creating attendance', error: err.message });
+    res.status(500).json({ message: 'Error creating attendance', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
 // PUT /api/attendance/:id
+const ATTENDANCE_UPDATABLE_FIELDS = [
+  'date', 'clock_in', 'clock_out', 'break_start', 'break_end', 'status',
+  'leave_type', 'notes', 'shift', 'expected_hours', 'is_approved',
+];
+
 app.put('/api/attendance/:id', authenticate, async (req, res) => {
   try {
     if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ message: 'Admin/Manager only' });
     const record = await Attendance.findByPk(req.params.id);
     if (!record) return res.status(404).json({ message: 'Record not found' });
-    const updates = req.body;
+    // Mass-assignment allowlist: the old `{ ...req.body }` update let a
+    // caller forge audit fields (approved_by, approved_at) and move records
+    // between users/branches.
+    const updates = {};
+    for (const key of ATTENDANCE_UPDATABLE_FIELDS) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
     const ci = updates.clock_in !== undefined ? updates.clock_in : record.clock_in;
     const co = updates.clock_out !== undefined ? updates.clock_out : record.clock_out;
     const bs = updates.break_start !== undefined ? updates.break_start : record.break_start;
@@ -4138,7 +4651,7 @@ app.put('/api/attendance/:id', authenticate, async (req, res) => {
     io.emit('attendance_update', { type: 'update', record });
     res.json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error updating attendance', error: err.message });
+    res.status(500).json({ message: 'Error updating attendance', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4151,7 +4664,7 @@ app.put('/api/attendance/:id/approve', authenticate, async (req, res) => {
     await record.update({ is_approved: true, approved_by: req.user.id, approved_at: new Date() });
     res.json({ message: 'Approved', record });
   } catch (err) {
-    res.status(500).json({ message: 'Error approving', error: err.message });
+    res.status(500).json({ message: 'Error approving', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4164,7 +4677,7 @@ app.delete('/api/attendance/:id', authenticate, async (req, res) => {
     await record.destroy();
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Error deleting', error: err.message });
+    res.status(500).json({ message: 'Error deleting', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4194,7 +4707,7 @@ app.get('/api/payroll', authenticate, async (req, res) => {
     const records = await Payroll.findAll({ where, order: [['pay_period_start', 'DESC'], ['created_at', 'DESC']] });
     res.json(records);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching payroll', error: err.message });
+    res.status(500).json({ message: 'Error fetching payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4208,7 +4721,7 @@ app.get('/api/payroll/my', authenticate, async (req, res) => {
     });
     res.json(records);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching payslips', error: err.message });
+    res.status(500).json({ message: 'Error fetching payslips', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4232,7 +4745,7 @@ app.get('/api/payroll/summary', authenticate, async (req, res) => {
     const byStatus = records.reduce((acc, r) => { acc[r.status] = (acc[r.status] || 0) + 1; return acc; }, {});
     res.json({ total: records.length, totalGross, totalNet, totalDeductions, totalBonus, byStatus });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching payroll summary', error: err.message });
+    res.status(500).json({ message: 'Error fetching payroll summary', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4243,7 +4756,7 @@ app.get('/api/payroll/staff-config', authenticate, async (req, res) => {
     const setting = await Settings.findOne({ where: { key: 'payroll_staff_config' } });
     res.json(setting ? { config: setting.value } : { config: {} });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching staff config', error: err.message });
+    res.status(500).json({ message: 'Error fetching staff config', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4259,7 +4772,7 @@ app.get('/api/payroll/my-config', authenticate, async (req, res) => {
     const myCfg = all[req.user.id] || null;
     res.json({ config: myCfg });
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching my salary config', error: err.message });
+    res.status(500).json({ message: 'Error fetching my salary config', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4271,7 +4784,7 @@ app.put('/api/payroll/staff-config', authenticate, async (req, res) => {
     await Settings.upsert({ key: 'payroll_staff_config', value: JSON.stringify(config), description: 'Per-staff salary configuration for payroll' });
     res.json({ message: 'Staff salary config saved', config });
   } catch (err) {
-    res.status(500).json({ message: 'Error saving staff config', error: err.message });
+    res.status(500).json({ message: 'Error saving staff config', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4284,7 +4797,7 @@ app.get('/api/payroll/:id', authenticate, async (req, res) => {
       return res.status(403).json({ message: 'Forbidden' });
     res.json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error fetching payroll record', error: err.message });
+    res.status(500).json({ message: 'Error fetching payroll record', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4346,7 +4859,7 @@ app.post('/api/payroll', authenticate, async (req, res) => {
     io.emit('payroll_update', { type: 'create', record });
     res.status(201).json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error creating payroll', error: err.message });
+    res.status(500).json({ message: 'Error creating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4445,17 +4958,31 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
     io.emit('payroll_update', { type: 'generate', count: created.length });
     res.json({ message: `Generated ${created.length} payroll records`, created, skipped });
   } catch (err) {
-    res.status(500).json({ message: 'Error generating payroll', error: err.message });
+    res.status(500).json({ message: 'Error generating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
 // PUT /api/payroll/:id - update payroll record
+const PAYROLL_UPDATABLE_FIELDS = [
+  'department', 'notes', 'basic_salary', 'hourly_rate', 'overtime_rate', 'overtime_pay',
+  'hra', 'transport', 'meals', 'medical', 'other_allowances',
+  'tax', 'provident_fund', 'insurance', 'advance_deduction', 'late_deduction',
+  'absent_deduction', 'other_deductions', 'performance_bonus', 'festival_bonus',
+  'tips_shared', 'days_present', 'days_absent', 'days_leave', 'days_holiday',
+  'regular_hours', 'overtime_hours', 'payment_method', 'payment_reference', 'payment_date',
+];
+
 app.put('/api/payroll/:id', authenticate, async (req, res) => {
   try {
     if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ message: 'Admin/Manager only' });
     const record = await Payroll.findByPk(req.params.id);
     if (!record) return res.status(404).json({ message: 'Record not found' });
-    const updates = { ...req.body };
+    // Mass-assignment allowlist: `{ ...req.body }` previously let a caller
+    // forge status/approval fields (status, paid_by, approved_by…).
+    const updates = {};
+    for (const key of PAYROLL_UPDATABLE_FIELDS) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
     // Recalculate totals
     const totalAllwc = parseFloat(updates.hra||record.hra||0) + parseFloat(updates.transport||record.transport||0) + parseFloat(updates.meals||record.meals||0) + parseFloat(updates.medical||record.medical||0) + parseFloat(updates.other_allowances||record.other_allowances||0);
     const totalDed   = parseFloat(updates.tax||record.tax||0) + parseFloat(updates.provident_fund||record.provident_fund||0) + parseFloat(updates.insurance||record.insurance||0) + parseFloat(updates.advance_deduction||record.advance_deduction||0) + parseFloat(updates.late_deduction||record.late_deduction||0) + parseFloat(updates.absent_deduction||record.absent_deduction||0) + parseFloat(updates.other_deductions||record.other_deductions||0);
@@ -4465,7 +4992,7 @@ app.put('/api/payroll/:id', authenticate, async (req, res) => {
     io.emit('payroll_update', { type: 'update', record });
     res.json(record);
   } catch (err) {
-    res.status(500).json({ message: 'Error updating payroll', error: err.message });
+    res.status(500).json({ message: 'Error updating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4479,7 +5006,7 @@ app.put('/api/payroll/:id/approve', authenticate, async (req, res) => {
     io.emit('payroll_update', { type: 'approve', record });
     res.json({ message: 'Approved', record });
   } catch (err) {
-    res.status(500).json({ message: 'Error approving payroll', error: err.message });
+    res.status(500).json({ message: 'Error approving payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4499,7 +5026,7 @@ app.put('/api/payroll/:id/pay', authenticate, async (req, res) => {
     io.emit('payroll_update', { type: 'paid', record });
     res.json({ message: 'Marked as paid', record });
   } catch (err) {
-    res.status(500).json({ message: 'Error marking as paid', error: err.message });
+    res.status(500).json({ message: 'Error marking as paid', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -4513,7 +5040,7 @@ app.delete('/api/payroll/:id', authenticate, async (req, res) => {
     await record.destroy();
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Error deleting payroll', error: err.message });
+    res.status(500).json({ message: 'Error deleting payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 

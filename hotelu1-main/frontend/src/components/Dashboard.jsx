@@ -397,7 +397,7 @@ const Dashboard = ({ locationSettings }) => {
     socket.on('order_status_updated', refresh);
     socket.on('order_deleted', refresh);
 
-    const pollInterval = setInterval(loadData, 10000);
+    const pollInterval = setInterval(loadData, 30000);
     const tickInterval = setInterval(() => setTick((v) => v + 1), 30000);
 
     return () => {

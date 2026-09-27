@@ -156,7 +156,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
 
   /* --------------------------- fetch orders --------------------------- */
   const fetchAllOrders = useCallback(() => {
-    authFetch('/api/orders')
+    // Billing only cares about dine-in orders that can still be settled.
+    // Pulling every order ever placed (with items and bills) on a 3s poll
+    // would eventually saturate the DB connection pool.
+    authFetch('/api/orders?type=DINE_IN&status=pending,preparing,ready,delivered,completed&limit=300')
       .then((res) => res.json())
       .then((data) => {
         const all = Array.isArray(data) ? data : [];
@@ -173,7 +176,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
 
   useEffect(() => {
     fetchAllOrders();
-    const poll = setInterval(fetchAllOrders, 3000);
+    const poll = setInterval(fetchAllOrders, 5000);
 
     const socket = io(getSocketUrl(), { auth: { token: localStorage.getItem('token') } });
     socketRef.current = socket;
@@ -448,10 +451,14 @@ const BillingPage = ({ locationSettings, currentUser }) => {
       ];
     });
     const headers = ['Order', 'Table', 'Status', 'Items', 'Total'];
+    // Escape quotes AND neutralize spreadsheet formula injection.
+    const escapeCell = (c) => {
+      let s = String(c);
+      if (/^[=+@\-\t]/.test(s)) s = `'${s}`;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
     const csv = [headers, ...rows]
-      .map((r) =>
-        r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')
-      )
+      .map((r) => r.map(escapeCell).join(','))
       .join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

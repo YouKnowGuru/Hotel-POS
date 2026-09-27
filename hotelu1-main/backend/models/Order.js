@@ -21,6 +21,10 @@ const Order = sequelize.define(
     total: { type: DataTypes.FLOAT, allowNull: false },
     timestamp: { type: DataTypes.DATE, allowNull: false },
     type: { type: DataTypes.STRING, allowNull: false },
+    // Number of guests seated at the table for this order (dine-in).
+    // Captured by staff when the order is placed; drives the guest count
+    // shown on Table Management cards.
+    guests: { type: DataTypes.INTEGER, allowNull: true, defaultValue: null },
     token: { type: DataTypes.STRING, allowNull: true }, // For takeaway orders
     bill_requested: { type: DataTypes.BOOLEAN, defaultValue: false },
     delivered_at: { type: DataTypes.DATE, allowNull: true },

@@ -20,7 +20,7 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
 
   const fetchReadyOrders = useCallback(async () => {
     try {
-      const res = await authFetch('/api/orders');
+      const res = await authFetch('/api/orders?status=ready&limit=200');
       const data = res.ok ? await res.json() : [];
       const ready = Array.isArray(data)
         ? data.filter(
@@ -46,7 +46,7 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
 
   useEffect(() => {
     fetchReadyOrders();
-    const poll = setInterval(fetchReadyOrders, 5000);
+    const poll = setInterval(fetchReadyOrders, 10000);
 
     try {
       const socket = io(getSocketUrl(), {

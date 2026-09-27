@@ -116,6 +116,19 @@ async function runSafeMigrations(sequelize, models = {}) {
         }
       }
 
+      // Bring older databases up to the current MenuItem model as well.
+      if (tableNames.includes("menu_items")) {
+        const menuDesc = await qi.describeTable("menu_items");
+        if (!menuDesc.isDeleted) {
+          await qi.addColumn("menu_items", "isDeleted", {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+          });
+          console.log("Migration: added menu_items.isDeleted");
+        }
+      }
+
       // Bring older databases up to the current Order model as well. Missing
       // columns otherwise make Sequelize's SELECT fail before an order can be
       // displayed, even if the new payment feature is not being used.
@@ -125,6 +138,9 @@ async function runSafeMigrations(sequelize, models = {}) {
         bill_generated: { type: DataTypes.BOOLEAN, defaultValue: false },
         customer_id: { type: DataTypes.INTEGER, allowNull: true },
         updated_at: { type: DataTypes.DATE, allowNull: true },
+        // Guest count captured by staff at order time (dine-in table
+        // management shows it on the table card).
+        guests: { type: DataTypes.INTEGER, allowNull: true },
       };
       for (const [column, definition] of Object.entries(legacyOrderColumns)) {
         if (!ordersDesc[column]) {
@@ -142,6 +158,14 @@ async function runSafeMigrations(sequelize, models = {}) {
           allowNull: true,
         });
         console.log("Migration: added users.subfranchise_id");
+      }
+      if (!usersDesc.tokenVersion) {
+        await qi.addColumn("users", "tokenVersion", {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 0,
+        });
+        console.log("Migration: added users.tokenVersion");
       }
     }
 

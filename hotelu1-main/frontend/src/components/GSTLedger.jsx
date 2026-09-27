@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { authFetch } from '../utils/api';
-import ExcelJS from 'exceljs';
+// BUNDLE: exceljs (~3 MB minified) is loaded only when the user exports.
 import useCurrency from '../hooks/useCurrency';
 import { loadRestaurantInfo } from '../utils/receiptPrint';
 
@@ -371,6 +371,7 @@ const GSTLedger = ({ locationSettings }) => {
 
   /* ── 1. Export Excel (.xlsx) ───────────────────────────────────── */
   const handleExportExcel = async () => {
+    const ExcelJS = (await import('exceljs')).default;
     const info = loadRestaurantInfo();
     const cur = currSymbol || 'Nu.';
     const rangeLabel =

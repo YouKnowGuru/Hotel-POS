@@ -7,8 +7,18 @@ export const getAPI_URL = () => {
   if (envUrl) return envUrl.replace(/\/$/, "");
   const protocol = window.location.protocol;
   const host = window.location.hostname;
-  if (host.includes("vercel.app")) {
-    return "https://hotel-pos-txtn.onrender.com";
+  if (host.includes("vercel.app") || host.includes("onrender.com")) {
+    // Production: REACT_APP_API_URL must be configured in the hosting
+    // provider's environment variables (Vercel project settings). The old
+    // behaviour hard-coded a stale Render URL here, so a fresh deploy
+    // silently pointed every browser at a backend that no longer existed —
+    // working locally, dead in production.
+    console.error(
+      "REACT_APP_API_URL is not configured for this deployment. " +
+      "Set it in the hosting provider's environment variables " +
+      "(e.g. https://hotelu1-backend.onrender.com)."
+    );
+    return `${protocol}//${host}`;
   }
   return `${protocol}//${host}:${BACKEND_PORT}`;
 };

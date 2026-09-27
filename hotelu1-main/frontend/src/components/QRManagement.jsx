@@ -67,6 +67,24 @@ const QRManagement = ({ locationSettings }) => {
 
   const qrCodeContainerRef = useRef(null);
 
+  // Branch-aware QR codes: the logged-in user's branch (or ?loc= override) is
+  // embedded in every generated QR URL so the backend can stamp those orders
+  // with the right restaurant. Without this, orders placed from a branch's
+  // table codes landed in the HQ bucket and branch staff never saw them.
+  const locId = useMemo(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('loc');
+    if (fromUrl) return fromUrl;
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      if (user?.subfranchise_id != null) return String(user.subfranchise_id);
+    } catch (_) { /* ignore */ }
+    return null;
+  }, []);
+  const buildQrUrl = (table) =>
+    `${BASE_QR_ORDER_URL}/qr-ordering?tableId=${encodeURIComponent(table)}${
+      locId ? `&loc=${encodeURIComponent(locId)}` : ''
+    }`;
+
   const [serverIP] = useState(() => {
     const savedIP = localStorage.getItem('qrServerIP');
     if (savedIP) return savedIP;
@@ -105,7 +123,7 @@ const QRManagement = ({ locationSettings }) => {
           ? await authFetch(
               `/api/orders?type=DINE_IN&tableId=${encodeURIComponent(
                 formatTableName(tableNumber)
-              )}`
+              )}&status=pending,preparing,ready,delivered&limit=50`
             )
           : await fetch(url);
         const data = await response.json();
@@ -121,7 +139,7 @@ const QRManagement = ({ locationSettings }) => {
       }
     };
     fetchTableStatus();
-    const interval = setInterval(fetchTableStatus, 3000);
+    const interval = setInterval(fetchTableStatus, 8000);
     return () => clearInterval(interval);
   }, [tableNumber]);
 
@@ -140,7 +158,7 @@ const QRManagement = ({ locationSettings }) => {
       }
     };
     fetchAll();
-    const interval = setInterval(fetchAll, 5000);
+    const interval = setInterval(fetchAll, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -169,11 +187,21 @@ const QRManagement = ({ locationSettings }) => {
 
   // QR script
   useEffect(() => {
+    // Bounded wait: if the CDN copy is blocked (offline kiosk, ad blocker,
+    // SRI mismatch) stop polling after ~5s and surface the problem instead
+    // of silently spinning forever.
+    let attempts = 0;
     const checkQRCodeLoaded = () => {
       if (window.QRCode) {
         setIsQrCodeScriptLoaded(true);
-      } else {
+      } else if (attempts++ < 50) {
         setTimeout(checkQRCodeLoaded, 100);
+      } else {
+        setNotification({
+          message: 'QR library failed to load — check your connection and refresh.',
+          type: 'error',
+        });
+        setTimeout(() => setNotification(null), 5000);
       }
     };
     checkQRCodeLoaded();
@@ -188,9 +216,7 @@ const QRManagement = ({ locationSettings }) => {
   useEffect(() => {
     if (!isQrCodeScriptLoaded || !qrCodeContainerRef.current) return;
     setIsQrCodeGenerated(false);
-    const url = `${BASE_QR_ORDER_URL}/qr-ordering?tableId=${encodeURIComponent(
-      tableNumber
-    )}`;
+    const url = buildQrUrl(tableNumber);
     setQrCodeValue(url);
 
     qrCodeContainerRef.current.innerHTML = '';
@@ -264,7 +290,7 @@ const QRManagement = ({ locationSettings }) => {
         temp.style.left = '-10000px';
         document.body.appendChild(temp);
         const styleObj = STYLES.find((s) => s.id === style) || STYLES[0];
-        const url = `${BASE_QR_ORDER_URL}/qr-ordering?tableId=${encodeURIComponent(targetTable)}`;
+        const url = buildQrUrl(targetTable);
         // eslint-disable-next-line no-new
         new window.QRCode(temp, {
           text: url,
@@ -312,7 +338,7 @@ const QRManagement = ({ locationSettings }) => {
 
   const handleTestQR = (overrideTable) => {
     const targetTable = overrideTable || tableNumber;
-    const url = `${BASE_QR_ORDER_URL}/qr-ordering?tableId=${encodeURIComponent(targetTable)}`;
+    const url = buildQrUrl(targetTable);
     window.open(url, '_blank');
   };
 

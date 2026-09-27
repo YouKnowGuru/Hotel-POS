@@ -204,8 +204,10 @@ export const NotificationsProvider = ({ children }) => {
     fetchOrders();
     fetchInventory();
 
-    const orderInt = setInterval(fetchOrders, 10000);
-    const invInt = setInterval(fetchInventory, 30000);
+    // Updates are pushed live via socket events; this poll is only a
+    // fallback for when the socket silently disconnects, so keep it slow.
+    const orderInt = setInterval(fetchOrders, 20000);
+    const invInt = setInterval(fetchInventory, 60000);
 
     let socket = null;
     try {

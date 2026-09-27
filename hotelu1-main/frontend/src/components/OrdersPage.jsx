@@ -181,7 +181,9 @@ const OrdersPage = ({ locationSettings }) => {
       // socket failure is non-fatal — polling still works
     }
 
-    const poll = setInterval(load, 6000);
+    // Live updates arrive via socket events (order_created etc.), so this
+    // slow poll is just a safety net in case a socket drop is missed.
+    const poll = setInterval(load, 15000);
     const tick = setInterval(() => setTick((v) => v + 1), 30000);
     return () => {
       if (socket) {
@@ -278,7 +280,14 @@ const OrdersPage = ({ locationSettings }) => {
       o.status || '',
       Number(o.total) || 0,
     ]);
-    const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+    // Escape quotes AND neutralize spreadsheet formula injection: values
+    // like "=cmd|..." in user-controlled fields (table names, statuses)
+    // would otherwise execute when staff open the export in Excel.
+    const escape = (v) => {
+      let s = String(v);
+      if (/^[=+@\-\t]/.test(s)) s = `'${s}`;
+      return `"${s.replace(/"/g, '""')}"`;
+    };
     const csv = [headers, ...rows].map((r) => r.map(escape).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -609,6 +618,29 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
   const [reviewing, setReviewing] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [reviewError, setReviewError] = useState('');
+  // Proof screenshots are no longer shipped inside the orders list (they made
+  // it megabytes heavy). Load the image lazily, only when reviewing a payment.
+  const [proofImage, setProofImage] = useState(null);
+  // Full-screen lightbox for the payment proof. The old "open in new tab"
+  // link pointed at a base64 data: URL, which modern browsers block for
+  // top-level navigation — so admins could never actually see the image
+  // full-size. This renders it in-page instead.
+  const [showProofViewer, setShowProofViewer] = useState(false);
+  const needsProof = order.payment_status === 'verification_pending' && (order.has_payment_proof || order.payment_proof_image);
+  useEffect(() => {
+    if (!needsProof) return undefined;
+    let alive = true;
+    setProofImage(null);
+    if (order.payment_proof_image) {
+      setProofImage(order.payment_proof_image);
+      return undefined;
+    }
+    authFetch(`/api/orders/${order.id}/proof-image`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (alive && d?.proofImage) setProofImage(d.proofImage); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [needsProof, order.id, order.payment_proof_image]);
 
   // Safely parse JSON from a fetch response; falls back to text on non-JSON.
   const safeJson = async (res) => {
@@ -778,11 +810,20 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
         <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
           <p className="font-bold text-amber-900">Payment verification required</p>
           <p className="mt-1 text-sm text-amber-800">Review the screenshot and confirm the payment amount matches this order.</p>
-          {order.payment_proof_image && (
-            <a href={order.payment_proof_image} target="_blank" rel="noreferrer" className="mt-3 block">
-              <img src={order.payment_proof_image} alt="Customer payment proof" className="max-h-56 w-full rounded-xl border border-amber-200 object-contain bg-white" />
-              <span className="mt-1 block text-xs font-semibold text-orange-600">Open full-size screenshot</span>
-            </a>
+          {needsProof && (
+            proofImage ? (
+              <button
+                type="button"
+                onClick={() => setShowProofViewer(true)}
+                className="mt-3 block w-full text-left"
+                title="View full-screen"
+              >
+                <img src={proofImage} alt="Customer payment proof" className="max-h-56 w-full rounded-xl border border-amber-200 object-contain bg-white cursor-zoom-in" />
+                <span className="mt-1 block text-xs font-semibold text-orange-600">Tap to view full-screen</span>
+              </button>
+            ) : (
+              <p className="mt-3 text-xs font-semibold text-amber-700">Loading payment screenshot…</p>
+            )
           )}
           <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)}
             placeholder="Reason if rejecting (required only for reject)" className="mt-3 min-h-20 w-full rounded-xl border border-amber-200 bg-white p-2.5 text-sm" />
@@ -802,7 +843,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
             <p className="font-bold text-emerald-900">Cash Payment — Collect from Customer</p>
           </div>
           <p className="text-sm text-emerald-800">
-            This order is being prepared. The customer will pay <b>{fmt(order.total)}</b> in cash. Please collect payment when food is served.
+            Confirming the cash collection dispatches this order straight to the <b>Waiter Panel</b> for serving — no kitchen/approval step needed.
           </p>
           {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
           <button
@@ -811,7 +852,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
             className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
           >
             <Banknote className="w-4 h-4" />
-            {reviewing ? 'Recording…' : `Confirm Cash Collected (${fmt(order.total)})`}
+            {reviewing ? 'Recording…' : `Confirm Cash Collected & Send to Waiter (${fmt(order.total)})`}
           </button>
         </div>
       )}
@@ -994,6 +1035,42 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
           onClose={() => setShowPreview(false)}
           onPrint={handlePrint}
         />
+      )}
+
+      {showProofViewer && proofImage && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex flex-col items-center justify-center p-4"
+          onClick={() => setShowProofViewer(false)}
+          role="dialog"
+          aria-label="Payment proof full-screen view"
+        >
+          <img
+            src={proofImage}
+            alt="Customer payment proof (full size)"
+            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <div className="mt-4 flex items-center gap-3">
+            <span className="text-xs font-semibold text-white/80">
+              Order #{order.id} — payment proof
+            </span>
+            <a
+              href={proofImage}
+              download={`payment-proof-order-${order.id}.png`}
+              onClick={(e) => e.stopPropagation()}
+              className="px-3 py-1.5 rounded-lg bg-white/10 border border-white/25 text-white text-xs font-semibold hover:bg-white/20 transition"
+            >
+              Download
+            </a>
+            <button
+              type="button"
+              onClick={() => setShowProofViewer(false)}
+              className="px-3 py-1.5 rounded-lg bg-white text-gray-900 text-xs font-bold hover:bg-gray-100 transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

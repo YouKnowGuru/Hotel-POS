@@ -3,35 +3,11 @@ import ErrorBoundary from './ErrorBoundary';
 import Sidebar from './Sidebar';
 import TopHeader from './TopHeader';
 import Login from './Login';
-import Dashboard from './Dashboard';
-import OrdersPage from './OrdersPage';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import Reports from './Reports';
-import QRManagement from './QRManagement';
-import DineInManagement from './DineInManagement';
-import TakeawayManagement from './TakeawayManagement';
-import InventoryManagement from './InventoryManagement';
-import BillingPage from './BillingPage';
-import KitchenDisplaySystem from './KitchenDisplaySystem';
-import MenuManagement from './MenuManagement';
-import QRCodeOrdering from './QRCodeOrdering';
-import UserManagement from './UserManagement';
-import PermissionManagementNew from './PermissionManagementNew';
-import FranchiseDashboard from './FranchiseDashboard';
-import SubFranchiseManagement from './SubFranchiseManagement';
-import CustomerIndex from './CustomerIndex';
-import OrderConfirmation from './OrderConfirmation';
-import WaiterDeliveryPanel from './WaiterDeliveryPanel';
 import NoAccessMessage from './NoAccessMessage';
 import ProtectedRoute from './ProtectedRoute';
 import RoleBasedRoute from './RoleBasedRoute';
 import PermissionBasedRoute from './PermissionBasedRoute';
-import NotificationsPage from './NotificationsPage';
-import SettingsPage from './SettingsPage';
-import StaffByBranch from './StaffByBranch';
-import GSTLedger from './GSTLedger';
-import AttendanceSystem from './AttendanceSystem';
-import PayrollSystem from './PayrollSystem';
 import { NotificationsProvider } from '../contexts/NotificationsContext';
 import { getLocationSettingsForCountry } from '../utils/currency';
 import { canRoleAccessModule } from '../utils/permissions';
@@ -41,6 +17,35 @@ import {
   applyDocumentBranding,
   BRANDING_UPDATED_EVENT,
 } from '../utils/branding';
+
+// BUNDLE SIZE: everything used to be eagerly imported, so the public QR
+// menu shipped the whole admin suite (xlsx ≈ 1 MB, exceljs ≈ 3 MB,
+// recharts, …) in one bundle before rendering a single dish. Heavy,
+// role-gated pages are split into lazily-loaded chunks below.
+const Dashboard = lazy(() => import('./Dashboard'));
+const OrdersPage = lazy(() => import('./OrdersPage'));
+const Reports = lazy(() => import('./Reports'));
+const QRManagement = lazy(() => import('./QRManagement'));
+const DineInManagement = lazy(() => import('./DineInManagement'));
+const TakeawayManagement = lazy(() => import('./TakeawayManagement'));
+const InventoryManagement = lazy(() => import('./InventoryManagement'));
+const BillingPage = lazy(() => import('./BillingPage'));
+const KitchenDisplaySystem = lazy(() => import('./KitchenDisplaySystem'));
+const MenuManagement = lazy(() => import('./MenuManagement'));
+const QRCodeOrdering = lazy(() => import('./QRCodeOrdering'));
+const UserManagement = lazy(() => import('./UserManagement'));
+const PermissionManagementNew = lazy(() => import('./PermissionManagementNew'));
+const FranchiseDashboard = lazy(() => import('./FranchiseDashboard'));
+const SubFranchiseManagement = lazy(() => import('./SubFranchiseManagement'));
+const CustomerIndex = lazy(() => import('./CustomerIndex'));
+const OrderConfirmation = lazy(() => import('./OrderConfirmation'));
+const WaiterDeliveryPanel = lazy(() => import('./WaiterDeliveryPanel'));
+const NotificationsPage = lazy(() => import('./NotificationsPage'));
+const SettingsPage = lazy(() => import('./SettingsPage'));
+const StaffByBranch = lazy(() => import('./StaffByBranch'));
+const GSTLedger = lazy(() => import('./GSTLedger'));
+const AttendanceSystem = lazy(() => import('./AttendanceSystem'));
+const PayrollSystem = lazy(() => import('./PayrollSystem'));
 
 // Loading component for Suspense fallback - Reference Image Design
 const LoadingSpinner = () => (

@@ -9,53 +9,12 @@ import './index.css';
 // to avoid a flash of the wrong theme on cold loads.
 applyThemeEarly();
 
-// Enhanced service worker and cache clearing
-const clearCachesAndServiceWorkers = async () => {
-  try {
-    // Clear all service workers
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(registration => registration.unregister()));
-      console.log('All service workers unregistered');
-    }
-
-    // Clear all caches
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log('All caches cleared');
-    }
-
-    // Clear localStorage (except for specific keys you want to keep)
-    const keysToKeep = [
-      'theme',
-      'language',
-      'systemSettingsExtended_v1',
-      'token',
-      'user',
-      'role',
-      'globalTaxDiscount',
-      'rolePermissionsMatrix',
-      'posCountry',
-      'soundNotificationPreferences',
-      'qrTableCodes',
-      'lastOrder'
-    ];
-    Object.keys(localStorage).forEach(key => {
-      if (!keysToKeep.includes(key)) {
-        localStorage.removeItem(key);
-      }
-    });
-
-    // Clear sessionStorage
-    sessionStorage.clear();
-  } catch (error) {
-    console.error('Error clearing caches:', error);
-  }
-};
-
-// Execute cache clearing immediately
-clearCachesAndServiceWorkers();
+// NOTE: an earlier version of this file wiped localStorage, sessionStorage
+// and caches on EVERY page load. That destroyed the QR customer session
+// (placed-order tracking, payment tokens), staff notification state and the
+// branding cache, breaking every reload-based journey. Persisted state is
+// app data now — do not clear it at boot. Dev-only stale-cache recovery is
+// handled by the browser DevTools / hard reload instead.
 
 // Prevent hot reload issues with better error handling
 if (module.hot) {
@@ -64,17 +23,6 @@ if (module.hot) {
     console.log('Hot module replacement disposed');
   });
 }
-
-// Add cache busting to prevent stale hot-update.js files
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-  const url = args[0];
-  if (typeof url === 'string' && url.includes('hot-update')) {
-    const separator = url.includes('?') ? '&' : '?';
-    args[0] = `${url}${separator}t=${Date.now()}`;
-  }
-  return originalFetch.apply(this, args);
-};
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

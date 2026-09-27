@@ -28,7 +28,7 @@ import {
   Timer,
   AlertCircle,
 } from 'lucide-react';
-import ExcelJS from 'exceljs';
+// BUNDLE: exceljs (~3 MB minified) is loaded only when the user exports.
 import { getAPI_URL } from '../utils/api';
 import { loadRestaurantInfo } from '../utils/receiptPrint';
 
@@ -1043,6 +1043,7 @@ const AttendanceSystem = ({ currentUser }) => {
       showToast('No records to export', 'error');
       return;
     }
+    const ExcelJS = (await import('exceljs')).default;
     const info = loadRestaurantInfo();
     const period = fmt.monthYear(filters.month, filters.year);
 

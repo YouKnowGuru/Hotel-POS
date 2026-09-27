@@ -40,7 +40,13 @@ const OrderConfirmation = () => {
 
     useEffect(() => {
         if (!orderData) {
-            navigate(tableId ? `/menu/${tableId}` : '/customer');
+            // "/menu/:tableId" and "/customer" were never registered routes;
+            // they fell through to the catch-all and bounced guests onto the
+            // staff login page. The public QR menu lives at /qr-ordering.
+            navigate(
+                `/qr-ordering${tableId ? `?tableId=${encodeURIComponent(tableId)}` : ''}`,
+                { replace: true }
+            );
         }
     }, [orderData, navigate, tableId]);
 
@@ -175,7 +181,11 @@ const OrderConfirmation = () => {
                     </button>
                     <button
                         type="button"
-                        onClick={() => navigate(tableId ? `/menu/${tableId}` : '/customer')}
+                        onClick={() =>
+                            navigate(
+                                `/qr-ordering${tableId ? `?tableId=${encodeURIComponent(tableId)}` : ''}`
+                            )
+                        }
                         className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-3 rounded-xl"
                     >
                         Order More Items

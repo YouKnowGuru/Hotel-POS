@@ -98,8 +98,13 @@ const KitchenDisplaySystem = ({ locationSettings: locationSettingsProp }) => {
     newSocket.on('new_order', handleNewOrder);
     newSocket.on('order_created', handleNewOrder);
 
-    const orderInterval = setInterval(fetchOrders, 2000);
-    const permissionInterval = setInterval(fetchPermissions, 5000);
+    // Kitchen updates arrive instantly via socket events; this poll is the
+    // fallback only. 5s keeps the DB load sane on free-tier hosting.
+    const orderInterval = setInterval(fetchOrders, 7000);
+    // Permissions change rarely; polling them every few seconds just burned
+    // DB cycles on every KDS terminal. 60s is plenty responsive here, and
+    // the page also refetches on window focus via the socket handlers.
+    const permissionInterval = setInterval(fetchPermissions, 60000);
 
     return () => {
       clearInterval(orderInterval);
@@ -125,7 +130,10 @@ const KitchenDisplaySystem = ({ locationSettings: locationSettingsProp }) => {
 
   const fetchOrders = async () => {
     try {
-      const response = await authFetch('/api/orders');
+      // The KDS only renders pending/preparing/ready. Filtering server-side
+      // keeps the poll payload bounded; the client-side filter below remains
+      // as a safety net for payment-gated QR orders.
+      const response = await authFetch('/api/orders?status=pending,preparing,ready&limit=200');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       const kitchenOrders = data.filter(

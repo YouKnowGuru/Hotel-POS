@@ -11,6 +11,11 @@ const User = sequelize.define('User', {
   },
   name: { type: DataTypes.STRING, allowNull: false },
   subfranchise_id: { type: DataTypes.INTEGER, allowNull: true },
+  // Incremented whenever the account's authorization changes (role,
+  // branch, password, deletion). Tokens issued before the bump are
+  // rejected by verifyToken, so deleted/demoted staff lose access
+  // immediately instead of holding a valid JWT for up to 24h.
+  tokenVersion: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
 }, {
   tableName: 'users',
   timestamps: false,

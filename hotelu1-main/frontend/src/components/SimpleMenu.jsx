@@ -73,6 +73,10 @@ function addLocalOrderId(tableId, orderId) {
 
 export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings }) {
   const { format: fmt } = useCurrency(locationSettings);
+  // Table-side status from the server: free | occupied. When the table is
+  // part of the way through a session (guests seated / waiting to pay /
+  // being cleaned), new QR orders are refused with a friendly banner.
+  const [tableStatus, setTableStatus] = useState('free');
   const [items, setItems] = useState([]);
   const [cats, setCats] = useState([]);
   const [cat, setCat] = useState('');
@@ -145,6 +149,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const fetchOrders = useCallback(async () => {
     try {
       const t = tableId || '1';
+      // Table-side occupancy check (best effort — if it fails we assume the
+      // table is free and let the server-side order guard decide).
+      fetch(`${getAPI_URL()}/api/tables/${encodeURIComponent(formatTableName(t))}/status`)
+        .then(r => r.ok ? r.json() : null)
+        .then(st => setTableStatus(st?.status === 'occupied' ? 'occupied' : 'free'))
+        .catch(() => {});
       const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}`);
       const d = await r.json();
       if (Array.isArray(d)) {
@@ -217,12 +227,22 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
 
   const placeOrder = async () => {
     if (!cart.length || placing) return;
+    // Double-check the table session client-side; the server enforces it too.
+    if (tableStatus === 'occupied') {
+      setPaymentError('This table is currently occupied. Please ask our staff for help.');
+      return;
+    }
     setPlacing(true);
+    setPaymentError('');
     try {
       const s = await fetchAndCacheGlobalSettings();
       const sub = cart.reduce((a, i) => a + i.price * i.qty, 0);
       const t = calculateOrderTotals(sub, s);
       const isCash = paymentMethod === 'cash';
+      // Branch-aware: QR table codes may carry a location id (`loc` URL
+      // param). Without it the server stamps the order to HQ, so branch
+      // staff never see orders placed from their own tables.
+      const locId = new URLSearchParams(window.location.search).get('loc');
       const res = await fetch(`${getAPI_URL()}/api/orders`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -230,26 +250,33 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
           items: cart.map(i => ({ menuItemId: i.id, name: i.name, quantity: i.qty, price: i.price })),
           subtotal: t.subtotal, discount: t.discountPercent, discountAmount: t.discountAmount,
           taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total, type: 'DINE_IN',
+          subfranchise_id: locId ? Number(locId) : undefined,
           payment_first: true,
           payment_method: isCash ? 'cash' : 'qr',
         }),
       });
-      const order = await res.json();
-      if (order.id) {
-        addLocalOrderId(tableId, order.id);
-        localStorage.setItem(`paymentAccess:${order.id}`, order.paymentAccessToken || '');
-        setCart([]); setCartOpen(false);
-        if (isCash) {
-          // Cash order — no QR needed, just show success toast
-          setBoomMsg({ title: 'Order placed! 💵', sub: 'Please pay cash to our staff when served.' });
-          setBoom(true); setTimeout(() => setBoom(false), 3500);
-          if (onOrderPlaced) onOrderPlaced({ ...order, payment_method: 'cash' });
-        } else {
-          setPaymentOrder(order);
-        }
-        fetchOrders();
+      const order = await res.json().catch(() => null);
+      if (!res.ok || !order || !order.id) {
+        if (res.status === 409) setTableStatus('occupied');
+        setPaymentError(order?.message || 'Could not place the order. Please try again.');
+        setPlacing(false);
+        return;
       }
-    } catch (_) { }
+      addLocalOrderId(tableId, order.id);
+      localStorage.setItem(`paymentAccess:${order.id}`, order.paymentAccessToken || '');
+      setCart([]); setCartOpen(false);
+      if (isCash) {
+        // Cash order — no QR needed, just show success toast
+        setBoomMsg({ title: 'Order placed! 💵', sub: 'Please pay cash to our staff when served.' });
+        setBoom(true); setTimeout(() => setBoom(false), 3500);
+        if (onOrderPlaced) onOrderPlaced({ ...order, payment_method: 'cash' });
+      } else {
+        setPaymentOrder(order);
+      }
+      fetchOrders();
+    } catch (e) {
+      setPaymentError('Network problem — could not place the order. Please try again.');
+    }
     setPlacing(false);
   };
 
@@ -464,6 +491,21 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
           {q && <span style={s.searchCount}>{filtered.length} found</span>}
         </div>
       </header>
+
+      {/* Table occupied banner — guests scanning a QR on a seated/cleaning table */}
+      {tableStatus === 'occupied' && (
+        <div className="sm-tracker" style={s.trackerSection}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 16, padding: '12px 14px' }}>
+            <span style={{ fontSize: 22 }}>🪑</span>
+            <div>
+              <p style={{ margin: 0, color: '#1d4ed8', fontSize: 13, fontWeight: 700 }}>This table is currently occupied</p>
+              <p style={{ margin: 0, color: '#3b82f6', fontSize: 11.5, marginTop: 2 }}>
+                Guests are still seated here. Please wait for the table to be freed, or speak to our staff — they will be happy to help.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {orders.length > 0 && (
         <div className="sm-tracker" style={s.trackerSection}>
@@ -784,6 +826,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
               <button style={s.drawerClose} onClick={() => setCartOpen(false)}><X size={18} color="#64748b" /></button>
             </div>
 
+            {paymentError && (
+              <div style={{ margin: '10px 16px 0', padding: '10px 12px', borderRadius: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>
+                {paymentError}
+              </div>
+            )}
+
             <div style={s.drawerScroll}>
               {!cart.length ? (
                 <div style={{ textAlign: 'center', padding: '60px 24px' }}>
@@ -857,12 +905,14 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
                   })}
                 </div>
 
-                <button className="sm-order-btn" style={{ ...s.orderBtn, ...(placing ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing}>
-                  {placing
-                    ? <><div style={s.spinner} /> Placing Order...</>
-                    : paymentMethod === 'cash'
-                      ? <><Banknote size={17} /> Place Order — Pay Cash <ArrowRight size={17} /></>
-                      : <><QrCode size={17} /> Place Order — Pay Online <ArrowRight size={17} /></>
+                <button className="sm-order-btn" style={{ ...s.orderBtn, ...((placing || tableStatus === 'occupied') ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing || tableStatus === 'occupied'}>
+                  {tableStatus === 'occupied'
+                    ? <><Utensils size={17} /> Table Occupied — Ask Staff</>
+                    : placing
+                      ? <><div style={s.spinner} /> Placing Order...</>
+                      : paymentMethod === 'cash'
+                        ? <><Banknote size={17} /> Place Order — Pay Cash <ArrowRight size={17} /></>
+                        : <><QrCode size={17} /> Place Order — Pay Online <ArrowRight size={17} /></>
                   }
                 </button>
               </div>

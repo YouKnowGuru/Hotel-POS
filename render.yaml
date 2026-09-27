@@ -18,7 +18,10 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGIN
-        value: "*"
+        # SECURITY: never "*" — an open CORS lets any website call this API
+        # with credentials. Replace with your real frontend origin(s),
+        # comma-separated, e.g. https://your-site.vercel.app
+        value: "CHANGE_ME_TO_YOUR_FRONTEND_URL"
       - key: DB_DIALECT
         value: mysql
       - key: DB_SSL

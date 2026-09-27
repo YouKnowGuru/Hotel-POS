@@ -63,7 +63,7 @@ const STATUS_CONFIG = {
     bigBg: 'bg-gradient-to-br from-blue-50 to-blue-100',
     cardRing: 'ring-1 ring-blue-100 hover:ring-blue-300',
     showDot: false,
-    hint: 'Right-click to free',
+    hint: 'Tap “Done Cleaning” to free',
   },
   waiting_payment: {
     label: 'WAITING PAYMENT',
@@ -126,6 +126,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
   const [isLoaded, setIsLoaded] = useState(false);
   const [showAddTable, setShowAddTable] = useState(false);
   const [newTable, setNewTable] = useState({ capacity: 4, floor: 'ground' });
+  const [busyCleaning, setBusyCleaning] = useState({});
   const [, setTick] = useState(0);
 
   /* ------------------------------ auth ------------------------------ */
@@ -146,6 +147,8 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
         );
 
         if (!tableOrder) {
+          // "cleaning" is staff-driven (Mark Cleaned / Done Cleaning below)
+          // and "reserved" is set manually, so don't let the poll wipe them.
           if (table.status === 'cleaning' || table.status === 'reserved') return table;
           return { ...table, status: 'available' };
         }
@@ -159,7 +162,12 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
 
   const fetchOrdersAndSync = useCallback(async () => {
     try {
-      const response = await authFetch('/api/orders?type=DINE_IN');
+      // Only non-completed dine-in orders matter here; completed history
+      // would be re-shipped on every poll. Paired with the server-side
+      // limit this keeps the poll small regardless of table volume.
+      const response = await authFetch(
+        '/api/orders?type=DINE_IN&status=pending,preparing,ready,delivered,NOT_AVAILABLE&limit=200'
+      );
       if (!response.ok) {
         setActiveOrders([]);
         return;
@@ -180,7 +188,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
 
   useEffect(() => {
     fetchOrdersAndSync();
-    const orderInterval = setInterval(fetchOrdersAndSync, 2000);
+    const orderInterval = setInterval(fetchOrdersAndSync, 5000);
     const timeTick = setInterval(() => setTick((v) => v + 1), 60000);
     return () => {
       clearInterval(orderInterval);
@@ -227,37 +235,69 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
     }
   };
 
+  // Table session lifecycle:
+  //  1. "Guests Left" (occupied/waiting_payment tables) — completes ALL the
+  //     table's active orders (only after payment for delivered ones) and
+  //     moves the table to CLEANING. This is how the system learns the
+  //     table is physically empty.
+  //  2. "Done Cleaning" (cleaning tables) — frees the table for new guests.
+  // Cleaning/reserved persist across polls — updateTableStatuses guards them.
   const handleMarkTableAvailable = async (tableId) => {
+    const table = tables.find((t) => t.id === tableId);
+    const finishing = table?.status === 'cleaning';
+    setBusyCleaning((prev) => ({ ...prev, [tableId]: true }));
     try {
-      const tableOrder = activeOrders.find((order) =>
-        tableIdMatches(tableId, order.table_name)
-      );
-      if (tableOrder && tableOrder.status === 'delivered') {
-        await authFetch(`/api/orders/${tableOrder.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'completed' }),
-        });
-      }
-      setTables((prev) =>
-        prev.map((t) => (t.id === tableId ? { ...t, status: 'cleaning' } : t))
-      );
-      setNotification({ message: `Table ${tableId} is being cleaned…`, type: 'info' });
-      setTimeout(() => {
+      if (!finishing) {
+        const tableOrders = activeOrders.filter((order) =>
+          tableIdMatches(tableId, order.table_name)
+        );
+        // Safety net: delivered-but-unpaid orders must be settled (cash
+        // collected or QR approved) before the session can be closed, so
+        // revenue can't silently vanish from the reports.
+        const unpaid = tableOrders.find(
+          (o) => o.status === 'delivered' && o.bill_status !== 'paid' &&
+                 !(o.payment_method === 'cash' || o.payment_status === 'paid' || o.payment_status === 'cash_pending')
+        );
+        if (unpaid) {
+          setNotification({
+            message: `Bill for table ${tableId} is not settled yet. Collect payment first.`,
+            type: 'error',
+          });
+          setTimeout(() => setNotification(null), 3500);
+          setBusyCleaning((prev) => ({ ...prev, [tableId]: false }));
+          return;
+        }
+        for (const order of tableOrders) {
+          try {
+            await authFetch(`/api/orders/${order.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'completed' }),
+            });
+            setActiveOrders((prev) => prev.filter((o) => o.id !== order.id));
+          } catch (err) {
+            console.error(`Failed to complete order ${order.id}:`, err);
+          }
+        }
+        setTables((prev) =>
+          prev.map((t) => (t.id === tableId ? { ...t, status: 'cleaning' } : t))
+        );
+        setNotification({ message: `Table ${tableId} is being cleaned…`, type: 'info' });
+        fetchOrdersAndSync();
+      } else {
         setTables((prev) =>
           prev.map((t) => (t.id === tableId ? { ...t, status: 'available' } : t))
         );
-        setNotification({
-          message: `Table ${tableId} is now available!`,
-          type: 'success',
-        });
+        setNotification({ message: `Table ${tableId} is now available!`, type: 'success' });
         fetchOrdersAndSync();
-        setTimeout(() => setNotification(null), 2500);
-      }, 3000);
+      }
+      setTimeout(() => setNotification(null), 2500);
     } catch (error) {
-      console.error('Error marking table available:', error);
-      setNotification({ message: 'Error marking table available.', type: 'error' });
+      console.error('Error updating table cleaning status:', error);
+      setNotification({ message: 'Error updating table status.', type: 'error' });
       setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setBusyCleaning((prev) => ({ ...prev, [tableId]: false }));
     }
   };
 
@@ -413,43 +453,54 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
         {filteredTables.map((table, idx) => {
           const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG.available;
           const tableOrder = orderForTable(table.id);
-          const isActive = table.status === 'occupied' || table.status === 'reserved';
+          // Tables with guests seated (order still open, incl. waiting for
+          // payment) show the occupancy footer.
+          const hasSession =
+            !!tableOrder &&
+            (table.status === 'occupied' || table.status === 'waiting_payment');
 
           const occupiedMin =
-            tableOrder && (tableOrder.created_at || tableOrder.createdAt)
-              ? minutesSince(tableOrder.created_at || tableOrder.createdAt)
+            tableOrder && (tableOrder.timestamp || tableOrder.created_at)
+              ? minutesSince(tableOrder.timestamp || tableOrder.created_at)
               : null;
-          const guestsOccupied = isActive
-            ? Math.max(
-                1,
-                Math.min(
-                  table.capacity,
-                  Math.ceil((tableOrder?.items?.length || 1) / 1.5)
-                )
-              )
-            : 0;
+          // Real guest count captured when the order was placed. Falls back
+          // to a capacity cap only for legacy orders placed before the
+          // guests field existed.
+          const guestsOccupied =
+            tableOrder && (table.status === 'occupied' || table.status === 'waiting_payment')
+              ? tableOrder.guests
+                ? Number(tableOrder.guests)
+                : Math.min(table.capacity, 2)
+              : 0;
           const orderValue = tableOrder?.total || 0;
 
+          const canClean =
+            table.status === 'occupied' ||
+            table.status === 'waiting_payment' ||
+            table.status === 'reserved' ||
+            table.status === 'cleaning';
+
           return (
-            <button
+            <div
               key={table.id}
+              role="button"
+              tabIndex={0}
               onClick={() => handleTableClick(table)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                if (table.status !== 'available') {
-                  handleMarkTableAvailable(table.id);
-                }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleTableClick(table);
               }}
-              className={`relative text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-4 ${cfg.cardRing} hover:-translate-y-0.5`}
+              className={`relative text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-4 ${cfg.cardRing} hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-orange-300`}
               style={{
                 animation: isLoaded
                   ? `cardPop .35s ease-out ${Math.min(idx * 35, 600)}ms both`
                   : 'none',
               }}
               title={
-                table.status !== 'available'
-                  ? 'Click to add items · Right-click to mark available'
-                  : 'Click to place a new order'
+                table.status === 'cleaning'
+                  ? 'Click to view · Done Cleaning frees the table'
+                  : table.status !== 'available'
+                    ? 'Click to add items · Guests Left ends the session'
+                    : 'Click to place a new order'
               }
             >
               {cfg.showDot && (
@@ -481,7 +532,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
               </div>
 
               {/* Footer info */}
-              {isActive ? (
+              {hasSession ? (
                 <div className="mt-3 space-y-2 text-[11px]">
                   {/* Occupancy progress */}
                   <div>
@@ -535,7 +586,34 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
                   </p>
                 </div>
               )}
-            </button>
+
+              {/* Explicit cleaning action — was hidden behind right-click */}
+              {canClean && (
+                <div
+                  className="mt-3"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleMarkTableAvailable(table.id)}
+                    disabled={busyCleaning[table.id]}
+                    className={`w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                      table.status === 'cleaning'
+                        ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                        : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {table.status === 'cleaning'
+                      ? 'Done Cleaning'
+                      : table.status === 'reserved'
+                        ? 'Free Table'
+                        : 'Guests Left'}
+                  </button>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

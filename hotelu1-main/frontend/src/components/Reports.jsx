@@ -31,7 +31,8 @@ import {
   Zap,
   Award,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
+// BUNDLE: xlsx (~1 MB minified) is only needed when the user clicks export,
+// so it's imported on demand instead of shipping in the main chunk.
 import useCurrency from '../hooks/useCurrency';
 
 /* ------------------------------------------------------------------ */
@@ -373,7 +374,8 @@ const Reports = ({ locationSettings }) => {
 
   /* --------------------------- export --------------------------- */
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import('xlsx');
     const workbook = XLSX.utils.book_new();
     const summary = [
       { Metric: 'Start Date', Value: startDate },

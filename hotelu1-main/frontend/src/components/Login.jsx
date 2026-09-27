@@ -11,9 +11,6 @@ import {
   ShoppingBag,
   Package,
   Building2,
-  ShieldCheck,
-  UserCog,
-  UtensilsCrossed,
   Sparkles,
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
@@ -25,36 +22,6 @@ const FEATURE_PILLS = [
   { icon: ShoppingBag, label: 'Smart Orders' },
   { icon: Package, label: 'Inventory Control' },
   { icon: Building2, label: 'Multi-Branch' },
-];
-
-const DEMO_ACCOUNTS = [
-  {
-    role: 'Admin',
-    username: 'admin',
-    password: 'admin',
-    Icon: ShieldCheck,
-    gradient: 'linear-gradient(135deg, #1E3A8A, #1E40AF)',
-    iconColor: '#93C5FD',
-    bgTint: 'rgba(30, 58, 138, 0.08)',
-  },
-  {
-    role: 'Manager',
-    username: 'manager',
-    password: 'pass2',
-    Icon: UserCog,
-    gradient: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-    iconColor: '#C4B5FD',
-    bgTint: 'rgba(124, 58, 237, 0.08)',
-  },
-  {
-    role: 'Waiter',
-    username: 'waiter',
-    password: 'pass',
-    Icon: UtensilsCrossed,
-    gradient: 'linear-gradient(135deg, #059669, #047857)',
-    iconColor: '#6EE7B7',
-    bgTint: 'rgba(5, 150, 105, 0.08)',
-  },
 ];
 
 /* Logo-aware mark for the login card (navy tile, white logo bg). */
@@ -125,11 +92,6 @@ const Login = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     submitLogin(username, password);
-  };
-
-  const fillDemo = (acc) => {
-    setUsername(acc.username);
-    setPassword(acc.password);
   };
 
   return (
@@ -418,90 +380,6 @@ const Login = ({ onLogin }) => {
                 )}
               </button>
             </form>
-
-            {/* OR divider */}
-            <div className="my-6 flex items-center gap-3">
-              <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-              <span className="text-xs font-semibold text-slate-400 tracking-wider">OR</span>
-              <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-            </div>
-
-            {/* Demo button — gold accent */}
-            <button
-              type="button"
-              onClick={() => fillDemo(DEMO_ACCOUNTS[0])}
-              className="w-full py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
-              style={{
-                background: 'rgba(212, 160, 23, 0.08)',
-                border: '1px solid rgba(212, 160, 23, 0.25)',
-                color: 'var(--accent-gold)',
-              }}
-            >
-              <Sparkles className="w-4 h-4" style={{ color: '#D4A017' }} />
-              Quick Demo Login
-            </button>
-          </div>
-
-          {/* ── Demo Credentials Card (glass) ── */}
-          <div
-            className="mt-5 glass-card rounded-2xl p-5 sm:p-6"
-            style={{
-              background: 'var(--card-bg)',
-              backdropFilter: 'blur(16px) saturate(1.3)',
-              WebkitBackdropFilter: 'blur(16px) saturate(1.3)',
-              border: '1px solid var(--border)',
-              boxShadow: 'var(--shadow-md)',
-            }}
-          >
-            <div className="flex items-center gap-2.5 mb-1">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: 'rgba(30, 58, 138, 0.08)' }}
-              >
-                <User className="w-4 h-4" style={{ color: '#1E3A8A' }} />
-              </div>
-              <div>
-                <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Demo Credentials</p>
-                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Click any role to auto-fill</p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-4 gap-2.5">
-              {DEMO_ACCOUNTS.map((acc) => {
-                const { Icon } = acc;
-                return (
-                  <button
-                    key={acc.role}
-                    type="button"
-                    onClick={() => fillDemo(acc)}
-                    className="flex flex-col items-center gap-2 rounded-xl p-3 transition-all duration-300 hover:shadow-md hover:scale-[1.03] active:scale-[0.97]"
-                    style={{
-                      background: acc.bgTint,
-                      border: '1px solid var(--border)',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--accent-light)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border)';
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: acc.gradient }}
-                    >
-                      <Icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-center leading-tight">
-                      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{acc.role}</p>
-                      <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{acc.username}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           {/* Footer */}

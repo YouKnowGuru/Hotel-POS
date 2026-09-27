@@ -3,6 +3,7 @@ import { authFetch, getAPI_URL } from '../utils/api';
 import { enrichOrderWithTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
 import Notification from './Notification';
 import useCurrency from '../hooks/useCurrency';
+import { Users } from 'lucide-react';
 import {
   loadRestaurantInfo,
   buildKitchenSlipHtml,
@@ -25,6 +26,9 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
     const [showMobileCart, setShowMobileCart] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    // Dine-in only: how many guests are seated at this table. Stored on the
+    // order and displayed on the Table Management card.
+    const [guests, setGuests] = useState(2);
     
     // Payment modal states for takeaway orders
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -279,6 +283,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
             timestamp: new Date().toISOString()
         };
 
+        // Guest count rides along with dine-in orders only.
+        if (orderType !== 'TAKEAWAY') {
+            newOrder.guests = Math.max(1, Math.min(50, Math.round(Number(guests) || 1)));
+        }
+
         // If editing existing order, handle differently for Takeaway vs Dine-in
         if (initialOrder && initialOrder.id) {
             if (initialOrder.table_name === 'Takeaway') {
@@ -458,8 +467,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
                 {/* Modal Header - Orange Theme */}
                 <div className="flex justify-between items-center p-4 sm:p-6 border-b border-orange-100 bg-gradient-to-r from-orange-500 to-orange-600 flex-shrink-0">
                     <h3 className="text-lg sm:text-2xl font-bold text-white">
-                        New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order for {table && table.id === 'Takeaway' ? 'Takeaway' : table && table.id ? `Table ${table.id}` : ''}
-                    </h3>
+                    New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order for {table && table.id === 'Takeaway' ? 'Takeaway' : table && table.id ? `Table ${table.id}` : ''}
+                </h3>
                     <button 
                         onClick={onClose} 
                         className="text-white/80 hover:text-white bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors"
@@ -939,6 +948,46 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
                                         </button>
                                     ))}
                                 </div>
+
+                                {/* Guests seated at this table (dine-in only) */}
+                                {orderType !== 'TAKEAWAY' && (
+                                    <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-4">
+                                        <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+                                            <Users className="w-4 h-4 text-blue-500" />
+                                            Guests
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setGuests(g => Math.max(1, Number(g) - 1))}
+                                                className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40"
+                                                disabled={Number(guests) <= 1}
+                                                aria-label="Fewer guests"
+                                            >
+                                                −
+                                            </button>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="50"
+                                                value={guests}
+                                                onChange={(e) =>
+                                                    setGuests(e.target.value === '' ? '' : Math.max(1, Math.min(50, Math.round(Number(e.target.value) || 1))))
+                                                }
+                                                className="w-14 text-center font-bold text-gray-800 bg-white border border-blue-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setGuests(g => Math.min(50, Number(g) + 1))}
+                                                className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40"
+                                                disabled={Number(guests) >= 50}
+                                                aria-label="More guests"
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Place Order Button */}
                                 <button
