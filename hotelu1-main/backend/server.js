@@ -13,6 +13,7 @@ const User = require("./models/User");
 const MenuItem = require("./models/MenuItem");
 const Order = require("./models/Order");
 const DiningTable = require("./models/DiningTable");
+const DiningFloor = require("./models/DiningFloor");
 const OrderItem = require("./models/OrderItem");
 const Inventory = require("./models/Inventory");
 const Permission = require("./models/Permission");
@@ -558,7 +559,7 @@ async function startServer() {
     console.log("Database connected successfully");
     
     // Create missing tables only (never alter:true — breaks users indexes)
-    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable];
+    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable, DiningFloor];
     for (const model of allModels) {
       try { await model.sync(); } catch (e) { console.warn(`Sync warning for ${model.tableName}: ${e.message}`); }
     }
@@ -577,7 +578,7 @@ async function startServer() {
         permission_id INT NOT NULL
       ) ENGINE=InnoDB`);
     } catch (_) {}
-    await runSafeMigrations(sequelize, { SubFranchise, DiningTable });
+    await runSafeMigrations(sequelize, { SubFranchise, DiningTable, DiningFloor });
     console.log("Database synchronized successfully");
 
     dbConnected = true;
@@ -970,13 +971,13 @@ async function getPermissionsForUser(user) {
         "view_dashboard", "view_reports", "manage_qr_codes", "manage_orders",
         "create_order", "view_orders", "edit_order", "view_inventory",
         "manage_inventory", "edit_inventory", "view_billing", "process_payments",
-        "view_bills", "kitchen_display", "view_menu", "manage_menu",
+        "view_bills", "view_menu", "manage_menu",
         "create_menu_item", "edit_menu_item", "delete_menu_item",
         "mark_order_preparing", "mark_order_ready", "confirm_order_delivery",
       ],
       waiter: [
         "view_dashboard", "manage_qr_codes", "create_order", "view_orders",
-        "edit_order", "kitchen_display", "confirm_order_delivery",
+        "edit_order", "confirm_order_delivery",
       ],
 
     };
@@ -2617,6 +2618,147 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
   }
 });
 
+// ── Floor registry (labels for dining_tables.floor) ─────────────────
+// GET /api/floors is public so the QR guest flow can label floors; the
+// mutating routes reuse the table management guard (admin/franchise only).
+
+const floorLabel = (key, fallback) => {
+  const clean = String(key || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 20);
+  return clean || (fallback || "ground");
+};
+
+// Humanize "ground" → "Ground Floor", "terrace-2" → "Terrace 2".
+const humanizeFloor = (key) => {
+  const words = String(key)
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  const base = words.join(" ") || "Floor";
+  return /floor|storey|storey|level|g|terrace/i.test(key) && /floor/i.test(base)
+    ? base
+    : `${base} Floor`;
+};
+
+app.get("/api/floors", async (_req, res) => {
+  try {
+    if (!dbConnected) return res.json([]);
+    // Registry rows first; union any straggler floor keys found on tables
+    // (e.g. created before the registry existed) so tabs never lose a floor
+    // that still has tables on it.
+    const [floors, tables] = await Promise.all([
+      DiningFloor.findAll({ order: [["id", "ASC"]] }),
+      DiningTable.findAll({
+        where: { is_active: true },
+        attributes: ["floor"],
+        group: ["floor"],
+        raw: true,
+      }),
+    ]);
+    const known = new Map(floors.map((f) => [f.key, f.label]));
+    for (const t of tables) {
+      if (t.floor && !known.has(t.floor)) {
+        known.set(t.floor, humanizeFloor(t.floor));
+      }
+    }
+    const rows = [...known.entries()].map(([key, label]) => ({ key, label }));
+    res.json(rows);
+  } catch (err) {
+    console.error("Error listing floors:", err);
+    res.status(500).json({ message: "Error listing floors" });
+  }
+});
+
+app.post("/api/floors", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const key = floorLabel(req.body.key || req.body.name);
+    if (!key) {
+      return res.status(400).json({ message: "Floor name is required" });
+    }
+    const label = req.body.label
+      ? String(req.body.label).trim().slice(0, 50)
+      : humanizeFloor(key);
+    const subfranchiseId = req.body.subfranchise_id != null ? Number(req.body.subfranchise_id) : null;
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (!locIds.includes(subfranchiseId)) {
+        return res.status(403).json({ message: "You can only add floors to your own locations" });
+      }
+    }
+    const exists = await DiningFloor.findOne({ where: { key, subfranchise_id: subfranchiseId } });
+    if (exists) {
+      return res.status(409).json({ message: `Floor "${label}" already exists` });
+    }
+    const floor = await DiningFloor.create({ key, label, subfranchise_id: subfranchiseId });
+    res.status(201).json({ message: `Floor "${floor.label}" added`, floor });
+  } catch (err) {
+    console.error("Error creating floor:", err);
+    res.status(500).json({ message: "Error creating floor" });
+  }
+});
+
+// Rename = display label change only. The floor `key` is the stable id
+// stored on every dining_tables.floor row, so table assignments survive a
+// rename untouched (that's what makes rename cheap and safe).
+app.put("/api/floors/:key", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const key = floorLabel(req.params.key);
+    const floor = await DiningFloor.findOne({ where: { key } });
+    if (!floor) {
+      // Floors derived from tables (no registry row) can be adopted on first rename.
+      const inUse = await DiningTable.count({ where: { floor: key, is_active: true } });
+      if (inUse === 0) return res.status(404).json({ message: "Floor not found" });
+      const label = req.body.label ? String(req.body.label).trim().slice(0, 50) : humanizeFloor(key);
+      const created = await DiningFloor.create({ key, label });
+      return res.json({ message: `Floor renamed to "${label}"`, floor: created });
+    }
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (floor.subfranchise_id != null && !locIds.includes(floor.subfranchise_id)) {
+        return res.status(403).json({ message: "This floor belongs to another location" });
+      }
+    }
+    const label = req.body.label ? String(req.body.label).trim().slice(0, 50) : null;
+    if (!label) return res.status(400).json({ message: "New floor name is required" });
+    floor.label = label;
+    await floor.save();
+    res.json({ message: `Floor renamed to "${label}"`, floor });
+  } catch (err) {
+    console.error("Error renaming floor:", err);
+    res.status(500).json({ message: "Error renaming floor" });
+  }
+});
+
+// Delete is only allowed for empty floors — a floor with tables would leave
+// those tables unreachable in the UI (they'd group under an invisible tab).
+app.delete("/api/floors/:key", verifyToken, tableManageAuth, async (req, res) => {
+  try {
+    const key = floorLabel(req.params.key);
+    const tablesUsing = await DiningTable.count({ where: { floor: key, is_active: true } });
+    if (tablesUsing > 0) {
+      return res.status(409).json({
+        message: `Floor "${key}" still has ${tablesUsing} active table(s). Move or delete them first.`,
+      });
+    }
+    const floor = await DiningFloor.findOne({ where: { key } });
+    if (!floor) return res.status(404).json({ message: "Floor not found" });
+    if (req.user.role === "franchise") {
+      const locIds = await getFranchiseLocationIds(req.user);
+      if (floor.subfranchise_id != null && !locIds.includes(floor.subfranchise_id)) {
+        return res.status(403).json({ message: "This floor belongs to another location" });
+      }
+    }
+    await floor.destroy();
+    res.json({ message: `Floor "${floor.label}" deleted` });
+  } catch (err) {
+    console.error("Error deleting floor:", err);
+    res.status(500).json({ message: "Error deleting floor" });
+  }
+});
+
 // Get Total Orders Count Endpoint (exclude NOT_AVAILABLE)
 app.get("/api/orders/total-count", optionalToken, async (req, res) => {
   try {
@@ -3610,7 +3752,6 @@ app.get("/api/permissions", verifyToken, async (req, res) => {
         { id: 28, name: "view_bills", category: "billing" },
         { id: 29, name: "view_dashboard", category: "reporting" },
         { id: 30, name: "view_reports", category: "reporting" },
-        { id: 31, name: "kitchen_display", category: "reporting" },
         { id: 32, name: "manage_settings", category: "settings" },
         { id: 33, name: "manage_subfranchise", category: "settings" },
       ]);
@@ -3856,23 +3997,23 @@ app.get("/api/users-with-permissions", verifyToken, async (req, res) => {
           "view_dashboard", "view_reports", "manage_qr_codes", "manage_orders", 
           "create_order", "view_orders", "edit_order", "view_inventory", 
           "manage_inventory", "edit_inventory", "view_billing", "process_payments", 
-          "view_bills", "kitchen_display", "view_menu", "manage_menu", 
+          "view_bills", "view_menu", "manage_menu", 
           "create_menu_item", "edit_menu_item", "delete_menu_item",
           "mark_order_preparing", "mark_order_ready", "confirm_order_delivery"
         ],
         waiter: [
           "view_dashboard", "manage_qr_codes", "create_order", "view_orders", 
-          "edit_order", "view_billing", "process_payments", "kitchen_display"
+          "edit_order", "view_billing", "process_payments"
         ],
 
         franchise: [
           "view_dashboard", "view_reports", "manage_qr_codes", "manage_orders", 
           "create_order", "view_orders", "view_inventory", "view_billing", 
-          "view_bills", "kitchen_display", "view_menu", "manage_subfranchise"
+          "view_bills", "view_menu", "manage_subfranchise"
         ],
         subfranchise: [
           "view_dashboard", "manage_qr_codes", "create_order", "view_orders", 
-          "view_inventory", "view_billing", "kitchen_display", "view_menu"
+          "view_inventory", "view_billing", "view_menu"
         ]
       };
 
@@ -4408,10 +4549,43 @@ app.delete("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (re
     }
     const row = await SubFranchise.findByPk(id);
     if (!row) return res.status(404).json({ message: "Not found" });
+    // Franchise owners may only delete branches they own (same rule as PUT).
+    if (
+      req.user.role === "franchise" &&
+      Number(row.owner_user_id) !== Number(req.user.id)
+    ) {
+      return res.status(403).json({ message: "You can only delete your own locations" });
+    }
+    // A branch with live sessions can't be removed — staff would be staring
+    // at orders that belong to a location that no longer exists. Completed
+    // history is fine: those rows keep their subfranchise_id for reports.
+    const openOrders = await Order.count({
+      where: {
+        subfranchise_id: id,
+        status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+      },
+    });
+    if (openOrders > 0) {
+      return res.status(409).json({
+        message: `"${row.name}" still has ${openOrders} open order(s). Close or complete them first.`,
+      });
+    }
+    // Branch logins are useless without their branch — remove them up front.
     await User.destroy({ where: { subfranchise_id: id } });
+    // Retire the branch's table plan and floor labels so stale QR stickers
+    // and floor tabs don't linger for a location that no longer exists.
+    try {
+      await DiningTable.update(
+        { is_active: false },
+        { where: { subfranchise_id: id, is_active: true } }
+      );
+    } catch (_) { /* table cleanup is best-effort */ }
+    try {
+      await DiningFloor.destroy({ where: { subfranchise_id: id } });
+    } catch (_) { /* floor cleanup is best-effort */ }
     await row.destroy();
     io.emit("subfranchise_deleted", { id });
-    res.json({ message: "Deleted" });
+    res.json({ message: `Branch "${row.name}" deleted` });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -30,7 +30,6 @@ const DineInManagement = lazy(() => import('./DineInManagement'));
 const TakeawayManagement = lazy(() => import('./TakeawayManagement'));
 const InventoryManagement = lazy(() => import('./InventoryManagement'));
 const BillingPage = lazy(() => import('./BillingPage'));
-const KitchenDisplaySystem = lazy(() => import('./KitchenDisplaySystem'));
 const MenuManagement = lazy(() => import('./MenuManagement'));
 const QRCodeOrdering = lazy(() => import('./QRCodeOrdering'));
 const UserManagement = lazy(() => import('./UserManagement'));
@@ -202,12 +201,6 @@ const App = () => {
       case 'billing':
         return allow('billing', ['franchise', 'subfranchise']) ? (
           <BillingPage locationSettings={locationSettings} />
-        ) : (
-          <NoAccessMessage />
-        );
-      case 'kds':
-        return allow('kitchen_display', ['franchise', 'subfranchise']) ? (
-          <KitchenDisplaySystem locationSettings={locationSettings} />
         ) : (
           <NoAccessMessage />
         );
@@ -420,16 +413,6 @@ const App = () => {
               <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['confirm_order_delivery']}>
                 <MenuLayout>
                   <WaiterDeliveryPanel locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/kitchen" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="kitchen_display" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['kitchen_display']}>
-                <MenuLayout>
-                  <KitchenDisplaySystem locationSettings={locationSettings} />
                 </MenuLayout>
               </PermissionBasedRoute>
             </ProtectedRoute>

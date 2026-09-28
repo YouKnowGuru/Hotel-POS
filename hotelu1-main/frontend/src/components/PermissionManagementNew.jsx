@@ -82,7 +82,6 @@ const PERMISSION_GROUPS = {
     permissions: [
       { name: 'view_dashboard', label: 'View Dashboard', simple: 'See sales, orders, and business overview' },
       { name: 'view_reports', label: 'View Reports', simple: 'Access detailed business reports' },
-      { name: 'kitchen_display', label: 'Kitchen Display', simple: 'View orders in kitchen' },
     ],
   },
   settings: {

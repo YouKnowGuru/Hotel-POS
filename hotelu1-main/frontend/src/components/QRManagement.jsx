@@ -40,9 +40,11 @@ const STYLES = [
   { id: 'green', label: 'Forest Green', color: '#10B981' },
 ];
 
-const FLOORS = [
-  { id: 'ground', label: 'Ground Floor' },
-  { id: 'first', label: 'First Floor' },
+// Fallback only — the live floor list comes from GET /api/floors (managed
+// in Table Management → Manage Floors) so both pages always agree.
+const FALLBACK_FLOORS = [
+  { key: 'ground', label: 'Ground Floor' },
+  { key: 'first', label: 'First Floor' },
 ];
 
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -63,6 +65,7 @@ const QRManagement = ({ locationSettings }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [tableCodes, setTableCodes] = useState([]);
   const [registeredTables, setRegisteredTables] = useState([]);
+  const [floors, setFloors] = useState(FALLBACK_FLOORS);
   const [allOrders, setAllOrders] = useState([]);
   const [menu, setMenu] = useState([]);
 
@@ -175,6 +178,33 @@ const QRManagement = ({ locationSettings }) => {
   }, []);
 
   useEffect(() => { fetchRegisteredTables(); }, [fetchRegisteredTables]);
+
+  // Live floor registry — same source Table Management uses.
+  const fetchFloors = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/floors');
+      if (!res.ok) return;
+      const list = await res.json();
+      if (Array.isArray(list) && list.length > 0) {
+        setFloors(list.map((f) => ({ key: f.key, label: f.label })));
+      }
+    } catch (_) { /* keep fallback */ }
+  }, []);
+
+  useEffect(() => { fetchFloors(); }, [fetchFloors]);
+
+  // If the selected floor was deleted, fall back to the first available one.
+  useEffect(() => {
+    if (floors.length > 0 && !floors.some((f) => f.key === floor)) {
+      setFloor(floors[0].key);
+    }
+  }, [floors]);
+
+  const floorLabel = (key) =>
+    floors.find((f) => f.key === key)?.label ||
+    String(key || 'ground')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase()) + ' Floor';
 
   // Generate Sticker now registers the table in the backend (idempotent),
   // then the local sticker list is kept for styling info.
@@ -497,7 +527,7 @@ const QRManagement = ({ locationSettings }) => {
                 </option>
                 {registeredTables.map((t) => (
                   <option key={t.id} value={t.table_number}>
-                    {t.table_number} · {t.capacity} seats · {t.floor === 'first' ? 'First Floor' : 'Ground Floor'}
+                    {t.table_number} · {t.capacity} seats · {floorLabel(t.floor)}
                   </option>
                 ))}
               </select>
@@ -511,8 +541,8 @@ const QRManagement = ({ locationSettings }) => {
                 onChange={(e) => setFloor(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm bg-white"
               >
-                {FLOORS.map((f) => (
-                  <option key={f.id} value={f.id}>
+                {floors.map((f) => (
+                  <option key={f.key} value={f.key}>
                     {f.label}
                   </option>
                 ))}
@@ -674,7 +704,7 @@ const QRManagement = ({ locationSettings }) => {
           <p className="mt-3 text-xs font-bold tracking-wider text-gray-700 uppercase">
             Table #{tableNumber} ·{' '}
             <span style={{ color: currentStyleColor }}>
-              {(FLOORS.find((f) => f.id === floor) || FLOORS[0]).label}
+              {floorLabel(floor)}
             </span>
           </p>
           <div className="flex items-center gap-2 mt-3">
@@ -745,7 +775,7 @@ const QRManagement = ({ locationSettings }) => {
         ) : (
           tableCodeStats.map((tc, idx) => {
             const styleObj = STYLES.find((s) => s.id === tc.style) || STYLES[0];
-            const floorObj = FLOORS.find((f) => f.id === tc.floor) || FLOORS[0];
+            const floorObj = floors.find((f) => f.key === tc.floor) || { key: tc.floor, label: floorLabel(tc.floor) };
             return (
               <div
                 key={tc.id}

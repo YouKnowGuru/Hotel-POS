@@ -3,17 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/api';
 import Notification from './Notification';
 import OrderEntryModal from './OrderEntryModal';
-import { Users, Plus, X, Clock3, Receipt, CircleCheck, Sparkles } from 'lucide-react';
+import { Users, Plus, X, Clock3, Receipt, CircleCheck, Sparkles, Layers, Pencil, Trash2 } from 'lucide-react';
 import useCurrency from '../hooks/useCurrency';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers & constants                                                */
 /* ------------------------------------------------------------------ */
 
-const FLOORS = [
-  { id: 'all', label: 'All Floors' },
-  { id: 'ground', label: 'Ground Floor' },
-  { id: 'first', label: 'First Floor' },
+// Fallback only — the live floor list comes from GET /api/floors so floors
+// added/renamed/deleted by staff are reflected on every page instantly.
+const FALLBACK_FLOORS = [
+  { key: 'ground', label: 'Ground Floor' },
+  { key: 'first', label: 'First Floor' },
 ];
 
 const STATUS_CONFIG = {
@@ -119,6 +120,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
   const navigate = useNavigate();
 
   const [tables, setTables] = useState(initialTables);
+  const [floors, setFloors] = useState(FALLBACK_FLOORS);
   const [activeOrders, setActiveOrders] = useState([]);
   const [selectedTable, setSelectedTable] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -127,7 +129,11 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
   const [activeFloor, setActiveFloor] = useState('all');
   const [isLoaded, setIsLoaded] = useState(false);
   const [showAddTable, setShowAddTable] = useState(false);
+  const [showManageFloors, setShowManageFloors] = useState(false);
   const [newTable, setNewTable] = useState({ capacity: 4, floor: 'ground' });
+  const [newFloorName, setNewFloorName] = useState('');
+  const [renamingFloor, setRenamingFloor] = useState(null);
+  const [renameFloorLabel, setRenameFloorLabel] = useState('');
   const [busyCleaning, setBusyCleaning] = useState({});
   const [, setTick] = useState(0);
 
@@ -229,6 +235,20 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
   }, []);
 
   useEffect(() => { fetchTables(); }, [fetchTables]);
+
+  // Load the floor registry (keys + display labels shared with QR Management).
+  const fetchFloors = useCallback(async () => {
+    try {
+      const res = await authFetch('/api/floors');
+      if (!res.ok) return;
+      const list = await res.json();
+      if (Array.isArray(list) && list.length > 0) {
+        setFloors(list.map((f) => ({ key: f.key, label: f.label })));
+      }
+    } catch (_) { /* offline: keep fallback */ }
+  }, []);
+
+  useEffect(() => { fetchFloors(); }, [fetchFloors]);
 
   /* ---------------------------- handlers ---------------------------- */
   const handleTableClick = (table) => {
@@ -360,6 +380,72 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
     setTimeout(() => setNotification(null), 2500);
   };
 
+  const floorName = (key) =>
+    floors.find((f) => f.key === key)?.label ||
+    String(key).replace(/[-_]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) + ' Floor';
+
+  const handleAddFloor = async () => {
+    const name = newFloorName.trim();
+    if (!name) return;
+    try {
+      const res = await authFetch('/api/floors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not add floor');
+      setNewFloorName('');
+      await fetchFloors();
+      setNotification({ message: data.message || `Floor "${name}" added.`, type: 'success' });
+    } catch (error) {
+      console.error('Error adding floor:', error);
+      setNotification({ message: error.message || 'Error adding floor.', type: 'error' });
+    }
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  const handleRenameFloor = async () => {
+    if (!renamingFloor) return;
+    const label = renameFloorLabel.trim();
+    if (!label) return;
+    try {
+      const res = await authFetch(`/api/floors/${encodeURIComponent(renamingFloor)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not rename floor');
+      setRenamingFloor(null);
+      setRenameFloorLabel('');
+      await fetchFloors();
+      setNotification({ message: data.message || 'Floor renamed.', type: 'success' });
+    } catch (error) {
+      console.error('Error renaming floor:', error);
+      setNotification({ message: error.message || 'Error renaming floor.', type: 'error' });
+    }
+    setTimeout(() => setNotification(null), 2500);
+  };
+
+  const handleDeleteFloor = async (key) => {
+    if (!window.confirm(`Delete floor "${floorName(key)}"? Only empty floors (no tables) can be deleted.`)) return;
+    try {
+      const res = await authFetch(`/api/floors/${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not delete floor');
+      if (activeFloor === key) setActiveFloor('all');
+      await fetchFloors();
+      setNotification({ message: data.message || 'Floor deleted.', type: 'success' });
+    } catch (error) {
+      console.error('Error deleting floor:', error);
+      setNotification({ message: error.message || 'Error deleting floor.', type: 'error' });
+    }
+    setTimeout(() => setNotification(null), 2500);
+  };
+
   /* ---------------------------- derived ---------------------------- */
   const summaryCounts = useMemo(() => {
     const c = { available: 0, occupied: 0, waiting_payment: 0, cleaning: 0, reserved: 0 };
@@ -468,13 +554,13 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
       </div>
 
       {/* Floor tabs */}
-      <div className="flex flex-wrap gap-2 mb-5">
-        {FLOORS.map((f) => {
-          const active = activeFloor === f.id;
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        {[{ key: 'all', label: 'All Floors' }, ...floors].map((f) => {
+          const active = activeFloor === f.key;
           return (
             <button
-              key={f.id}
-              onClick={() => setActiveFloor(f.id)}
+              key={f.key}
+              onClick={() => setActiveFloor(f.key)}
               className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                 active
                   ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md shadow-orange-200/60 scale-[1.02]'
@@ -485,6 +571,14 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
             </button>
           );
         })}
+        <button
+          onClick={() => setShowManageFloors(true)}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:text-orange-600 hover:border-orange-200 transition-all duration-200"
+          title="Add, rename or delete floors"
+        >
+          <Layers className="w-3.5 h-3.5" />
+          Manage Floors
+        </button>
       </div>
 
       {/* Tables grid */}
@@ -697,8 +791,11 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
                   }
                   className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm bg-white"
                 >
-                  <option value="ground">Ground Floor</option>
-                  <option value="first">First Floor</option>
+                  {floors.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -716,6 +813,112 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
                 Add
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Floors Modal */}
+      {showManageFloors && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-modal-in">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Manage Floors</h3>
+              <button
+                onClick={() => {
+                  setShowManageFloors(false);
+                  setRenamingFloor(null);
+                  setNewFloorName('');
+                }}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Add floor */}
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text"
+                maxLength={30}
+                value={newFloorName}
+                onChange={(e) => setNewFloorName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddFloor()}
+                placeholder="e.g. Terrace, Basement"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none text-sm"
+              />
+              <button
+                onClick={handleAddFloor}
+                disabled={!newFloorName.trim()}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold shadow-md hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Floor list with rename/delete */}
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {floors.map((f) =>
+                renamingFloor === f.key ? (
+                  <div key={f.key} className="flex gap-2 items-center">
+                    <input
+                      autoFocus
+                      type="text"
+                      maxLength={50}
+                      value={renameFloorLabel}
+                      onChange={(e) => setRenameFloorLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleRenameFloor();
+                        if (e.key === 'Escape') setRenamingFloor(null);
+                      }}
+                      className="flex-1 px-3 py-2 rounded-xl border border-orange-300 focus:ring-2 focus:ring-orange-100 outline-none text-sm"
+                    />
+                    <button
+                      onClick={handleRenameFloor}
+                      className="px-3 py-2 rounded-xl bg-orange-500 text-white text-xs font-semibold hover:bg-orange-600 transition shrink-0"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setRenamingFloor(null)}
+                      className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 text-xs font-semibold hover:bg-gray-200 transition shrink-0"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    key={f.key}
+                    className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100"
+                  >
+                    <span className="text-sm font-semibold text-gray-700 truncate">
+                      {f.label}
+                    </span>
+                    <span className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => {
+                          setRenamingFloor(f.key);
+                          setRenameFloorLabel(f.label);
+                        }}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition"
+                        title="Rename floor"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteFloor(f.key)}
+                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                        title="Delete floor (only if empty)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 mt-3">
+              Renaming only changes the display name — tables stay on their floor. Floors can be deleted only when no tables are on them.
+            </p>
           </div>
         </div>
       )}

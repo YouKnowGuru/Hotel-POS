@@ -234,11 +234,19 @@ const SubFranchiseManagement = ({ currentUser, locationSettings }) => {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Delete branch "${name}"?`)) return;
+    if (
+      !window.confirm(
+        `Delete branch "${name}"?\n\nThis permanently removes the branch and any staff accounts linked to it. Branches with open orders cannot be deleted.`
+      )
+    )
+      return;
     try {
       const res = await authFetch(`/api/subfranchises/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Delete failed');
-      setNotification({ message: 'Branch removed', type: 'success' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || 'Delete failed');
+      }
+      setNotification({ message: data.message || 'Branch removed', type: 'success' });
       load();
     } catch (e) {
       setNotification({ message: e.message, type: 'error' });
@@ -473,10 +481,12 @@ const BranchCard = ({ sf, isAdmin, isLoaded, idx, onClick, onSuspend, onEdit, on
               Edit
             </button>
           )}
-          {isAdmin && !sf._isHQ && (
+          {isAdmin && (
             <button
               onClick={onDelete}
-              className="w-7 h-7 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 flex items-center justify-center transition"
+              className={`w-7 h-7 rounded-full bg-gray-50 hover:bg-rose-50 text-gray-400 hover:text-rose-500 flex items-center justify-center transition ${
+                sf._isHQ ? 'opacity-50' : ''
+              }`}
               title="Delete branch"
             >
               <Trash2 className="w-3.5 h-3.5" />

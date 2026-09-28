@@ -5,7 +5,6 @@ import {
   ClipboardList,
   Receipt,
   Utensils,
-  Flame,
   ShoppingBag,
   Store,
   HelpCircle,
@@ -186,7 +185,6 @@ const Sidebar = ({
       inventory: '/inventory',
       billing: '/billing',
       reports: '/reports',
-      kds: '/kitchen',
       'qr-management': '/qr-management',
       'takeaway-management': '/takeaway',
       'user-management': '/user-management',
@@ -366,17 +364,6 @@ const Sidebar = ({
                 label="Takeaway"
                 active={activeTab === 'takeaway-management'}
                 onClick={() => handleTabClick('takeaway-management')}
-              />
-            </li>
-          )}
-
-          {canSee('kitchen_display', 'kitchen_display') && (
-            <li>
-              <NavItem
-                icon={Flame}
-                label="Kitchen Display"
-                active={activeTab === 'kds'}
-                onClick={() => handleTabClick('kds')}
               />
             </li>
           )}

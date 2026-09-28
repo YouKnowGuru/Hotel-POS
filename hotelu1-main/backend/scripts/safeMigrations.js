@@ -5,7 +5,7 @@ const { DataTypes } = require("sequelize");
  * alter:true on users caused "Too many keys" and broke orders queries.
  */
 async function runSafeMigrations(sequelize, models = {}) {
-  const { SubFranchise } = models;
+  const { SubFranchise, DiningFloor } = models;
   const qi = sequelize.getQueryInterface();
 
   try {
@@ -246,6 +246,32 @@ async function runSafeMigrations(sequelize, models = {}) {
         } catch (e) {
           console.warn("Migration: dining_tables seed skipped:", e.message);
         }
+      }
+    }
+
+    // ── Dining floors registry (labels shown on floor tabs / pickers) ──
+    if (!tableNames.includes("dining_floors")) {
+      await qi.createTable("dining_floors", {
+        id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+        key: { type: DataTypes.STRING(20), allowNull: false },
+        label: { type: DataTypes.STRING(50), allowNull: false },
+        subfranchise_id: { type: DataTypes.INTEGER, allowNull: true },
+      });
+      console.log("Migration: created dining_floors table");
+    }
+    if (tableNames.includes("dining_floors") && DiningFloor) {
+      try {
+        const count = await DiningFloor.count();
+        if (count === 0) {
+          // Matches the original hardcoded UI list so upgrades look identical.
+          await DiningFloor.bulkCreate([
+            { key: "ground", label: "Ground Floor" },
+            { key: "first", label: "First Floor" },
+          ]);
+          console.log("Migration: seeded default floors (ground, first)");
+        }
+      } catch (e) {
+        console.warn("Migration: dining_floors seed skipped:", e.message);
       }
     }
 
