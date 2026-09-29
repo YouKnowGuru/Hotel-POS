@@ -15,22 +15,34 @@ export const getGlobalTaxDiscount = () => {
   return { taxPercent: 5, discountPercent: 0 };
 };
 
-/** Fetch settings from API and cache in localStorage. */
+/**
+ * Fetch settings from API and cache in localStorage.
+ *
+ * The admin's Billing & Taxation settings are saved as two separate keys
+ * (`taxPercent`, `discountPercent`) via /api/settings/batch. The old code
+ * requested the non-existent `globalTaxDiscount` key, got `value: null`,
+ * and then overwrote the good localStorage cache with 5%/0% defaults on
+ * every call — so the QR menu always displayed the default tax no matter
+ * what the admin configured (while the server charged the real rate).
+ */
 export const fetchAndCacheGlobalSettings = async () => {
   try {
     const { getAPI_URL } = await import("./api");
-    const res = await fetch(`${getAPI_URL()}/api/settings?key=globalTaxDiscount`);
+    const res = await fetch(`${getAPI_URL()}/api/settings`);
     if (res.ok) {
       const data = await res.json();
-      const val = data.value || {};
-      const tax = Number(val.taxPercent);
-      const disc = Number(val.discountPercent);
-      const settings = {
-        taxPercent: isNaN(tax) ? 5 : tax,
-        discountPercent: isNaN(disc) ? 0 : disc,
-      };
-      localStorage.setItem("globalTaxDiscount", JSON.stringify(settings));
-      return settings;
+      // Full settings map (admin/manager) or public defaults map — both
+      // expose taxPercent / discountPercent at the top level.
+      const tax = Number(data?.taxPercent);
+      const disc = Number(data?.discountPercent);
+      if (!Number.isNaN(tax) || !Number.isNaN(disc)) {
+        const settings = {
+          taxPercent: Number.isNaN(tax) ? 5 : tax,
+          discountPercent: Number.isNaN(disc) ? 0 : disc,
+        };
+        localStorage.setItem("globalTaxDiscount", JSON.stringify(settings));
+        return settings;
+      }
     }
   } catch (e) {
     console.warn("Could not fetch settings:", e);

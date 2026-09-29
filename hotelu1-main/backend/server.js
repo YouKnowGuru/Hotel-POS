@@ -57,7 +57,14 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
 const isOriginAllowed = (origin) => {
   if (!origin) return true;
   if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) return true;
-  if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+  // Private-network origins (LAN kiosks / dev machines) — allowed in dev
+  // only. In production the app lives behind Render/Vercel, and an always-on
+  // private-range allowance let any Internet-adjacent 192.168.* host call
+  // the API with credentials.
+  if (
+    process.env.NODE_ENV !== "production" &&
+    /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/.test(origin)
+  ) {
     return true;
   }
   return false;
@@ -720,7 +727,9 @@ function stripProofImages(orders) {
     // the flag and staff panels never learn a screenshot exists. Plain
     // objects also guarantee the two secrets below are really gone from the
     // response instead of being overridden only on the wrapper.
-    const p = typeof o.get === "function" ? o.get({ plain: true }) : o;
+    // Always copy: mutating a plain mock object in place would permanently
+    // strip the stored proof image out of the in-memory demo store.
+    const p = typeof o.get === "function" ? o.get({ plain: true }) : { ...o };
     p.has_payment_proof = !!(p.payment_proof_image || o.payment_proof_image);
     // SECURITY: never serialize the proof bytes or the payment access
     // token. The access token authorizes attaching a payment screenshot
@@ -897,7 +906,16 @@ async function applyOrderScopeToWhere(whereClause, req, query = {}) {
     return whereClause;
   }
   if (scope.type === "main") {
-    whereClause.subfranchise_id = { [Op.is]: null };
+    // Anonymous QR guests poll orders for a specific branch's table; the QR
+    // URL carries ?loc=N which the order create stamped on the rows. Without
+    // this the guest's own branch orders were invisible (HQ-only filter), so
+    // the status card / pay-now button never appeared at branch restaurants.
+    const loc = query.loc ?? query.subfranchise_id;
+    if (!req?.user && loc != null && loc !== "" && Number.isFinite(Number(loc))) {
+      whereClause.subfranchise_id = Number(loc);
+    } else {
+      whereClause.subfranchise_id = { [Op.is]: null };
+    }
     return whereClause;
   }
   if (scope.type === "branch") {
@@ -1040,7 +1058,12 @@ const verifyToken = (req, res, next) => {
           }
           next();
         })
-        .catch(() => next()); // DB hiccup: don't lock out the whole app
+        .catch((e) => {
+          // DB hiccup: don't lock out the whole app, but make it auditable
+          // instead of silently skipping the revocation check.
+          console.warn("Token revocation check skipped (DB error):", e?.message || e);
+          next();
+        });
       return;
     }
     next();
@@ -1437,6 +1460,11 @@ function tableSessionState(orders, tableId) {
 
 function scopeOrdersForUser(orders, user, query = {}) {
   if (!user) {
+    // Demo-mode mirror of the DB rule: honour the QR's ?loc branch stamp.
+    const loc = query.loc ?? query.subfranchise_id;
+    if (loc != null && loc !== "" && Number.isFinite(Number(loc))) {
+      return orders.filter((o) => Number(o.subfranchise_id) === Number(loc));
+    }
     return orders.filter((o) => o.subfranchise_id == null);
   }
   if (user.role === "admin") {
@@ -1637,7 +1665,26 @@ function getItemsSubtotal(items = []) {
  * Returns { subtotal, lines } or null when verification fails.
  */
 async function getVerifiedSubtotal(items = []) {
-  if (!dbConnected || !Array.isArray(items) || items.length === 0) return null;
+  if (!Array.isArray(items) || items.length === 0) return null;
+  // Demo mode: verify against the in-memory mock menu. Previously this
+  // returned null whenever the DB was down, which made POST /api/orders
+  // fail with 400 for EVERY demo-mode order — the mock order path below
+  // was dead code.
+  if (!dbConnected) {
+    const priceById = new Map(
+      mockMenuItems.map((m) => [Number(m.id), Number(m.price)])
+    );
+    let sum = 0;
+    for (const item of items) {
+      const menuItemId = Number(item.productId || item.menuItemId);
+      const qty = Number(item.quantity || item.qty);
+      if (!menuItemId || !Number.isFinite(menuItemId) || !Number.isFinite(qty) || qty <= 0) return null;
+      const price = priceById.get(menuItemId);
+      if (!Number.isFinite(price)) return null;
+      sum += price * qty;
+    }
+    return { subtotal: sum, priceById };
+  }
   const ids = [];
   const qtyById = new Map();
   for (const item of items) {
@@ -1792,7 +1839,10 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
           (o) =>
             orderMatchesTableId(o, table_name) &&
             String(o.type || "").toUpperCase() === "DINE_IN" &&
-            !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status)
+            !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status) &&
+            (linkedSubFranchiseId == null
+              ? o.subfranchise_id == null
+              : Number(o.subfranchise_id) === Number(linkedSubFranchiseId))
         );
       } else {
         openSessions = await Order.findAll({
@@ -1800,6 +1850,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
             table_name: { [Op.in]: tableNameVariants(table_name) },
             type: { [Op.like]: "DINE_IN" },
             status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+            // Table numbers are only unique per branch — without the branch
+            // filter a guest scanning T1 at one restaurant was blocked by
+            // another restaurant's T1 session.
+            subfranchise_id:
+              linkedSubFranchiseId != null
+                ? linkedSubFranchiseId
+                : { [Op.is]: null },
           },
           attributes: ["id", "table_name", "guests", "status", "type", "client_session"],
         });
@@ -2215,17 +2272,15 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
         }
 
         if (status && prevStatus !== status) {
-          // Mock orders are already plain objects, so in-place stripping is
-          // reflected in the res.json(order) below.
-          stripProofImages(order);
+          const strippedForSocket = stripProofImages(order)[0];
           io.emit('order_status_updated', { orderId: req.params.id, status: status });
           if (String(status).toLowerCase() === 'ready') {
-            emitStaffEvent('new_order', order);
+            emitStaffEvent('new_order', strippedForSocket);
             io.emit('order_created');
           }
         }
 
-        return res.json({ message: "Order updated", order });
+        return res.json({ message: "Order updated", order: stripProofImages(order)[0] });
       }
       return res.status(404).json({ message: "Order not found" });
     }
@@ -2421,24 +2476,74 @@ app.get("/api/orders/live-count", optionalToken, async (req, res) => {
 // subfranchise routes); duplicated here because the table routes live above
 // that declaration and referencing a const early throws.
 const tableManageAuth = (req, res, next) => {
-  if (!req.user || !["admin", "franchise"].includes(req.user.role)) {
+  if (!req.user) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  // Managers may manage the floor plan of their own restaurant: branch-
+  // assigned managers get their branch, main-branch (HQ) managers get the
+  // HQ registry. The role matrix grants managers the QR Management panel,
+  // which exposes these actions — so the API must accept them.
+  const role = String(req.user.role || "").toLowerCase();
+  if (!["admin", "franchise", "manager"].includes(role)) {
     return res
       .status(403)
-      .json({ message: "Only admin or franchise owner can manage tables" });
+      .json({ message: "Only admin, franchise owner or manager can manage tables" });
   }
   next();
 };
 
+/**
+ * Ownership check shared by table/floor mutations: franchise owners may
+ * only touch rows that belong to their own locations; branch-assigned
+ * managers only their own branch. Admin passes. Returns true when allowed.
+ */
+async function canManageTableRow(req, subfranchiseId) {
+  if (req.user.role === "admin") return true;
+  if (req.user.role === "franchise") {
+    const locIds = await getFranchiseLocationIds(req.user);
+    return locIds.includes(Number(subfranchiseId));
+  }
+  if (req.user.role === "subfranchise") {
+    return Number(req.user.subfranchise_id) === Number(subfranchiseId);
+  }
+  if (isBranchAssignedStaff(req.user)) {
+    return Number(req.user.subfranchise_id) === Number(subfranchiseId);
+  }
+  return false;
+}
+
 // List tables. Public read of number/floor/capacity only (the QR menu uses
 // it to render the floor picker); staff callers get the full row set
 // including is_reserved/is_active and branch scoping.
-app.get("/api/tables", async (req, res) => {
+// optionalToken: req.user used to be read here but the middleware was never
+// attached, so EVERY caller was treated as anonymous — staff panels never
+// received is_active and soft-deleted tables reappeared on every page.
+app.get("/api/tables", optionalToken, async (req, res) => {
   try {
     if (!dbConnected) return res.json([]);
     const attrs = ["id", "table_number", "label", "floor", "capacity", "is_reserved", "is_active", "subfranchise_id"];
     const isStaff = !!req.user;
+    const where = isStaff ? {} : { is_active: true };
+    // Branch scoping: authenticated staff only see their own restaurant's
+    // tables; anonymous QR guests can filter via the ?loc branch param on
+    // the QR URL. Admin still sees everything.
+    if (isStaff) {
+      const scope = await getBranchScopeForUser(req.user, req.query);
+      if (scope.type === "main") {
+        where.subfranchise_id = { [Op.is]: null };
+      } else if (scope.type === "branch") {
+        where.subfranchise_id = scope.id;
+      } else if (scope.type === "branches") {
+        where.subfranchise_id = scope.ids.length > 0 ? { [Op.in]: scope.ids } : -1;
+      }
+    } else {
+      const loc = req.query.loc;
+      if (loc != null && loc !== "" && Number.isFinite(Number(loc))) {
+        where.subfranchise_id = Number(loc);
+      }
+    }
     const rows = await DiningTable.findAll({
-      where: isStaff ? {} : { is_active: true },
+      where,
       attributes: isStaff ? attrs : ["id", "table_number", "label", "floor", "capacity", "subfranchise_id"],
       order: [["id", "ASC"]],
     });
@@ -2462,7 +2567,15 @@ app.post("/api/tables", verifyToken, tableManageAuth, async (req, res) => {
     }
     const floor = String(req.body.floor || "ground").slice(0, 20);
     const label = req.body.label ? String(req.body.label).slice(0, 50) : null;
-    const subfranchiseId = req.body.subfranchise_id != null ? Number(req.body.subfranchise_id) : null;
+    // Managers are pinned to their own branch; admins may target a branch
+    // via the body, defaulting to HQ. (Previously managers could only ever
+    // create HQ tables even when assigned to a branch.)
+    let subfranchiseId = req.body.subfranchise_id != null ? Number(req.body.subfranchise_id) : null;
+    if (isBranchAssignedStaff(req.user)) {
+      subfranchiseId = Number(req.user.subfranchise_id);
+    } else if (req.user.role === "subfranchise") {
+      subfranchiseId = Number(req.user.subfranchise_id);
+    }
     if (req.user.role === "franchise") {
       const locIds = await getFranchiseLocationIds(req.user);
       if (!locIds.includes(subfranchiseId)) {
@@ -2491,11 +2604,8 @@ app.put("/api/tables/:id", verifyToken, tableManageAuth, async (req, res) => {
   try {
     const table = await DiningTable.findByPk(req.params.id);
     if (!table) return res.status(404).json({ message: "Table not found" });
-    if (req.user.role === "franchise") {
-      const locIds = await getFranchiseLocationIds(req.user);
-      if (!locIds.includes(table.subfranchise_id)) {
-        return res.status(403).json({ message: "This table belongs to another location" });
-      }
+    if (!(await canManageTableRow(req, table.subfranchise_id))) {
+      return res.status(403).json({ message: "This table belongs to another location" });
     }
     const UPDATABLE = ["label", "floor", "capacity", "is_reserved", "is_active"];
     for (const key of UPDATABLE) {
@@ -2526,19 +2636,21 @@ app.delete("/api/tables/:id", verifyToken, tableManageAuth, async (req, res) => 
   try {
     const table = await DiningTable.findByPk(req.params.id);
     if (!table) return res.status(404).json({ message: "Table not found" });
-    if (req.user.role === "franchise") {
-      const locIds = await getFranchiseLocationIds(req.user);
-      if (!locIds.includes(table.subfranchise_id)) {
-        return res.status(403).json({ message: "This table belongs to another location" });
-      }
+    if (!(await canManageTableRow(req, table.subfranchise_id))) {
+      return res.status(403).json({ message: "This table belongs to another location" });
     }
     // Refuse to delete a table that still has an open session — stickers
     // already printed would go dead and seated guests would be orphaned.
+    // Branch-scoped: another restaurant's T1 must not block this one.
     const openOrders = await Order.count({
       where: {
         table_name: { [Op.in]: tableNameVariants(table.table_number) },
         type: { [Op.like]: "DINE_IN" },
         status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+        subfranchise_id:
+          table.subfranchise_id != null
+            ? table.subfranchise_id
+            : { [Op.is]: null },
       },
     });
     if (openOrders > 0) {
@@ -2569,12 +2681,21 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
       typeof req.query.session === "string" && req.query.session
         ? req.query.session.slice(0, 100)
         : null;
+    // Branch stamp carried on the QR URL (?loc=N).
+    const locQuery = req.query.loc;
+    const locId =
+      locQuery != null && locQuery !== "" && Number.isFinite(Number(locQuery))
+        ? Number(locQuery)
+        : null;
     if (!dbConnected) {
       const open = mockOrders.filter(
         (o) =>
           orderMatchesTableId(o, tableId) &&
           String(o.type || "").toUpperCase() === "DINE_IN" &&
-          !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status)
+          !"completed,not_available,NOT_AVAILABLE".split(",").includes(o.status) &&
+          (locId != null
+            ? Number(o.subfranchise_id) === locId
+            : o.subfranchise_id == null)
       );
       const guests = open.reduce((s, o) => s + (Number(o.guests) || 0), 0);
       return res.json({
@@ -2588,6 +2709,10 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
         table_name: { [Op.in]: tableNameVariants(tableId) },
         type: { [Op.like]: "DINE_IN" },
         status: { [Op.notIn]: ["completed", "NOT_AVAILABLE", "not_available"] },
+        // Branch stamp from the QR URL (?loc=N) keeps table numbers from
+        // colliding across restaurants.
+        subfranchise_id:
+          locId != null ? Number(locId) : { [Op.is]: null },
       },
       attributes: ["id", "guests", "client_session"],
     });
@@ -2597,7 +2722,10 @@ app.get("/api/tables/:tableId/status", async (req, res) => {
     let capacity = null;
     try {
       const reg = await DiningTable.findOne({
-        where: { table_number: String(tableId).toUpperCase().startsWith("T") ? String(tableId).toUpperCase() : `T${String(tableId)}` },
+        where: {
+          table_number: String(tableId).toUpperCase().startsWith("T") ? String(tableId).toUpperCase() : `T${String(tableId)}`,
+          subfranchise_id: locId != null ? locId : { [Op.is]: null },
+        },
         attributes: ["is_reserved", "capacity", "is_active"],
       });
       if (reg) {
@@ -2638,21 +2766,37 @@ const humanizeFloor = (key) => {
     .filter(Boolean)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
   const base = words.join(" ") || "Floor";
-  return /floor|storey|storey|level|g|terrace/i.test(key) && /floor/i.test(base)
-    ? base
-    : `${base} Floor`;
+  // Only append "Floor" when the base name doesn't already say it.
+  return /floor|storey|level|terrace/i.test(base) ? base : `${base} Floor`;
 };
 
-app.get("/api/floors", async (_req, res) => {
+app.get("/api/floors", optionalToken, async (req, res) => {
   try {
     if (!dbConnected) return res.json([]);
     // Registry rows first; union any straggler floor keys found on tables
     // (e.g. created before the registry existed) so tabs never lose a floor
-    // that still has tables on it.
+    // that still has tables on it. Branch-scoped so one restaurant never
+    // sees another's floors.
+    const tableWhere = { is_active: true };
+    if (req.user) {
+      const scope = await getBranchScopeForUser(req.user, req.query);
+      if (scope.type === "main") {
+        tableWhere.subfranchise_id = { [Op.is]: null };
+      } else if (scope.type === "branch") {
+        tableWhere.subfranchise_id = scope.id;
+      } else if (scope.type === "branches") {
+        tableWhere.subfranchise_id = scope.ids.length > 0 ? { [Op.in]: scope.ids } : -1;
+      }
+    } else {
+      const loc = req.query.loc;
+      if (loc != null && loc !== "" && Number.isFinite(Number(loc))) {
+        tableWhere.subfranchise_id = Number(loc);
+      }
+    }
     const [floors, tables] = await Promise.all([
-      DiningFloor.findAll({ order: [["id", "ASC"]] }),
+      DiningFloor.findAll({ order: [["id", "ASC"]], where: tableWhere.subfranchise_id !== undefined ? { subfranchise_id: tableWhere.subfranchise_id } : {} }),
       DiningTable.findAll({
-        where: { is_active: true },
+        where: tableWhere,
         attributes: ["floor"],
         group: ["floor"],
         raw: true,
@@ -2688,11 +2832,16 @@ app.post("/api/floors", verifyToken, tableManageAuth, async (req, res) => {
         return res.status(403).json({ message: "You can only add floors to your own locations" });
       }
     }
-    const exists = await DiningFloor.findOne({ where: { key, subfranchise_id: subfranchiseId } });
+    // Managers are pinned to their own branch when creating floors.
+    let sfId = subfranchiseId;
+    if (isBranchAssignedStaff(req.user) || req.user.role === "subfranchise") {
+      sfId = Number(req.user.subfranchise_id);
+    }
+    const exists = await DiningFloor.findOne({ where: { key, subfranchise_id: sfId } });
     if (exists) {
       return res.status(409).json({ message: `Floor "${label}" already exists` });
     }
-    const floor = await DiningFloor.create({ key, label, subfranchise_id: subfranchiseId });
+    const floor = await DiningFloor.create({ key, label, subfranchise_id: sfId });
     res.status(201).json({ message: `Floor "${floor.label}" added`, floor });
   } catch (err) {
     console.error("Error creating floor:", err);
@@ -2711,15 +2860,15 @@ app.put("/api/floors/:key", verifyToken, tableManageAuth, async (req, res) => {
       // Floors derived from tables (no registry row) can be adopted on first rename.
       const inUse = await DiningTable.count({ where: { floor: key, is_active: true } });
       if (inUse === 0) return res.status(404).json({ message: "Floor not found" });
+      if (!(await canManageTableRow(req, null))) {
+        return res.status(403).json({ message: "This floor belongs to another location" });
+      }
       const label = req.body.label ? String(req.body.label).trim().slice(0, 50) : humanizeFloor(key);
       const created = await DiningFloor.create({ key, label });
       return res.json({ message: `Floor renamed to "${label}"`, floor: created });
     }
-    if (req.user.role === "franchise") {
-      const locIds = await getFranchiseLocationIds(req.user);
-      if (floor.subfranchise_id != null && !locIds.includes(floor.subfranchise_id)) {
-        return res.status(403).json({ message: "This floor belongs to another location" });
-      }
+    if (!(await canManageTableRow(req, floor.subfranchise_id))) {
+      return res.status(403).json({ message: "This floor belongs to another location" });
     }
     const label = req.body.label ? String(req.body.label).trim().slice(0, 50) : null;
     if (!label) return res.status(400).json({ message: "New floor name is required" });
@@ -2745,11 +2894,8 @@ app.delete("/api/floors/:key", verifyToken, tableManageAuth, async (req, res) =>
     }
     const floor = await DiningFloor.findOne({ where: { key } });
     if (!floor) return res.status(404).json({ message: "Floor not found" });
-    if (req.user.role === "franchise") {
-      const locIds = await getFranchiseLocationIds(req.user);
-      if (floor.subfranchise_id != null && !locIds.includes(floor.subfranchise_id)) {
-        return res.status(403).json({ message: "This floor belongs to another location" });
-      }
+    if (!(await canManageTableRow(req, floor.subfranchise_id))) {
+      return res.status(403).json({ message: "This floor belongs to another location" });
     }
     await floor.destroy();
     res.json({ message: `Floor "${floor.label}" deleted` });
@@ -3096,6 +3242,13 @@ app.get("/api/orders/status/delivered", verifyToken, async (req, res) => {
 // Complete order and mark bill as paid
 app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
   try {
+    // ROLE GATE: closing an order marks revenue as collected. Waiters must
+    // not be able to do it — the Billing UI restricts the button to
+    // admin/manager/cashier, and now the API does too.
+    const paymentAllowedRoles = ["admin", "manager", "cashier", "franchise", "subfranchise"];
+    if (!paymentAllowedRoles.includes(String(req.user?.role || "").toLowerCase())) {
+      return res.status(403).json({ message: "Only managers or cashiers can complete payments" });
+    }
     const paymentMethod = req.body.payment_method || "cash";
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
@@ -3344,6 +3497,15 @@ app.post("/register", strictLimiter, verifyToken, async (req, res) => {
     return res.status(403).json({ message: "Only admins can register users" });
   }
   const { username, password, role, name } = req.body;
+  // Validate inputs + role (previously any string was accepted as a role,
+  // creating accounts that could never log in or that bypassed role checks).
+  if (!username || !password || !role || !name) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+  const validRegisterRoles = ["admin", "franchise", "subfranchise", "manager", "waiter", "cashier"];
+  if (!validRegisterRoles.includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
+  }
   try {
     if (!dbConnected) {
       return res
@@ -4760,6 +4922,18 @@ function diffHours(start, end) {
   return Math.max(0, (new Date(end) - new Date(start)) / 3600000);
 }
 
+// Helper: last calendar day of a month as YYYY-MM-DD, computed in LOCAL time.
+// `new Date(y, m, 0).toISOString()` shifts the date back one day in UTC+
+// timezones (Bhutan is UTC+6), silently excluding the last working day of
+// every month from attendance and payroll date ranges.
+function lastDayOfMonthStr(year, month) {
+  const y = parseInt(year);
+  const m = parseInt(month);
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+  const d = new Date(y, m, 0);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // Helper: scope attendance where-clause by user role.
 // Branch-assigned staff (incl. managers) only see their own restaurant's
 // records; main-branch staff see HQ rows; franchise owners see their
@@ -4799,7 +4973,7 @@ app.get('/api/attendance', authenticate, async (req, res) => {
     }
     if (month && year) {
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-      const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().slice(0, 10);
+      const endDate = lastDayOfMonthStr(year, month) || new Date(parseInt(year), parseInt(month), 0).toISOString().slice(0, 10);
       where.date = { [Op.between]: [startDate, endDate] };
     } else if (year && !month) {
       where.date = { [Op.between]: [`${year}-01-01`, `${year}-12-31`] };
@@ -4843,7 +5017,7 @@ app.get('/api/attendance/summary', authenticate, async (req, res) => {
     const m = parseInt(month) || (new Date().getMonth() + 1);
     const y = parseInt(year) || new Date().getFullYear();
     const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
-    const endDate = new Date(y, m, 0).toISOString().slice(0, 10);
+    const endDate = lastDayOfMonthStr(y, m) || new Date(y, m, 0).toISOString().slice(0, 10);
     const where = await scopedAttendanceWhere(req);
     where.date = { [Op.between]: [startDate, endDate] };
     const records = await Attendance.findAll({ where });
@@ -5073,7 +5247,7 @@ app.get('/api/payroll', authenticate, async (req, res) => {
     }
     if (year && month) {
       const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-      const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+      const endDate = lastDayOfMonthStr(year, month) || new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
       where.pay_period_start = { [Op.lte]: endDate };
       where.pay_period_end   = { [Op.gte]: startDate };
     }
@@ -5106,7 +5280,7 @@ app.get('/api/payroll/summary', authenticate, async (req, res) => {
     const where = {};
     if (year && month) {
       const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-      const endDate = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+      const endDate = lastDayOfMonthStr(year, month) || new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
       where.pay_period_start = { [Op.lte]: endDate };
       where.pay_period_end   = { [Op.gte]: startDate };
     }
@@ -5244,7 +5418,7 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
     if (!year || !month) return res.status(400).json({ message: 'year and month are required' });
 
     const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-    const endDate   = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+    const endDate   = lastDayOfMonthStr(year, month) || new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
     const periodLabel = new Date(parseInt(year), parseInt(month)-1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
     const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
     const weekendDays = Array.from({ length: daysInMonth }, (_, i) => {

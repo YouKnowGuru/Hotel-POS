@@ -152,19 +152,24 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
   const fetchOrders = useCallback(async () => {
     try {
       const t = tableId || '1';
+      // Branch stamp from the QR URL (?loc=N) — without it the server
+      // filtered anonymous polls to HQ rows and branch guests could never
+      // see their own orders.
+      const locId = new URLSearchParams(window.location.search).get('loc');
+      const locQs = locId ? `&loc=${encodeURIComponent(locId)}` : '';
       // Table-side occupancy check (best effort — if it fails we assume the
       // table is free and let the server-side order guard decide). The
       // device session marks "this phone owns the open order", so the
       // current guest is never blocked or warned on their own screen.
       const mySession = ensureSession(t);
-      fetch(`${getAPI_URL()}/api/tables/${encodeURIComponent(formatTableName(t))}/status?session=${encodeURIComponent(mySession)}`)
+      fetch(`${getAPI_URL()}/api/tables/${encodeURIComponent(formatTableName(t))}/status?session=${encodeURIComponent(mySession)}${locQs}`)
         .then(r => r.ok ? r.json() : null)
         .then(st => {
           setTableStatus(st?.status === 'occupied' ? 'occupied' : 'free');
           setTableMine(!!st?.mine);
         })
         .catch(() => {});
-      const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}`);
+      const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}${locQs}`);
       const d = await r.json();
       if (Array.isArray(d)) {
         // Filter to only orders placed by THIS device so customers on the same

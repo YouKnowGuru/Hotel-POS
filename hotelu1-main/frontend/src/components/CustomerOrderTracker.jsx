@@ -36,7 +36,8 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
 
   useEffect(() => {
     fetchOrderStatus();
-    const interval = setInterval(fetchOrderStatus, 2000); // Refresh every 2 seconds
+    // Refresh every 2 seconds; the on-screen toggle pauses/resumes it.
+    const interval = autoRefresh ? setInterval(fetchOrderStatus, 2000) : null;
 
     // Also subscribe to socket so customers get the bell the instant
     // the kitchen hits "Mark Ready" — without waiting up to 2 s for the
@@ -68,7 +69,7 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
     }
 
     return () => {
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
       if (socket) {
         try {
           socket.disconnect();
@@ -78,7 +79,7 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
       }
     };
     // eslint-disable-next-line
-  }, [orderId]);
+  }, [orderId, autoRefresh]);
 
   const handleOrderReady = () => {
     playOrderReadyBell();
