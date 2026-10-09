@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
+import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
 import { formatTableName, tableIdMatches, isActiveTableOrder } from '../utils/tableOrderUtils';
 import useCurrency from '../hooks/useCurrency';
 
@@ -886,11 +887,27 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
               <div style={s.drawerFoot}>
                 <div style={s.bill}>
                   <div style={s.billRow}><span style={s.billLabel}>Subtotal</span><span style={s.billVal}>{fmt(totals.subtotal)}</span></div>
-                  {totals.taxPercent > 0 && <div style={s.billRow}><span style={s.billLabel}>Tax ({totals.taxPercent}%)</span><span style={s.billVal}>{fmt(totals.taxAmount)}</span></div>}
+                  {totals.discountAmount > 0 && (
+                    <div style={s.billRow}><span style={s.billLabel}>Discount</span><span style={{ ...s.billVal, color: '#ef4444' }}>-{fmt(totals.discountAmount)}</span></div>
+                  )}
+                  {/* Service Charge — shown always, separate from GST */}
+                  <div style={{ ...s.billRow, color: '#1a5c3e' }}>
+                    <span style={{ ...s.billLabel, color: '#1a5c3e', fontWeight: 700 }}>Service Charge ({SERVICE_CHARGE_PERCENT}%)</span>
+                    <span style={{ ...s.billVal, color: '#1a5c3e', fontWeight: 700 }}>+{fmt(totals.serviceCharge)}</span>
+                  </div>
+                  {totals.taxPercent > 0 && (
+                    <div style={s.billRow}>
+                      <span style={s.billLabel}>GST ({totals.taxPercent}%)</span>
+                      <span style={s.billVal}>{fmt(totals.taxAmount)}</span>
+                    </div>
+                  )}
                   <div style={{ ...s.billRow, borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: 12, marginTop: 6 }}>
-                    <span style={s.billTotal}>Total</span>
+                    <span style={s.billTotal}>Grand Total</span>
                     <span style={s.billTotalVal}>{fmt(totals.total)}</span>
                   </div>
+                  <p style={{ margin: '6px 0 0', fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+                    Incl. {SERVICE_CHARGE_PERCENT}% service charge + {totals.taxPercent}% GST
+                  </p>
                 </div>
 
                 {/* ── Payment method selector ── */}

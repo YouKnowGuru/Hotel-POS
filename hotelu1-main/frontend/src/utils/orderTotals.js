@@ -1,3 +1,4 @@
+import { SERVICE_CHARGE_PERCENT } from './receiptPrint';
 /** Read global tax/discount from localStorage (synced by Sidebar). */
 export const getGlobalTaxDiscount = () => {
   try {
@@ -52,19 +53,29 @@ export const fetchAndCacheGlobalSettings = async () => {
 
 export const calculateOrderTotals = (subtotal, settings = null) => {
   const { taxPercent, discountPercent } = settings || getGlobalTaxDiscount();
-  const safeSubtotal = Number(subtotal) || 0;
-  const discountAmount = safeSubtotal * (discountPercent / 100);
-  const afterDiscount = safeSubtotal - discountAmount;
-  const taxAmount = afterDiscount * (taxPercent / 100);
-  const total = Math.round((afterDiscount + taxAmount) * 100) / 100;
+  const safeSubtotal    = Number(subtotal) || 0;
+  const discountAmount  = safeSubtotal * (discountPercent / 100);
+  const afterDiscount   = safeSubtotal - discountAmount;
+
+  // 10% service charge (fixed, goes to Service Charge ledger)
+  const scPct           = SERVICE_CHARGE_PERCENT;
+  const serviceCharge   = afterDiscount * (scPct / 100);
+  const afterServiceCharge = afterDiscount + serviceCharge;
+
+  // GST on (afterDiscount + serviceCharge)
+  const taxAmount = afterServiceCharge * (taxPercent / 100);
+  const total     = Math.round((afterServiceCharge + taxAmount) * 100) / 100;
 
   return {
-    subtotal: Math.round(safeSubtotal * 100) / 100,
-    discount: discountPercent,
+    subtotal:            Math.round(safeSubtotal      * 100) / 100,
+    discount:            discountPercent,
     discountPercent,
-    discountAmount: Math.round(discountAmount * 100) / 100,
+    discountAmount:      Math.round(discountAmount    * 100) / 100,
+    serviceChargePercent: scPct,
+    serviceCharge:       Math.round(serviceCharge     * 100) / 100,
+    afterServiceCharge:  Math.round(afterServiceCharge* 100) / 100,
     taxPercent,
-    taxAmount: Math.round(taxAmount * 100) / 100,
+    taxAmount:           Math.round(taxAmount         * 100) / 100,
     total,
   };
 };
