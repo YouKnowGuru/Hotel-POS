@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Download, Printer, Calendar, TrendingUp, Receipt, Filter,
   ChevronDown, RefreshCw, CheckCircle, AlertCircle, Percent,
-  Layers, ArrowUpRight, Search, X,
+  Layers, ArrowUpRight, Search, X, Users, DivideSquare,
 } from 'lucide-react';
 import { authFetch } from '../utils/api';
 import useCurrency from '../hooks/useCurrency';
@@ -102,6 +102,9 @@ const ServiceChargeLedger = ({ locationSettings }) => {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [orderType,     setOrderType]     = useState('all');
   const [searchQuery,   setSearchQuery]   = useState('');
+  // Waiter distribution
+  const [distribution, setDistribution] = useState(null);
+  const [distLoading,  setDistLoading]  = useState(false);
 
   const loadSettings = useCallback(() => {
     try {
@@ -137,6 +140,27 @@ const ServiceChargeLedger = ({ locationSettings }) => {
   }, []);
 
   useEffect(() => { loadSettings(); fetchOrders(); }, [loadSettings, fetchOrders]);
+
+  // Fetch waiter distribution whenever year/month filter changes
+  const fetchDistribution = useCallback(async () => {
+    setDistLoading(true);
+    try {
+      const qs = [
+        selectedYear  !== 'all' ? `year=${selectedYear}`  : '',
+        selectedMonth !== 'all' ? `month=${selectedMonth}` : '',
+      ].filter(Boolean).join('&');
+      const res  = await authFetch(`/api/service-charge/distribution${qs ? '?' + qs : ''}`);
+      const data = await res.json();
+      setDistribution(data);
+    } catch {
+      setDistribution(null);
+    } finally {
+      setDistLoading(false);
+    }
+  }, [selectedYear, selectedMonth]);
+
+  useEffect(() => { fetchDistribution(); }, [fetchDistribution]);
+
 
   const enriched = useMemo(
     () => orders.map((o) => ({ ...o, _sc: calcServiceCharge(o, taxPercent) })),
@@ -503,6 +527,98 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── Waiter Distribution Panel ───────────────────────────── */}
+      <div className="mt-5 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: TEAL + '15' }}>
+              <Users className="w-4 h-4" style={{ color: TEAL }} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-800">Waiter Service Charge Distribution</h2>
+              <p className="text-[11px] text-gray-400">Total pool divided equally among all active waiters</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {distribution && (
+              <span className="text-xs font-semibold px-3 py-1 rounded-full" style={{ background: TEAL + '12', color: TEAL }}>
+                {distribution.waiterCount} waiter{distribution.waiterCount !== 1 ? 's' : ''}
+              </span>
+            )}
+            <button
+              onClick={fetchDistribution}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs font-medium shadow-sm transition"
+            >
+              <RefreshCw className="w-3 h-3" /> Refresh
+            </button>
+          </div>
+        </div>
+
+        {distLoading ? (
+          <div className="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {[1,2,3,4].map((i) => <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />)}
+          </div>
+        ) : !distribution || distribution.waiterCount === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3">
+              <Users className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-semibold text-gray-500 mb-1">No active waiters found</p>
+            <p className="text-xs text-gray-400">Add waiter accounts in User Management to enable distribution.</p>
+          </div>
+        ) : (
+          <div className="p-5">
+            {/* Summary bar */}
+            <div className="flex flex-wrap items-center gap-4 mb-5 p-4 rounded-xl" style={{ background: TEAL + '08', border: `1px solid ${TEAL}20` }}>
+              <div className="flex items-center gap-2">
+                <DivideSquare className="w-4 h-4" style={{ color: TEAL }} />
+                <span className="text-sm font-semibold" style={{ color: TEAL }}>
+                  {fmt(distribution.totalServiceCharge)} ÷ {distribution.waiterCount} waiters
+                </span>
+              </div>
+              <span className="text-gray-300">•</span>
+              <span className="text-sm font-bold text-gray-800">
+                Each waiter gets: <span style={{ color: TEAL }}>{fmt(distribution.sharePerWaiter)}</span>
+              </span>
+              <span className="text-gray-300">•</span>
+              <span className="text-xs text-gray-500">
+                from {distribution.totalOrders} paid order{distribution.totalOrders !== 1 ? 's' : ''} 
+                {' '}({distribution.period !== 'all-time' ? `in ${distribution.period}` : 'all time'})
+              </span>
+            </div>
+
+            {/* Waiter cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+              {distribution.waiters.map((w, i) => (
+                <div
+                  key={w.id}
+                  className="rounded-xl p-4 border transition hover:shadow-md"
+                  style={{ borderColor: TEAL + '25', background: `linear-gradient(135deg, ${TEAL}08, ${TEAL}04)` }}
+                >
+                  {/* Avatar */}
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-base mb-3"
+                    style={{ background: `hsl(${(i * 47 + 158) % 360}, 55%, 42%)` }}
+                  >
+                    {(w.name || w.username || '?')[0].toUpperCase()}
+                  </div>
+                  <p className="text-sm font-bold text-gray-800 truncate mb-0.5">{w.name || w.username}</p>
+                  <p className="text-[10px] text-gray-400 truncate mb-2">{w.email || 'Waiter'}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Share</span>
+                    <span className="text-sm font-extrabold" style={{ color: TEAL }}>{fmt(w.share)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 text-[11px] text-gray-400 text-center">
+              💡 This share is automatically added to each waiter's <strong>tips_shared</strong> when payroll is generated for this period.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

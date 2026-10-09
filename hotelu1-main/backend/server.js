@@ -5415,6 +5415,95 @@ app.post('/api/payroll', authenticate, async (req, res) => {
   }
 });
 
+// ─── Service Charge Distribution ─────────────────────────────────────────────
+// GET /api/service-charge/distribution?year=2026&month=10
+// Returns total service charge collected in a period and the per-waiter share.
+app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
+  try {
+    if (!['admin', 'manager'].includes(req.user.role))
+      return res.status(403).json({ message: 'Admin/Manager only' });
+
+    const { year, month } = req.query;
+    const SC_PERCENT  = 10; // fixed 10%
+
+    // Build date range filter (optional — if not supplied, return all-time)
+    let dateFilter = {};
+    if (year && month) {
+      const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
+      const endDate   = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+      dateFilter = { paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] } };
+    } else if (year) {
+      const startDate = `${year}-01-01`;
+      const endDate   = `${year}-12-31`;
+      dateFilter = { paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] } };
+    }
+
+    // Fetch all paid orders in the period
+    const paidOrders = await Order.findAll({
+      where: {
+        [Op.or]: [
+          { status: 'completed' }, { status: 'paid' },
+          { payment_status: 'paid' }, { bill_status: 'paid' },
+        ],
+        ...dateFilter,
+      },
+    });
+
+    // Sum up the service charge portion from each order's total
+    // We need the GST rate from settings to back-calculate SC from total
+    let taxPercent = 5;
+    try {
+      const taxSetting = await Settings.findOne({ where: { key: 'taxPercent' } });
+      if (taxSetting) taxPercent = parseFloat(taxSetting.value) || 5;
+    } catch (_) {}
+
+    const scFactor  = 1 + SC_PERCENT / 100;   // 1.10
+    const gstFactor = 1 + taxPercent / 100;   // 1.05
+    const divisor   = scFactor * gstFactor;    // e.g. 1.155
+
+    let totalServiceCharge = 0;
+    let totalOrders = 0;
+    paidOrders.forEach(o => {
+      const paidTotal = parseFloat(o.total) || 0;
+      if (paidTotal > 0) {
+        const subtotal = paidTotal / divisor;
+        totalServiceCharge += subtotal * (SC_PERCENT / 100);
+        totalOrders++;
+      }
+    });
+    totalServiceCharge = Math.round(totalServiceCharge * 100) / 100;
+
+    // Count active waiters
+    const waiters = await User.findAll({
+      where: { role: 'waiter', is_active: true },
+      attributes: ['id', 'username', 'name', 'email'],
+    });
+
+    const waiterCount = waiters.length;
+    const sharePerWaiter = waiterCount > 0
+      ? Math.round((totalServiceCharge / waiterCount) * 100) / 100
+      : 0;
+
+    res.json({
+      period:           year && month ? `${year}-${String(month).padStart(2,'0')}` : year || 'all-time',
+      totalOrders,
+      totalServiceCharge,
+      waiterCount,
+      sharePerWaiter,
+      scPercent:        SC_PERCENT,
+      taxPercent,
+      waiters: waiters.map(w => ({
+        id:    w.id,
+        name:  w.name || w.username,
+        email: w.email,
+        share: sharePerWaiter,
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error computing service charge distribution', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
+  }
+});
+
 // POST /api/payroll/generate - auto-generate payroll from attendance data
 app.post('/api/payroll/generate', authenticate, async (req, res) => {
   try {
@@ -5447,6 +5536,34 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
 
     const created = [];
     const skipped = [];
+
+    // ── Service charge distribution for this pay period ─────────────────
+    // Sum SC from all orders paid during the period, divide by active waiter count.
+    const SC_PERCENT_PAYROLL = 10;
+    let totalSCForPeriod = 0;
+    try {
+      const paidInPeriod = await Order.findAll({
+        where: {
+          [Op.or]: [{ status: 'completed' }, { status: 'paid' }, { payment_status: 'paid' }],
+          paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] },
+        },
+      });
+      let taxPct = 5;
+      try { const ts = await Settings.findOne({ where: { key: 'taxPercent' } }); if (ts) taxPct = parseFloat(ts.value) || 5; } catch (_) {}
+      const scF = 1 + SC_PERCENT_PAYROLL / 100;
+      const gF  = 1 + taxPct / 100;
+      paidInPeriod.forEach(o => {
+        const paid = parseFloat(o.total) || 0;
+        if (paid > 0) totalSCForPeriod += (paid / (scF * gF)) * (SC_PERCENT_PAYROLL / 100);
+      });
+    } catch (_) {}
+    // Count waiter-role users in the attendance data
+    const waiterUserIds = Object.entries(byUser)
+      .filter(([, recs]) => recs[0]?.user_role === 'waiter')
+      .map(([uid]) => uid);
+    const waiterCount = waiterUserIds.length || 1;
+    const scSharePerWaiter = parseFloat((totalSCForPeriod / waiterCount).toFixed(2));
+    // ─────────────────────────────────────────────────────────────────────
 
     for (const [userId, records] of Object.entries(byUser)) {
       // Check if payroll already exists for this user+period
@@ -5501,8 +5618,11 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
         hra, transport, meals, medical, other_allowances: otherAllw, total_allowances: totalAllwc,
         tax: taxAmt, provident_fund: pfAmt, insurance,
         late_deduction: lateDeduction, absent_deduction: absentDeduction, total_deductions: totalDed,
-        performance_bonus: perfBonus, festival_bonus: 0, tips_shared: 0,
-        gross_salary: parseFloat(grossSalary.toFixed(2)), net_salary: netSalary,
+        performance_bonus: perfBonus, festival_bonus: 0,
+        // Only waiters share the service charge pool
+        tips_shared: userRole === 'waiter' ? scSharePerWaiter : 0,
+        gross_salary: parseFloat((grossSalary + (userRole === 'waiter' ? scSharePerWaiter : 0)).toFixed(2)),
+        net_salary:   parseFloat((netSalary   + (userRole === 'waiter' ? scSharePerWaiter : 0)).toFixed(2)),
         status: 'draft', created_by: req.user.id,
       });
       created.push(record);
