@@ -43,6 +43,7 @@ const NotificationsPage = lazy(() => import('./NotificationsPage'));
 const SettingsPage = lazy(() => import('./SettingsPage'));
 const StaffByBranch = lazy(() => import('./StaffByBranch'));
 const GSTLedger = lazy(() => import('./GSTLedger'));
+const ServiceChargeLedger = lazy(() => import('./ServiceChargeLedger'));
 const AttendanceSystem = lazy(() => import('./AttendanceSystem'));
 const PayrollSystem = lazy(() => import('./PayrollSystem'));
 
@@ -511,6 +512,16 @@ const App = () => {
               <RoleBasedRoute allowedRoles={['admin', 'manager']}>
                 <MenuLayout>
                   <GSTLedger locationSettings={locationSettings} />
+                </MenuLayout>
+              </RoleBasedRoute>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/service-charge" element={
+            <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['admin', 'manager']}>
+                <MenuLayout>
+                  <ServiceChargeLedger locationSettings={locationSettings} />
                 </MenuLayout>
               </RoleBasedRoute>
             </ProtectedRoute>

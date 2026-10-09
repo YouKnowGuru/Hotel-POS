@@ -12,6 +12,7 @@ import {
   Receipt,
   Wallet,
   BookOpen,
+  Percent,
 } from 'lucide-react';
 import useCurrency from '../hooks/useCurrency';
 import {
@@ -21,6 +22,7 @@ import {
   calculateTotals as calcReceiptTotalsShared,
   openReceiptForPrint,
   formatPaymentLabel,
+  SERVICE_CHARGE_PERCENT,
 } from '../utils/receiptPrint';
 
 /* ------------------------------------------------------------------ */
@@ -211,6 +213,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
         subtotal: 0,
         discount: 0,
         discountAmount: 0,
+        afterDiscount: 0,
+        serviceChargePercent: SERVICE_CHARGE_PERCENT,
+        serviceCharge: 0,
+        afterServiceCharge: 0,
         taxPercent: 0,
         tax: 0,
         total: 0,
@@ -225,14 +231,22 @@ const BillingPage = ({ locationSettings, currentUser }) => {
         discountTypeParam === 'percent' ? subtotal * (discount / 100) : discount;
     }
     const afterDiscount = Math.max(0, subtotal - discountAmount);
+
+    // 10% service charge
+    const serviceCharge = afterDiscount * (SERVICE_CHARGE_PERCENT / 100);
+    const afterServiceCharge = afterDiscount + serviceCharge;
+
     const effectiveTaxRate = taxRateParam !== null ? taxRateParam : taxRate;
-    const tax = afterDiscount * effectiveTaxRate;
-    const total = afterDiscount + tax;
+    const tax = afterServiceCharge * effectiveTaxRate;
+    const total = afterServiceCharge + tax;
     return {
       subtotal,
       discount,
       discountAmount,
       afterDiscount,
+      serviceChargePercent: SERVICE_CHARGE_PERCENT,
+      serviceCharge,
+      afterServiceCharge,
       taxPercent: effectiveTaxRate * 100,
       tax,
       total,
@@ -323,6 +337,8 @@ const BillingPage = ({ locationSettings, currentUser }) => {
             paid_amount: totals.total || selectedOrder.total,
             discount: discountPercent,
             tax_rate: taxRate,
+            service_charge_percent: SERVICE_CHARGE_PERCENT,
+            service_charge_amount: totals.serviceCharge || 0,
           }),
         }
       );
@@ -710,12 +726,24 @@ const BillingPage = ({ locationSettings, currentUser }) => {
                 )}
                 {discountPercent > 0 && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">After Discount</span>
+                    <span className="text-gray-500">
+                      After Discount
+                    </span>
                     <span className="text-gray-900 font-medium">
                       {fmt(currentOrderTotals.afterDiscount)}
                     </span>
                   </div>
                 )}
+                {/* Service Charge — separate from GST */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#1a5c3e' }}>
+                    <Percent className="w-3.5 h-3.5" />
+                    Service Charge ({SERVICE_CHARGE_PERCENT}%)
+                  </span>
+                  <span className="font-semibold" style={{ color: '#1a5c3e' }}>
+                    +{fmt(currentOrderTotals.serviceCharge)}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-500 font-semibold">
                     GST ({manualTaxRate}%)
@@ -725,7 +753,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                  <span className="text-base font-bold text-gray-900">Total</span>
+                  <span className="text-base font-bold text-gray-900">Grand Total</span>
                   <span className="text-lg font-bold text-orange-500">
                     {fmt(currentOrderTotals.total)}
                   </span>

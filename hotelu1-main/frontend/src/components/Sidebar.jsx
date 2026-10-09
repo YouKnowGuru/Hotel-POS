@@ -24,6 +24,7 @@ import {
   BadgePercent,
   CalendarClock,
   Banknote,
+  Percent,
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
 import { useNotifications } from '../contexts/NotificationsContext';
@@ -194,6 +195,7 @@ const Sidebar = ({
       notifications: '/notifications',
       settings: '/settings',
       'gst-ledger': '/gst-ledger',
+      'service-charge': '/service-charge',
       attendance: '/attendance',
       payroll: '/payroll',
     };
@@ -404,6 +406,17 @@ const Sidebar = ({
                 label="GST Ledger"
                 active={activeTab === 'gst-ledger'}
                 onClick={() => handleTabClick('gst-ledger')}
+              />
+            </li>
+          )}
+
+          {canSee('reports', 'view_reports') && !isFranchiseLogin && (
+            <li>
+              <NavItem
+                icon={Percent}
+                label="Service Charge"
+                active={activeTab === 'service-charge'}
+                onClick={() => handleTabClick('service-charge')}
               />
             </li>
           )}

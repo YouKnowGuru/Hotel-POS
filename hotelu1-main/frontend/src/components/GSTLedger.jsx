@@ -25,7 +25,7 @@ import {
 import { authFetch } from '../utils/api';
 // BUNDLE: exceljs (~3 MB minified) is loaded only when the user exports.
 import useCurrency from '../hooks/useCurrency';
-import { loadRestaurantInfo } from '../utils/receiptPrint';
+import { loadRestaurantInfo, SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
 
 /* ─── helpers ────────────────────────────────────────────────────────── */
 
@@ -63,33 +63,50 @@ const guessCategory = (name = '') => {
 };
 
 /**
- * Use order.total (the actual paid grand total) as source of truth.
- * GST = total - subtotal, where subtotal = total / (1 + taxPct/100).
+ * Extract GST from an order's total.
+ *
+ * Formula:
+ *   total = subtotal × (1 + SC/100) × (1 + GST/100)
+ *   → subtotal   = total / [(1 + SC/100) × (1 + GST/100)]
+ *   → serviceCharge = subtotal × SC/100
+ *   → gst        = (subtotal + serviceCharge) × GST/100
+ *
+ * Returns { subtotal, serviceCharge, gst, total }
  */
 const calcGST = (order, taxPercent) => {
   const paidTotal = Number(order.total) || 0;
   const tPct = Number(taxPercent) || 0;
+  const scPct = SERVICE_CHARGE_PERCENT; // fixed 10%
 
   if (paidTotal > 0 && tPct > 0) {
-    const subtotal = paidTotal / (1 + tPct / 100);
-    const gst      = paidTotal - subtotal;
+    const scFactor  = 1 + scPct / 100;  // 1.10
+    const gstFactor = 1 + tPct / 100;  // 1.05
+    const subtotal       = paidTotal / (scFactor * gstFactor);
+    const serviceCharge  = subtotal * (scPct / 100);
+    const afterSC        = subtotal + serviceCharge;
+    const gst            = afterSC * (tPct / 100);
     return {
-      subtotal: Math.round(subtotal * 100) / 100,
-      gst:      Math.round(gst      * 100) / 100,
-      total:    Math.round(paidTotal * 100) / 100,
+      subtotal:      Math.round(subtotal      * 100) / 100,
+      serviceCharge: Math.round(serviceCharge * 100) / 100,
+      gst:           Math.round(gst           * 100) / 100,
+      total:         Math.round(paidTotal     * 100) / 100,
     };
   }
 
+  // Fallback: compute from items (no service charge info available)
   const subtotal = (order.items || []).reduce(
     (s, it) => s + (Number(it.price) || 0) * (it.quantity || it.qty || 1),
     0
   );
-  const gst   = subtotal * (tPct / 100);
-  const total = subtotal + gst;
+  const serviceCharge = subtotal * (scPct / 100);
+  const afterSC       = subtotal + serviceCharge;
+  const gst   = afterSC * (tPct / 100);
+  const total = afterSC + gst;
   return {
-    subtotal: Math.round(subtotal * 100) / 100,
-    gst:      Math.round(gst      * 100) / 100,
-    total:    Math.round(total    * 100) / 100,
+    subtotal:      Math.round(subtotal      * 100) / 100,
+    serviceCharge: Math.round(serviceCharge * 100) / 100,
+    gst:           Math.round(gst           * 100) / 100,
+    total:         Math.round(total         * 100) / 100,
   };
 };
 

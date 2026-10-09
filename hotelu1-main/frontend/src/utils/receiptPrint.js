@@ -44,6 +44,9 @@ export const groupItemsByName = (items) => {
   return Object.values(grouped);
 };
 
+/** Fixed service charge rate applied to all orders (10%) */
+export const SERVICE_CHARGE_PERCENT = 10;
+
 /**
  * Load the active tax + discount preferences saved in Settings →
  * Billing & Taxation. Falls back to a sensible default if nothing
@@ -70,11 +73,16 @@ export const loadTaxDiscountSettings = () => {
 };
 
 /**
- * Compute totals for a receipt using the configured tax + discount.
- * The math is always consistent (subtotal − discount + tax = grand
- * total), so the printed bill never has a mismatched line.
+ * Compute totals for a receipt.
  *
- * Tax is calculated as a single BST percentage.
+ * Calculation order (per Paradise Tomza menu):
+ *   1. subtotal   = sum of item prices
+ *   2. discount   = applied to subtotal
+ *   3. afterDiscount = subtotal - discount
+ *   4. serviceCharge = 10% of afterDiscount  → goes to Service Charge ledger
+ *   5. afterServiceCharge = afterDiscount + serviceCharge
+ *   6. tax (GST)  = taxPercent% of afterServiceCharge  → goes to GST ledger
+ *   7. total      = afterServiceCharge + tax
  */
 export const calculateTotals = (
   order,
@@ -82,6 +90,7 @@ export const calculateTotals = (
     taxPercent = 5,
     discountPercent = 0,
     discountType = 'percent',
+    serviceChargePercent = SERVICE_CHARGE_PERCENT,
   } = {}
 ) => {
   const empty = {
@@ -90,6 +99,9 @@ export const calculateTotals = (
     discountType: 'percent',
     discountAmount: 0,
     afterDiscount: 0,
+    serviceChargePercent: SERVICE_CHARGE_PERCENT,
+    serviceCharge: 0,
+    afterServiceCharge: 0,
     taxPercent: 0,
     tax: 0,
     total: 0,
@@ -111,9 +123,15 @@ export const calculateTotals = (
   }
   const afterDiscount = Math.max(0, subtotal - discountAmount);
 
+  // 10% service charge on after-discount amount
+  const scPct = Number(serviceChargePercent ?? SERVICE_CHARGE_PERCENT) || 0;
+  const serviceCharge = afterDiscount * (scPct / 100);
+  const afterServiceCharge = afterDiscount + serviceCharge;
+
+  // GST on (afterDiscount + serviceCharge)
   const tPct = Number(taxPercent) || 0;
-  const tax = afterDiscount * (tPct / 100);
-  const total = afterDiscount + tax;
+  const tax = afterServiceCharge * (tPct / 100);
+  const total = afterServiceCharge + tax;
 
   return {
     subtotal,
@@ -121,6 +139,9 @@ export const calculateTotals = (
     discountType,
     discountAmount,
     afterDiscount,
+    serviceChargePercent: scPct,
+    serviceCharge,
+    afterServiceCharge,
     taxPercent: tPct,
     tax,
     total,
@@ -269,7 +290,8 @@ export const buildCustomerReceiptHtml = (order, totals, info, options = {}) => {
              ).toFixed(2)}</span></div>`
           : ''
       }
-      <div class="row small bold"><span>BST (${Number(taxPercent).toFixed(
+      <div class="row small svc"><span>Service Charge (${Number(totals.serviceChargePercent ?? 10).toFixed(0)}%)</span><span>${Number(totals.serviceCharge ?? 0).toFixed(2)}</span></div>
+      <div class="row small bold"><span>GST (${Number(taxPercent).toFixed(
         2
       )}%)</span><span>${Number(totals.tax).toFixed(2)}</span></div>
       <div class="dashed"></div>
@@ -343,6 +365,7 @@ export const RECEIPT_STYLES = `
   table.items td { padding: 3px 0; vertical-align: top; }
   td.num, th.num { text-align: right; }
   .item-name { word-break: break-word; }
+  .svc { color: #1a5c3e; }
   .grand {
     font-size: 15px;
     font-weight: bold;
