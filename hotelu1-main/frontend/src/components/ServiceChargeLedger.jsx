@@ -15,8 +15,11 @@ const isOrderPaid = (o) => {
   const p = String(o?.payment_status || '').toLowerCase();
   return s === 'completed' || s === 'paid' || b === 'paid' || p === 'paid' || !!o?.paid_at;
 };
-const getOrderDate = (o) =>
-  new Date(o.paid_at || o.delivered_at || o.updated_at || o.timestamp);
+const getOrderDate = (o) => {
+  const raw = o?.paid_at || o?.delivered_at || o?.updated_at || o?.timestamp || o?.createdAt || o?.created_at;
+  const d = raw ? new Date(raw) : new Date();
+  return isNaN(d.getTime()) ? new Date() : d;
+};
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
   'July','August','September','October','November','December',
@@ -34,6 +37,7 @@ const TEAL = '#1a5c3e';
  * total = subtotal * (1 + SC%) * (1 + GST%)
  */
 const calcServiceCharge = (order, taxPercent) => {
+  if (!order) return { subtotal: 0, serviceCharge: 0, gst: 0, total: 0 };
   const paidTotal = Number(order.total) || 0;
   const tPct  = Number(taxPercent) || 0;
   const scPct = SERVICE_CHARGE_PERCENT; // 10
@@ -51,8 +55,13 @@ const calcServiceCharge = (order, taxPercent) => {
       total:         Math.round(paidTotal* 100) / 100,
     };
   }
-  const subtotal = (order.items || []).reduce(
-    (s, it) => s + (Number(it.price)||0)*(it.quantity||it.qty||1), 0
+  const rawItems = Array.isArray(order.items)
+    ? order.items
+    : typeof order.items === 'string'
+      ? (() => { try { return JSON.parse(order.items); } catch { return []; } })()
+      : [];
+  const subtotal = rawItems.reduce(
+    (s, it) => s + (Number(it?.price) || 0) * (it?.quantity || it?.qty || 1), 0
   );
   const sc    = subtotal * (scPct / 100);
   const afterSC = subtotal + sc;
@@ -103,8 +112,15 @@ const ServiceChargeLedger = ({ locationSettings }) => {
   const [orderType,     setOrderType]     = useState('all');
   const [searchQuery,   setSearchQuery]   = useState('');
   // Waiter distribution
-  const [distribution, setDistribution] = useState(null);
-  const [distLoading,  setDistLoading]  = useState(false);
+  const [distribution, setDistribution] = useState({
+    waiters: [],
+    waiterCount: 0,
+    totalOrders: 0,
+    totalServiceCharge: 0,
+    sharePerWaiter: 0,
+    period: 'all-time',
+  });
+  const [distLoading,  setDistLoading]  = useState(true);
 
   const loadSettings = useCallback(() => {
     try {
@@ -151,9 +167,23 @@ const ServiceChargeLedger = ({ locationSettings }) => {
       ].filter(Boolean).join('&');
       const res  = await authFetch(`/api/service-charge/distribution${qs ? '?' + qs : ''}`);
       const data = await res.json();
-      setDistribution(data);
+      // Guard: ensure the response has the expected shape
+      if (data && typeof data === 'object' && !data.message) {
+        setDistribution({
+          ...data,
+          waiters:        Array.isArray(data.waiters) ? data.waiters : [],
+          waiterCount:    Number(data.waiterCount)    || 0,
+          totalOrders:    Number(data.totalOrders)    || 0,
+          totalServiceCharge: Number(data.totalServiceCharge) || 0,
+          sharePerWaiter: Number(data.sharePerWaiter) || 0,
+          period:         data.period || 'all-time',
+        });
+      } else {
+        // API returned an error message or unexpected shape — show empty state
+        setDistribution({ waiters: [], waiterCount: 0, totalOrders: 0, totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time' });
+      }
     } catch {
-      setDistribution(null);
+      setDistribution({ waiters: [], waiterCount: 0, totalOrders: 0, totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time' });
     } finally {
       setDistLoading(false);
     }
@@ -163,16 +193,16 @@ const ServiceChargeLedger = ({ locationSettings }) => {
 
 
   const enriched = useMemo(
-    () => orders.map((o) => ({ ...o, _sc: calcServiceCharge(o, taxPercent) })),
+    () => (Array.isArray(orders) ? orders : []).map((o) => ({ ...o, _sc: calcServiceCharge(o, taxPercent) })),
     [orders, taxPercent]
   );
 
   const availableYears = useMemo(() => {
-    const s = new Set(enriched.map((o) => getOrderDate(o).getFullYear()));
+    const s = new Set((enriched || []).map((o) => getOrderDate(o).getFullYear()).filter((y) => !isNaN(y)));
     return ['all', ...Array.from(s).sort((a, b) => b - a)];
   }, [enriched]);
 
-  const filtered = useMemo(() => enriched.filter((o) => {
+  const filtered = useMemo(() => (enriched || []).filter((o) => {
     const d = getOrderDate(o);
     if (selectedYear  !== 'all' && d.getFullYear() !== Number(selectedYear)) return false;
     if (selectedMonth !== 'all' && String(d.getMonth()+1).padStart(2,'0') !== selectedMonth) return false;
@@ -182,9 +212,14 @@ const ServiceChargeLedger = ({ locationSettings }) => {
       if (orderType === 'takeaway' && t !== 'TAKEAWAY') return false;
     }
     if (searchQuery.trim()) {
-      const q     = searchQuery.toLowerCase();
-      const items = (o.items || []).map((it) => it.name || '').join(' ').toLowerCase();
-      if (!String(o.id).includes(q) && !items.includes(q) && !(o.table_name||'').toLowerCase().includes(q))
+      const q = searchQuery.toLowerCase();
+      const rawItems = Array.isArray(o?.items)
+        ? o.items
+        : typeof o?.items === 'string'
+          ? (() => { try { return JSON.parse(o.items); } catch { return []; } })()
+          : [];
+      const items = rawItems.map((it) => it?.name || '').join(' ').toLowerCase();
+      if (!String(o?.id || '').includes(q) && !items.includes(q) && !(o?.table_name||'').toLowerCase().includes(q))
         return false;
     }
     return true;
@@ -560,7 +595,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
           <div className="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {[1,2,3,4].map((i) => <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />)}
           </div>
-        ) : !distribution || distribution.waiterCount === 0 ? (
+        ) : !distribution || (distribution.waiterCount === 0 && (!distribution.waiters || distribution.waiters.length === 0)) ? (
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3">
               <Users className="w-6 h-6" />
@@ -591,7 +626,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
 
             {/* Waiter cards */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-              {distribution.waiters.map((w, i) => (
+              {(distribution.waiters || []).map((w, i) => (
                 <div
                   key={w.id}
                   className="rounded-xl p-4 border transition hover:shadow-md"

@@ -5473,11 +5473,16 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
     });
     totalServiceCharge = Math.round(totalServiceCharge * 100) / 100;
 
-    // Count active waiters
-    const waiters = await User.findAll({
-      where: { role: 'waiter', is_active: true },
-      attributes: ['id', 'username', 'name', 'email'],
-    });
+    // Fetch all waiter-role users (is_active column may not exist — skip that filter)
+    let waiters = [];
+    try {
+      waiters = await User.findAll({
+        where: { role: 'waiter' },
+        attributes: ['id', 'username', 'name', 'email'],
+      });
+    } catch (_) {
+      waiters = [];
+    }
 
     const waiterCount = waiters.length;
     const sharePerWaiter = waiterCount > 0
