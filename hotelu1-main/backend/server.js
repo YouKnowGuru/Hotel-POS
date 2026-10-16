@@ -6,6 +6,8 @@ if (dns.setDefaultResultOrder) {
 // Load environment variables from .env file
 require('dotenv').config();
 
+const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
@@ -127,6 +129,11 @@ app.use(helmet({ contentSecurityPolicy: false }));
 // while allowing a normal phone screenshot (the client also validates 3 MB).
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
+
+const frontendBuildPath = path.join(__dirname, "../frontend/build");
+if (fs.existsSync(frontendBuildPath)) {
+  app.use(express.static(frontendBuildPath));
+}
 // Enable ETag responses. Express computes a strong ETag for JSON bodies, so
 // the many short-interval GET polls from admin/waiter/customer panels get a
 // tiny 304 instead of re-downloading the full orders list every few seconds
@@ -155,15 +162,17 @@ const strictLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.get("/", (_req, res) => {
-  res.json({
-    name: "Hotel POS System API",
-    status: "online",
-    database: dbConnected ? "connected" : "disconnected",
-    healthCheck: "/healthz",
-    message: "This is the backend API server. Please access the application through your Vercel frontend URL.",
+if (!fs.existsSync(frontendBuildPath)) {
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "Hotel POS System API",
+      status: "online",
+      database: dbConnected ? "connected" : "disconnected",
+      healthCheck: "/healthz",
+      message: "This is the backend API server. Build the frontend to serve the full web application.",
+    });
   });
-});
+}
 
 app.get("/healthz", (_req, res) => {
   res.json({ status: "ok", db: dbConnected, time: new Date().toISOString() });
@@ -5910,8 +5919,15 @@ app.delete('/api/payroll/:id', authenticate, async (req, res) => {
   }
 });
 
-// ============================================================================
-// ============================================================================
+// Fallback for React Single Page Application (SPA) routing
+if (fs.existsSync(frontendBuildPath)) {
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/healthz") || req.path.startsWith("/socket.io")) {
+      return next();
+    }
+    res.sendFile(path.join(frontendBuildPath, "index.html"));
+  });
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 

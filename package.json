@@ -2,11 +2,12 @@
   "name": "hotel-pos-system",
   "version": "1.0.0",
   "description": "Hotel POS System",
+  "main": "server.js",
   "scripts": {
-    "build": "npm --prefix hotelu1-main/frontend install --legacy-peer-deps && npm --prefix hotelu1-main/frontend run build",
-    "start": "npm --prefix hotelu1-main/frontend start",
-    "dev": "npm --prefix hotelu1-main/frontend run dev",
+    "build": "npm --prefix hotelu1-main/backend install && npm --prefix hotelu1-main/frontend install --legacy-peer-deps && npm --prefix hotelu1-main/frontend run build",
+    "start": "node hotelu1-main/backend/server.js",
+    "backend": "npm --prefix hotelu1-main/backend start",
     "frontend": "npm --prefix hotelu1-main/frontend start",
-    "backend": "npm --prefix hotelu1-main/backend start"
+    "dev": "npm --prefix hotelu1-main/frontend run dev"
   }
 }
