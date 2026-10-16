@@ -3,8 +3,10 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
+const path = require('path');
 const { Sequelize } = require('sequelize');
 
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 require('dotenv').config();
 
 /**

@@ -3,11 +3,13 @@ if (dns.setDefaultResultOrder) {
   dns.setDefaultResultOrder('ipv4first');
 }
 
-// Load environment variables from .env file
-require('dotenv').config();
-
 const path = require("path");
 const fs = require("fs");
+
+// Load environment variables from .env file (check backend folder, then cwd)
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config();
+
 const crypto = require("crypto");
 const express = require("express");
 const rateLimit = require("express-rate-limit");
@@ -36,6 +38,8 @@ const AuditLog = require("./models/AuditLog");
 const bcrypt = require("bcrypt");
 const http = require("http");
 const { Server } = require("socket.io");
+// Customer email notifications for the public delivery-ordering flow.
+const mailer = require("./utils/mailer");
 
 const app = express();
 // Behind a reverse proxy (Render, Vercel fronts, nginx) the TCP peer is the
@@ -1883,6 +1887,37 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     } else {
       guests = null;
     }
+
+    // ── Home-delivery (public web ordering) customer details ──────────
+    // A public-website DELIVERY order must carry the customer's contact
+    // details so kitchen/waiter/admin staff know who to serve, where to
+    // deliver, and where to email the automatic order/payment updates.
+    const isDeliveryOrder = String(type || "").toUpperCase() === "DELIVERY";
+    let customerName = typeof req.body.customer_name === "string" ? req.body.customer_name.trim() : "";
+    let customerPhone = typeof req.body.customer_phone === "string" ? req.body.customer_phone.trim() : "";
+    let customerEmail = typeof req.body.customer_email === "string" ? req.body.customer_email.trim() : "";
+    let deliveryAddress = typeof req.body.delivery_address === "string" ? req.body.delivery_address.trim() : "";
+    if (isDeliveryOrder) {
+      if (customerName.length < 2 || customerName.length > 80) {
+        return res.status(400).json({ message: "Please enter your full name" });
+      }
+      const phoneDigits = customerPhone.replace(/[\s-()+]/g, "");
+      if (!/^[+]?\d{7,15}$/.test(phoneDigits)) {
+        return res.status(400).json({ message: "Please enter a valid phone number (7–15 digits)" });
+      }
+      if (!customerEmail || !mailer.isValidEmail(customerEmail)) {
+        return res.status(400).json({ message: "Please enter a valid email address" });
+      }
+      if (deliveryAddress.length < 10 || deliveryAddress.length > 500) {
+        return res.status(400).json({ message: "Please enter your full delivery address (at least 10 characters)" });
+      }
+      if (customerEmail.length > 254) customerEmail = customerEmail.slice(0, 254);
+      if (customerName.length > 80) customerName = customerName.slice(0, 80);
+      if (customerPhone.length > 24) customerPhone = customerPhone.slice(0, 24);
+    } else {
+      // Non-delivery orders ignore (and never trust) these fields.
+      customerName = null; customerPhone = null; customerEmail = null; deliveryAddress = null;
+    }
     // Anonymous QR device session (opaque token from the guest's phone).
     // Never trusted for anything except "same device placed a previous open
     // order at this table" checks; capped in size.
@@ -1986,11 +2021,16 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         subfranchise_id: linkedSubFranchiseId,
         timestamp: new Date(),
         token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_email: customerEmail,
+        delivery_address: deliveryAddress,
         ...totals,
       };
       mockOrders.push(newOrder);
       // Cash orders and non-payment-first orders go straight to the kitchen.
       if (!paymentFirst || isCashPayment) io.emit("order_created");
+      if (isDeliveryOrder) mailer.sendOrderPlacedEmail(newOrder);
       const responseOrder = { ...newOrder, paymentAccessToken };
       delete responseOrder.payment_access_token;
       return res.json(responseOrder);
@@ -2022,6 +2062,10 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
             payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
             payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
             payment_access_token: paymentAccessToken,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_email: customerEmail,
+            delivery_address: deliveryAddress,
           },
           { transaction: t }
         );
@@ -2049,6 +2093,8 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       return res.status(500).json({ message: "Could not save the order. Please try again." });
     }
     if (!paymentFirst || isCashPayment) io.emit("order_created");
+    // Automatic customer email #1: order placed (delivery orders only).
+    if (isDeliveryOrder) mailer.sendOrderPlacedEmail(orderWithItems);
     const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
     responseOrder.paymentAccessToken = paymentAccessToken;
     delete responseOrder.payment_access_token;
@@ -2186,6 +2232,10 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
       if (decision === "approve") {
         emitStaffEvent("new_order", strippedOrder);
         io.emit("order_created");
+        // Customer email #2: QR payment approved by admin.
+        mailer.sendPaymentApprovedEmail(order);
+      } else {
+        mailer.sendRejectionEmail(order, rejectionReason);
       }
       return res.json({ message: `Payment ${decision}d`, order: strippedOrder });
     }
@@ -2204,6 +2254,13 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
     if (decision === "approve") {
       emitStaffEvent("new_order", strippedOrder);
       io.emit("order_created");
+      // Customer email #2: QR payment approved by admin (GST & service
+      // charge for this order become reportable from this moment — the
+      // ledger only counts orders whose payment_status is "paid").
+      mailer.sendPaymentApprovedEmail(order);
+    } else {
+      // Customer email: payment rejected — invite a new attempt.
+      mailer.sendRejectionEmail(order, rejectionReason);
     }
     res.json({ message: `Payment ${decision}d`, order: strippedOrder });
   } catch (err) {
@@ -2227,6 +2284,8 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
         order.payment_status = "paid";
         order.payment_verified_by = req.user.id;
         order.payment_verified_at = new Date();
+        // Customer email #2: payment approved while approving the order.
+        mailer.sendPaymentApprovedEmail(order);
       }
       const strippedOrder = stripProofImages(order)[0];
       io.emit("order_status_updated", { orderId: order.id, status: "ready" });
@@ -2247,6 +2306,9 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
       order.payment_verified_at = new Date();
     }
     await order.save();
+    // Customer email #2: payment approved (QR flow) when the admin
+    // directly approves the order.
+    if (String(order.payment_status) === "paid") mailer.sendPaymentApprovedEmail(order);
     const strippedOrder = stripProofImages(order)[0];
     io.emit("order_status_updated", { orderId: order.id, status: "ready" });
     emitStaffEvent("new_order", strippedOrder);
@@ -3247,16 +3309,23 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
         order.delivered_at = new Date();
         order.bill_generated = true;
         if (req.body.collect_cash) {
-          order.payment_status = "paid";
+          // Cash-on-delivery: the staff member has physically received the
+          // cash. GST & service charge are only RECORDED after an admin
+          // signs it off (see /api/orders/:id/approve-cash), so we stop at
+          // "cash_pending_admin" and never set paid_at here.
+          order.payment_status = "cash_pending_admin";
           order.payment_method = "cash";
-          order.paid_at = new Date().toISOString();
         }
         
         // Emit socket event to update dashboard
         io.emit('order_status_updated', { orderId: req.params.id, status: 'delivered', payment_status: order.payment_status });
+        // Customer email #3: food delivered.
+        mailer.sendDeliveredEmail(order);
         
         return res.json({
-          message: "Order delivered and bill generated",
+          message: req.body.collect_cash
+            ? "Order delivered — cash received, waiting for admin approval"
+            : "Order delivered and bill generated",
           order,
         });
       }
@@ -3282,16 +3351,21 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     order.delivered_at = new Date();
     order.bill_generated = true;
     if (collect_cash) {
-      order.payment_status = "paid";
+      // Cash-on-delivery: staff physically received the cash, but per the
+      // business rule GST & service charge are only recorded (the ledgers
+      // only count "paid" orders) AFTER an admin approves. Setting
+      // paid_at here would instantly make the order appear as paid in
+      // the GST/Service-Charge ledgers, so it is deliberately withheld.
+      order.payment_status = "cash_pending_admin";
       order.payment_method = "cash";
-      order.paid_at = new Date();
-      order.payment_verified_by = req.user?.id || null;
-      order.payment_verified_at = new Date();
+      order.paid_at = null;
     }
     await order.save();
 
     // Emit socket event to update dashboard
     io.emit('order_status_updated', { orderId: id, status: 'delivered', payment_status: order.payment_status });
+    // Customer email #3: food delivered (COD or prepaid).
+    mailer.sendDeliveredEmail(order);
 
     // Auto-generate bill using globally configured Tax & Discount
     const settings = await getTaxDiscountSettings();
@@ -3311,7 +3385,9 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     });
 
     res.json({
-      message: "Order delivered and bill generated",
+      message: collect_cash
+        ? "Order delivered — cash received by staff, waiting for admin approval"
+        : "Order delivered and bill generated",
       order,
       bill,
     });
@@ -3319,6 +3395,65 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     res
       .status(500)
       .json({ message: "Error confirming delivery", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
+  }
+});
+
+// Admin approval of a cash-on-delivery payment collected by staff.
+// Business rule: the waiter marks the cash as received at the doorstep,
+// but GST and service charge only become reportable (the ledgers only
+// count orders whose payment_status is "paid") once an admin signs off.
+app.put("/api/orders/:id/approve-cash", verifyToken, async (req, res) => {
+  try {
+    const allowedRoles = ["admin", "manager", "franchise", "subfranchise"];
+    if (!allowedRoles.includes(String(req.user?.role || "").toLowerCase())) {
+      return res.status(403).json({ message: "Only admin/managers can approve cash payments" });
+    }
+    if (!dbConnected) {
+      const order = mockOrders.find((o) => o.id === Number(req.params.id));
+      if (!order || !(await assertOrderInScope(req, order, res))) return;
+      if (order.payment_status !== "cash_pending_admin") {
+        return res.status(409).json({ message: "This order is not waiting for cash approval" });
+      }
+      order.payment_status = "paid";
+      order.paid_at = new Date().toISOString();
+      order.payment_verified_by = req.user.id;
+      order.payment_verified_at = new Date();
+      const strippedOrder = stripProofImages(order)[0];
+      io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
+      io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
+      mailer.sendPaymentReceivedEmail(order);
+      return res.json({ message: "COD payment approved — GST & service charge recorded", order: strippedOrder });
+    }
+    const order = await Order.findByPk(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!(await assertOrderInScope(req, order, res))) return;
+    if (order.payment_status !== "cash_pending_admin") {
+      return res.status(409).json({ message: "This order is not waiting for cash approval" });
+    }
+    order.payment_status = "paid";
+    order.paid_at = new Date();
+    order.payment_verified_by = req.user.id;
+    order.payment_verified_at = new Date();
+    await order.save();
+
+    const bill = await Bill.findOne({ where: { orderId: order.id } });
+    if (bill) {
+      bill.bill_status = "paid";
+      bill.paid_at = new Date();
+      bill.payment_method = "cash";
+      await bill.save();
+    }
+
+    logAudit(req, "payment.cod.approve", "order", order.id, {});
+    io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
+    io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
+    // Customer email #4: COD payment confirmed.
+    mailer.sendPaymentReceivedEmail(order);
+    res.json({ message: "COD payment approved — GST & service charge recorded", order });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Could not approve cash payment", error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
   }
 });
 
@@ -3426,6 +3561,10 @@ app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
 
     // Emit socket event to update dashboard
     io.emit('order_status_updated', { orderId: id, status: 'completed', payment_status: 'paid' });
+
+    // Customer email: payment completed (fallback path via the Billing
+    // page — covers the "payment completion" notification requirement).
+    mailer.sendPaymentReceivedEmail(order.get({ plain: true }));
 
     // Update bill status to paid
     const bill = await Bill.findOne({ where: { orderId: id } });
