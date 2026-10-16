@@ -57,9 +57,8 @@ const GlassIconBtn = ({ onClick, label, children, className = '', hide = '' }) =
       onClick={onClick}
       className={`${hide} relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${className}`}
       style={{
-        background: hovered ? 'var(--glass-bg)' : 'transparent',
-        border: hovered ? '1px solid var(--glass-border)' : '1px solid transparent',
-        backdropFilter: hovered ? 'blur(8px)' : 'none',
+        background: hovered ? 'var(--card-bg)' : 'transparent',
+        border: hovered ? '1px solid var(--border)' : '1px solid transparent',
         color: hovered ? 'var(--text-primary)' : undefined,
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
       }}
@@ -268,11 +267,9 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
     <header
       className="sticky top-0 z-30"
       style={{
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(20px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-        borderBottom: '1px solid var(--glass-border)',
-        boxShadow: 'var(--shadow-glass)',
+        background: 'var(--card-bg)',
+        borderBottom: '1px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <div className="flex items-center gap-3 px-4 sm:px-6 h-16">
@@ -307,24 +304,22 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               style={{
                 background: searchFocused
                   ? 'var(--card-bg)'
-                  : 'var(--glass-bg)',
+                  : 'var(--card-bg)',
                 border: searchFocused
                   ? '1.5px solid var(--border)'
-                  : '1.5px solid var(--glass-border)',
+                  : '1.5px solid var(--border)',
                 boxShadow: searchFocused
-                  ? 'var(--shadow-glass-hover)'
+                  ? 'var(--shadow-md)'
                   : 'none',
-                backdropFilter: 'blur(12px)',
                 color: 'var(--text-primary)',
               }}
             />
             <span
               className="hidden sm:inline-flex absolute right-3 top-1/2 -translate-y-1/2 items-center gap-1 text-[11px] px-2 py-1 rounded-lg font-mono transition-all duration-200"
               style={{
-                background: 'var(--glass-bg)',
-                border: '1px solid var(--glass-border)',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border)',
                 color: 'var(--text-muted)',
-                backdropFilter: 'blur(4px)',
               }}
             >
               <Command className="w-3 h-3" />
@@ -336,12 +331,10 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <div
                 className="absolute left-0 right-0 top-full mt-2 overflow-hidden z-50"
                 style={{
-                  background: 'var(--glass-bg)',
-                  backdropFilter: 'blur(24px) saturate(1.5)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                  background: 'var(--card-bg)',
                   borderRadius: '16px',
-                  border: '1px solid var(--glass-border)',
-                  boxShadow: 'var(--shadow-glass-hover)',
+                  border: '1px solid var(--border)',
+                  boxShadow: 'var(--shadow-md)',
                 }}
               >
                 {searchQuery.trim() === '' ? (
@@ -351,8 +344,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                     <div
                       className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center"
                       style={{
-                        background: 'var(--glass-bg)',
-                        border: '1px solid var(--glass-border)',
+                        background: 'var(--card-bg)',
+                        border: '1px solid var(--border)',
                       }}
                     >
                       <Search className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
@@ -396,7 +389,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                     <div
                       className="px-4 py-2.5 flex items-center justify-between text-[11px]"
                       style={{
-                        borderTop: '1px solid var(--glass-border)',
+                        borderTop: '1px solid var(--border)',
                         color: 'var(--text-muted)',
                       }}
                     >
@@ -405,8 +398,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                           <kbd
                             className="px-1.5 py-0.5 rounded-md text-[10px] font-mono"
                             style={{
-                              background: 'var(--glass-bg)',
-                              border: '1px solid var(--glass-border)',
+                              background: 'var(--card-bg)',
+                              border: '1px solid var(--border)',
                               color: 'var(--text-muted)',
                             }}
                           >
@@ -418,8 +411,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                           <kbd
                             className="px-1.5 py-0.5 rounded-md text-[10px] font-mono"
                             style={{
-                              background: 'var(--glass-bg)',
-                              border: '1px solid var(--glass-border)',
+                              background: 'var(--card-bg)',
+                              border: '1px solid var(--border)',
                               color: 'var(--text-muted)',
                             }}
                           >
@@ -457,7 +450,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <span
                 className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center pointer-events-none"
                 style={{
-                  background: 'linear-gradient(135deg, #F0C050, #D4A017, #A16207)',
+                  background: '#D4A017',
                   boxShadow: '0 2px 8px rgba(212,160,23,0.4), 0 0 0 2px rgba(255,255,255,0.9)',
                   letterSpacing: '-0.02em',
                 }}
@@ -509,21 +502,20 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               style={{
                 border: open
                   ? '1px solid rgba(212,160,23,0.5)'
-                  : '1px solid var(--glass-border)',
+                  : '1px solid var(--border)',
                 background: open
                   ? 'rgba(212,160,23,0.08)'
                   : 'transparent',
-                backdropFilter: open ? 'blur(8px)' : 'none',
               }}
               onMouseEnter={(e) => {
                 if (!open) {
                   e.currentTarget.style.borderColor = 'var(--border)';
-                  e.currentTarget.style.background = 'var(--glass-bg)';
+                  e.currentTarget.style.background = 'var(--card-bg)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!open) {
-                  e.currentTarget.style.borderColor = 'var(--glass-border)';
+                  e.currentTarget.style.borderColor = 'var(--border)';
                   e.currentTarget.style.background = 'transparent';
                 }
               }}
@@ -531,8 +523,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <span
                 className="w-8 h-8 rounded-lg text-white text-sm font-bold flex items-center justify-center"
                 style={{
-                  background: 'linear-gradient(135deg, #1E3A8A, #2563EB)',
-                  boxShadow: 'var(--shadow-glass)',
+                  background: '#4F46E5',
+                  boxShadow: 'var(--shadow-sm)',
                 }}
               >
                 {initials}
@@ -559,13 +551,11 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <div
                 className="absolute right-0 mt-2 w-56 py-1 z-50"
                 style={{
-                  background: 'var(--glass-bg)',
-                  backdropFilter: 'blur(24px) saturate(1.5)',
-                  WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                  background: 'var(--card-bg)',
                   borderRadius: '16px',
-                  border: '1px solid var(--glass-border)',
+                  border: '1px solid var(--border)',
                   boxShadow:
-                    'var(--shadow-glass-hover)',
+                    'var(--shadow-md)',
                   animation: 'scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
                   transformOrigin: 'top right',
                 }}
@@ -574,16 +564,16 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                 <div
                   className="px-4 py-3 mx-2 mt-1 rounded-xl"
                   style={{
-                    background: 'var(--glass-bg)',
-                    border: '1px solid var(--glass-border)',
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <span
                       className="w-10 h-10 rounded-xl text-white text-base font-bold flex items-center justify-center shrink-0"
                       style={{
-                        background: 'linear-gradient(135deg, #1E3A8A, #2563EB)',
-                        boxShadow: 'var(--shadow-glass)',
+                        background: '#4F46E5',
+                        boxShadow: 'var(--shadow-sm)',
                       }}
                     >
                       {initials}
@@ -603,7 +593,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                   </div>
                 </div>
 
-                <div className="my-1 mx-3" style={{ height: '1px', background: 'var(--glass-bg)' }} />
+                <div className="my-1 mx-3" style={{ height: '1px', background: 'var(--card-bg)' }} />
 
                 {/* Profile link */}
                 <DropdownItem
@@ -615,7 +605,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                   }}
                 />
 
-                <div className="my-1 mx-3" style={{ height: '1px', background: 'var(--glass-bg)' }} />
+                <div className="my-1 mx-3" style={{ height: '1px', background: 'var(--card-bg)' }} />
 
                 {/* Logout */}
                 <DropdownItem
@@ -652,7 +642,7 @@ const DropdownItem = ({ icon: Icon, label, onClick, danger = false }) => {
         background: hovered
           ? danger
             ? 'rgba(239,68,68,0.08)'
-            : 'var(--glass-bg)'
+            : 'var(--card-bg)'
           : 'transparent',
         borderRadius: '0',
       }}
@@ -704,10 +694,9 @@ const HintChip = ({ label, onClick }) => {
       onClick={onClick}
       className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
       style={{
-        background: hovered ? 'var(--glass-bg)' : 'transparent',
-        border: hovered ? '1px solid var(--glass-border)' : '1px solid transparent',
+        background: hovered ? 'var(--card-bg)' : 'transparent',
+        border: hovered ? '1px solid var(--border)' : '1px solid transparent',
         color: hovered ? 'var(--text-primary)' : 'var(--text-muted)',
-        backdropFilter: 'blur(4px)',
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -729,8 +718,8 @@ const ResultGroup = ({ title, icon: Icon, items, offset, activeIdx, onPick }) =>
         <div
           className="w-5 h-5 rounded-md flex items-center justify-center"
           style={{
-            background: 'var(--glass-bg)',
-            border: '1px solid var(--glass-border)',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
           }}
         >
           <Icon className="w-3 h-3" style={{ color: 'var(--text-primary)' }} />
@@ -748,11 +737,11 @@ const ResultGroup = ({ title, icon: Icon, items, offset, activeIdx, onPick }) =>
                 onClick={() => onPick(it)}
                 className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 transition-all duration-150"
                 style={{
-                  background: isActive ? 'var(--glass-bg)' : 'transparent',
+                  background: isActive ? 'var(--card-bg)' : 'transparent',
                   borderLeft: isActive ? '2px solid #D4A017' : '2px solid transparent',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) e.currentTarget.style.background = 'var(--glass-bg)';
+                  if (!isActive) e.currentTarget.style.background = 'var(--card-bg)';
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'transparent';

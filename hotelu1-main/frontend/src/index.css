@@ -1,12 +1,13 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display+SC:wght@400;700&family=Karla:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @import "./styles/3d-animations.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ==========================================================================
-   LIQUID GLASS DESIGN SYSTEM — Hotel POS
-   Navy + Gold luxury hospitality palette
+   SOLID DESIGN SYSTEM — Hotel POS  (v2 redesign)
+   Clean modern SaaS: solid surfaces, crisp borders, one strong accent.
+   No translucent glass — every surface is an opaque token.
    Inter (all text)
    ========================================================================== */
 
@@ -156,16 +157,18 @@ button {
   --warning: #D97706;
   --danger: #DC2626;
 
-  /* ── Shadows (Liquid Glass) ──────────────────────────────────────── */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 16px rgba(30, 58, 138, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 8px 32px rgba(30, 58, 138, 0.10), 0 4px 8px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 16px 48px rgba(30, 58, 138, 0.12), 0 8px 16px rgba(15, 23, 42, 0.04);
+  /* ── Shadows (Solid SaaS) ────────────────────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 2px 4px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-lg: 0 4px 8px rgba(15, 23, 42, 0.04), 0 12px 24px rgba(15, 23, 42, 0.08);
+  --shadow-xl: 0 8px 16px rgba(15, 23, 42, 0.06), 0 24px 48px rgba(15, 23, 42, 0.12);
   --shadow-navy: 0 4px 24px rgba(30, 58, 138, 0.15);
   --shadow-gold: 0 4px 16px rgba(161, 98, 7, 0.15);
-  --shadow-glass: 0 8px 32px rgba(30, 58, 138, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --shadow-glass-hover: 0 12px 40px rgba(30, 58, 138, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Glass tokens kept as aliases, mapped to SOLID surfaces so every
+     component that still references them renders opaque. */
+  --shadow-glass: var(--shadow-sm);
+  --shadow-glass-hover: var(--shadow-lg);
 
   /* ── Focus Rings ─────────────────────────────────────────────────── */
   --ring: 0 0 0 3px rgba(59, 130, 246, 0.15);
@@ -185,17 +188,43 @@ button {
   --ease-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-glass: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── Glass Morphism ──────────────────────────────────────────────── */
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-heavy: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-blur: 16px;
-  --glass-blur-heavy: 24px;
+  /* ── Solid Surfaces (glass classes are aliases for opaque surfaces) ─ */
+  --glass-bg: #FFFFFF;
+  --glass-bg-heavy: #FFFFFF;
+  --glass-border: #E2E8F0;
+  --glass-blur: 0px;
+  --glass-blur-heavy: 0px;
 
   /* ── Sidebar ─────────────────────────────────────────────────────── */
   --sidebar-bg: linear-gradient(180deg, #0F172A 0%, #1E2D5E 60%, #1E3A8A 100%);
   --sidebar-text: #E2E8F0;
   --sidebar-muted: #94A3B8;
+
+  /* ── Responsive layout rhythm ────────────────────────────────────── */
+  --page-pad-x: 1rem;
+  --page-pad-y: 1.25rem;
+  --page-max-w: 96rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --page-pad-x: 1.5rem;
+    --page-pad-y: 1.75rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --page-pad-x: 2rem;
+    --page-pad-y: 2rem;
+  }
+}
+
+/* Responsive page container used by redesigned screens */
+.page-pad {
+  padding: var(--page-pad-y) var(--page-pad-x);
+  max-width: var(--page-max-w);
+  margin: 0 auto;
 }
 
 /* ── Density Modes ─────────────────────────────────────────────────── */
@@ -215,11 +244,9 @@ html[data-density="spacious"] {
    LIQUID GLASS UTILITY CLASSES
    ========================================================================== */
 
-/* ── Glass Surface ─────────────────────────────────────────────────── */
+/* ── Solid Surface (glass classes are now opaque aliases) ──────────── */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
 }
@@ -230,32 +257,26 @@ html[data-density="spacious"] {
 
 .glass-heavy {
   background: var(--glass-bg-heavy);
-  backdrop-filter: blur(var(--glass-blur-heavy));
-  -webkit-backdrop-filter: blur(var(--glass-blur-heavy));
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
 }
 
 .glass-card {
   background: var(--glass-bg-heavy);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
   transition: box-shadow var(--ease-glass), transform var(--ease-glass);
 }
 
 .glass-card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
 
 .glass-subtle {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--app-bg);
+  border: 1px solid var(--border);
 }
 
 /* ── Gradient Utilities ────────────────────────────────────────────── */
@@ -272,74 +293,68 @@ html[data-density="spacious"] {
 }
 
 .gradient-surface {
-  background: linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%);
+  background: var(--app-bg);
 }
 
 /* ── Button Variants ───────────────────────────────────────────────── */
 .btn-gradient {
   @apply inline-flex items-center justify-center gap-2 px-6 py-3 text-white font-semibold;
   border-radius: var(--radius-control);
-  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+  background: var(--accent);
   box-shadow: var(--shadow-sm);
   transition: all var(--ease-ui);
 }
 
 .btn-gradient:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-  filter: brightness(1.08);
+  background: var(--accent-light);
 }
 
 .btn-gradient:active {
-  transform: translateY(0);
-  filter: brightness(0.97);
+  filter: brightness(0.94);
 }
 
 .btn-primary {
   @apply w-full text-white font-semibold py-3;
   border-radius: var(--radius-control);
   font-size: 14px;
-  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+  background: var(--accent);
   box-shadow: var(--shadow-sm);
   transition: all var(--ease-ui);
 }
 
 .btn-primary:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-  filter: brightness(1.08);
+  background: var(--accent-light);
 }
 
 .btn-gold {
   @apply inline-flex items-center justify-center gap-2 px-6 py-3 text-white font-semibold;
   border-radius: var(--radius-control);
-  background: linear-gradient(135deg, #D4A017 0%, #A16207 100%);
+  background: var(--accent-gold);
   box-shadow: var(--shadow-sm);
   transition: all var(--ease-ui);
 }
 
 .btn-gold:hover {
   box-shadow: var(--shadow-gold);
-  transform: translateY(-1px);
-  filter: brightness(1.08);
+  background: #B8860B;
 }
 
 .btn-glass {
   @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-medium text-sm;
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-pill);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
   color: var(--text-primary);
   box-shadow: var(--shadow-xs);
   transition: all var(--ease-ui);
 }
 
 .btn-glass:hover {
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-1px);
+  background: var(--app-bg);
+  border-color: var(--accent-light);
+  color: var(--accent);
 }
 
 /* ── Sidebar Utilities ─────────────────────────────────────────────── */
@@ -377,12 +392,12 @@ html[data-density="spacious"] {
 }
 
 .hotel-gold-bg {
-  background: linear-gradient(135deg, #D4A017 0%, #A16207 100%);
+  background: var(--accent-gold);
 }
 
 /* ── Effects ───────────────────────────────────────────────────────── */
 .restaurant-text-shadow {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  text-shadow: none;
 }
 
 .restaurant-glow {
@@ -394,21 +409,14 @@ html[data-density="spacious"] {
 }
 
 .primary-gradient {
-  background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
-}
-
-.backdrop-blur {
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: var(--accent);
 }
 
 /* ── Feature Card (Glass) ──────────────────────────────────────────── */
 .feature-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: var(--shadow-md);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-card);
@@ -416,14 +424,7 @@ html[data-density="spacious"] {
 }
 
 .feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.02) 100%);
-  pointer-events: none;
+  display: none;
 }
 
 .feature-card:hover {
@@ -483,11 +484,9 @@ html[data-density="spacious"] {
 
 /* ── Input Glass Variant ───────────────────────────────────────────── */
 .input-glass {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(30, 58, 138, 0.1);
-  border-radius: var(--radius-pill);
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-control);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: var(--text-primary);
@@ -495,9 +494,9 @@ html[data-density="spacious"] {
 }
 
 .input-glass:focus {
-  border-color: #3B82F6;
+  border-color: var(--accent-light);
   box-shadow: var(--ring);
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--card-bg);
 }
 
 .input-glass::placeholder {
@@ -567,15 +566,15 @@ html.dark {
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6), 0 8px 16px rgba(0, 0, 0, 0.35);
   --shadow-navy: 0 4px 24px rgba(0, 0, 0, 0.45);
   --shadow-gold: 0 4px 16px rgba(212, 160, 23, 0.2);
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-glass-hover: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-glass: var(--shadow-sm);
+  --shadow-glass-hover: var(--shadow-lg);
 
   --ring: 0 0 0 3px rgba(59, 130, 246, 0.25);
   --ring-gold: 0 0 0 3px rgba(212, 160, 23, 0.25);
 
-  --glass-bg: rgba(20, 28, 46, 0.75);
-  --glass-bg-heavy: rgba(20, 28, 46, 0.88);
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: #141C2E;
+  --glass-bg-heavy: #141C2E;
+  --glass-border: #1E293B;
 
   --sidebar-bg: linear-gradient(180deg, #060D1A 0%, #0F172A 60%, #1E2D5E 100%);
 
@@ -1120,17 +1119,17 @@ html.dark .glass {
 
 html.dark .glass-heavy {
   background: var(--glass-bg-heavy);
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-border);
 }
 
 html.dark .glass-card {
   background: var(--glass-bg-heavy);
-  border-color: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-border);
 }
 
 html.dark .glass-subtle {
-  background: rgba(20, 28, 46, 0.5);
-  border-color: rgba(255, 255, 255, 0.04);
+  background: #0F1729;
+  border-color: var(--border);
 }
 
 html.dark .kpi-card {
@@ -1143,13 +1142,13 @@ html.dark .kpi-card:hover {
 }
 
 html.dark .input-glass {
-  background: rgba(20, 28, 46, 0.7);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: #1A2336;
+  border-color: #283548;
   color: #F1F5F9;
 }
 
 html.dark .input-glass:focus {
-  background: rgba(20, 28, 46, 0.85);
+  background: #1A2336;
   border-color: #3B82F6;
 }
 

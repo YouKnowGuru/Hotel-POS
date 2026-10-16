@@ -4,6 +4,21 @@ const bcrypt = require('bcrypt');
 
 async function seedUsers() {
   try {
+    // SECURITY GUARD: this script creates well-known demo credentials
+    // (admin/admin, waiter/pass, manager/pass2). Running it against a real
+    // production database resets every admin password to a value that is
+    // publicly committed to the repository, giving anyone with repo access
+    // full admin control. Production seeding must be deliberate.
+    if (process.env.NODE_ENV === 'production' && !process.env.ALLOW_DEMO_SEED) {
+      console.error(
+        'Refusing to seed demo credentials in production.\n' +
+        'These are committed demo logins (admin/admin, waiter/pass, ...).\n' +
+        'If you REALLY intend to reset a live database to publicly-known\n' +
+        'passwords, set ALLOW_DEMO_SEED=1 — then rotate those passwords\n' +
+        'immediately after first login.'
+      );
+      process.exit(1);
+    }
     await sequelize.authenticate();
     console.log('Database connected successfully');
     

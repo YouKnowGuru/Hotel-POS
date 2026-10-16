@@ -30,6 +30,7 @@ const Settings = require("./models/Settings");
 const SubFranchise = require("./models/SubFranchise");
 const Attendance = require("./models/Attendance");
 const Payroll = require("./models/Payroll");
+const AuditLog = require("./models/AuditLog");
 const bcrypt = require("bcrypt");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -571,7 +572,7 @@ async function startServer() {
     console.log("Database connected successfully");
     
     // Create missing tables only (never alter:true — breaks users indexes)
-    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable, DiningFloor];
+    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable, DiningFloor, AuditLog];
     for (const model of allModels) {
       try { await model.sync(); } catch (e) { console.warn(`Sync warning for ${model.tableName}: ${e.message}`); }
     }
@@ -735,7 +736,15 @@ function stripProofImages(orders) {
     // Always copy: mutating a plain mock object in place would permanently
     // strip the stored proof image out of the in-memory demo store.
     const p = typeof o.get === "function" ? o.get({ plain: true }) : { ...o };
-    p.has_payment_proof = !!(p.payment_proof_image || o.payment_proof_image);
+    // List queries no longer fetch the blob itself; when the caller asked
+    // the DB to compute proof presence (a 0/1 LENGTH() projection in
+    // has_payment_proof), keep that instead of defaulting to false.
+    p.has_payment_proof = !!(
+      p.payment_proof_image ||
+      o.payment_proof_image ||
+      p.has_payment_proof === 1 ||
+      p.has_payment_proof === true
+    );
     // SECURITY: never serialize the proof bytes or the payment access
     // token. The access token authorizes attaching a payment screenshot
     // to an order; leaking it inside GET /api/orders (which is reachable
@@ -1206,6 +1215,11 @@ app.post("/api/login", loginLimiter, async (req, res) => {
           }
         } else {
           // User not found in database - return error (don't fall back to mockUsers)
+          // TIMING: run a throwaway bcrypt compare so "unknown username" takes
+          // as long as "known username, wrong password". Without this, the
+          // response-time gap lets an attacker enumerate which usernames exist.
+          const DUMMY_HASH = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8fPJYVxNQqzXSMnrvSYyED6zQ3AywK";
+          try { await bcrypt.compare(password, DUMMY_HASH); } catch (_) { /* ignore */ }
           console.log("User not found in database:", username);
           return res.status(401).json({ 
             success: false,
@@ -1508,6 +1522,23 @@ function scopeOrdersForUser(orders, user, query = {}) {
 }
 
 // Orders Endpoints
+// PERF instrumentation: log only requests over a duration threshold
+// (default 500ms) so the dashboard can spot regressions without spamming
+// logs. Toggle with LOG_SLOW_ORDERS_MS; negative values disable it.
+// Logged: route + duration only — never query results or user data.
+const SLOW_ORDERS_LOG_MS = Number(process.env.LOG_SLOW_ORDERS_MS ?? 500);
+app.use("/api/orders", (req, res, next) => {
+  if (!Number.isFinite(SLOW_ORDERS_LOG_MS) || SLOW_ORDERS_LOG_MS < 0) return next();
+  const start = process.hrtime.bigint();
+  res.on("finish", () => {
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    if (ms >= SLOW_ORDERS_LOG_MS) {
+      console.log(`[slow-orders] ${req.method} ${req.originalUrl} ${ms.toFixed(0)}ms`);
+    }
+  });
+  next();
+});
+
 app.get("/api/orders", optionalToken, async (req, res) => {
   try {
     const { status, type, table_name, tableId, date, startDate, endDate } = req.query;
@@ -1588,6 +1619,33 @@ app.get("/api/orders", optionalToken, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 500, 1000);
     const orders = await Order.findAll({
       where: whereClause,
+      // PERF: SELECT Order.* used to include payment_proof_image — a base64
+      // screenshot LONGTEXT (~100KB+ per order with a proof) — transferred
+      // from MySQL to Node on EVERY list call and then immediately deleted
+      // by stripProofImages(). The dedicated proof-image endpoint
+      // (GET /api/orders/:id/proof-image) serves it on demand, so excluding
+      // it here changes no response payload bytes except the derived
+      // has_payment_proof flag — computed instead by a projection that only
+      // reads LENGTH() of the blob inside MySQL (1 byte served instead of
+      // ~100KB). quoteIdentifier keeps the literal valid on MySQL and
+      // Postgres alike.
+      attributes: {
+        exclude: ["payment_proof_image"],
+        include: [
+          [
+            sequelize.literal(
+              `CASE WHEN ${sequelize.getQueryInterface().quoteIdentifier("Order")}.${
+                sequelize.getQueryInterface().quoteIdentifier("payment_proof_image")
+              } IS NULL OR LENGTH(${
+                sequelize.getQueryInterface().quoteIdentifier("Order")
+              }.${
+                sequelize.getQueryInterface().quoteIdentifier("payment_proof_image")
+              }) = 0 THEN 0 ELSE 1 END`
+            ),
+            "has_payment_proof",
+          ],
+        ],
+      },
       include: [
         { model: OrderItem, as: "items" },
         { model: Bill, as: "bill", required: false },
@@ -1719,13 +1777,26 @@ function calculateOrderTotals(subtotal, settings) {
   const safeSubtotal = Number(subtotal) || 0;
   const discountAmount = safeSubtotal * (discountPercent / 100);
   const afterDiscount = safeSubtotal - discountAmount;
-  const taxAmount = afterDiscount * (taxPercent / 100);
-  const total = Math.round((afterDiscount + taxAmount) * 100) / 100;
+  // BUGFIX: the 10% service charge was missing from the server's math.
+  // The cart (SimpleMenu), billing page, receipts, the Service-Charge
+  // ledger and payroll all price orders as: subtotal − discount → +10%
+  // SC → GST on the whole thing. This function used to stop after
+  // discount, so guests were charged a total BELOW the cart figure and
+  // the ledger back-calculated a service charge that never existed.
+  // Formula now mirrors frontend/src/utils/orderTotals.js exactly.
+  const serviceChargePercent = 10;
+  const serviceCharge = afterDiscount * (serviceChargePercent / 100);
+  const afterServiceCharge = afterDiscount + serviceCharge;
+  const taxAmount = afterServiceCharge * (taxPercent / 100);
+  const total = Math.round((afterServiceCharge + taxAmount) * 100) / 100;
   return {
     subtotal: Math.round(safeSubtotal * 100) / 100,
     discount: discountPercent,
     discountPercent,
     discountAmount: Math.round(discountAmount * 100) / 100,
+    serviceChargePercent,
+    serviceCharge: Math.round(serviceCharge * 100) / 100,
+    afterServiceCharge: Math.round(afterServiceCharge * 100) / 100,
     taxPercent,
     taxAmount: Math.round(taxAmount * 100) / 100,
     total,
@@ -1919,13 +1990,19 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     // Header + line items are created atomically. A partial order (header
     // without items, or a truncated item list) corrupts bills and reports.
     let orderWithItems;
-    try {
-      orderWithItems = await sequelize.transaction(async (t) => {
-        const newOrder = await Order.create(
-          {
-            table_name,
-            total: totals.total,
-            status: "pending",
+    try {        orderWithItems = await sequelize.transaction(async (t) => {
+          const newOrder = await Order.create(
+            {
+              table_name,
+              total: totals.total,
+              // Per-order tax/SC snapshot — the GST and Service-Charge
+              // ledgers read these instead of re-deriving with the
+              // CURRENT tax rate (see Order model comment).
+              subtotal: totals.subtotal,
+              tax_percent: totals.taxPercent,
+              tax_amount: totals.taxAmount,
+              service_charge: totals.serviceCharge,
+              status: "pending",
             type: type || "DINE_IN",
             guests: guests || null,
             client_session: clientSession,
@@ -2108,6 +2185,11 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
     if (!(await assertOrderInScope(req, order, res))) return;
     const problem = update(order); if (problem) return res.status(409).json({ message: problem });
     await order.save();
+    logAudit(req,
+      decision === "approve" ? "payment.verification.approve" : "payment.verification.reject",
+      "order", order.id,
+      { rejectionReason: decision === "reject" ? rejectionReason : undefined }
+    );
     const strippedOrder = stripProofImages(order)[0];
     io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: order.payment_status });
     if (decision === "approve") {
@@ -2237,12 +2319,47 @@ app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
   }
 });
 
+// SECURITY: `status` used to be accepted as any free-form string, letting a
+// logged-in staff user write values outside the schema's ENUM (e.g.
+// "completed-x", arbitrary text) — which corrupted reports/analytics and
+// broke code paths that switch on status. Values must match the ENUM in
+// mrbeast_schema.sql (case variants for NOT_AVAILABLE kept for legacy rows).
+const ALLOWED_ORDER_STATUSES = [
+  "pending", "preparing", "ready", "delivered", "completed",
+  "NOT_AVAILABLE", "not_available",
+];
+
+// AUDIT: best-effort audit-trail writer for privileged/administrative
+// actions. Action names are fixed strings chosen by the server (never from
+// request bodies). Detail payloads must never contain passwords, tokens,
+// hashes or full PII — pass identifiers and changed-field names only.
+// A failed audit write must not block the action, so this never throws.
+function logAudit(req, action, targetType, targetId, detail) {
+  try {
+    AuditLog.create({
+      actor_id: req?.user?.id ?? null,
+      actor_username: req?.user?.username ?? null,
+      actor_role: req?.user?.role ?? null,
+      action,
+      target_type: targetType,
+      target_id: targetId != null ? String(targetId) : null,
+      detail: detail ? JSON.stringify(detail).slice(0, 2000) : null,
+      ip: (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.ip || null,
+    }).catch((e) => console.error("Audit log write failed:", e?.message || e));
+  } catch (e) {
+    console.error("Audit log write failed:", e?.message || e);
+  }
+}
+
 app.put("/api/orders/:id", verifyToken, async (req, res) => {
   try {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
       if (order) {
         const { status, items, total } = req.body;
+        if (status && !ALLOWED_ORDER_STATUSES.includes(String(status))) {
+          return res.status(400).json({ message: "Invalid order status" });
+        }
         const prevStatus = order.status;
         if (status) {
           order.status = status;
@@ -2291,6 +2408,9 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
     }
     const { id } = req.params;
     const { status, items } = req.body;
+    if (status && !ALLOWED_ORDER_STATUSES.includes(String(status))) {
+      return res.status(400).json({ message: "Invalid order status" });
+    }
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
@@ -2355,6 +2475,11 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
       const settings = await getTaxDiscountSettings();
       const totals = calculateOrderTotals(subtotal, settings);
       order.total = totals.total;
+      // Keep the stored tax/SC snapshot in sync when items are repriced.
+      order.subtotal = totals.subtotal;
+      order.tax_percent = totals.taxPercent;
+      order.tax_amount = totals.taxAmount;
+      order.service_charge = totals.serviceCharge;
       // Replace line items + reprice the header atomically so a failure
       // mid-loop can never leave an order with zero items.
       await sequelize.transaction(async (t) => {
@@ -3330,11 +3455,25 @@ app.get("/api/inventory", verifyToken, async (req, res) => {
 
 app.post("/api/inventory", verifyToken, async (req, res) => {
   try {
+    // SECURITY: inventory edits are as sensitive as menu edits — stock
+    // levels, prices and GST rates feed the GST input ledger and payroll.
+    // Previously ANY authenticated user (a waiter) could create or edit
+    // them; menu routes already require admin/manager.
+    if (!["admin", "manager"].includes(req.user?.role)) {
+      return res.status(403).json({ message: "Only admin or manager can manage inventory" });
+    }
     const { material_name, current_stock, min_stock, unit, supplier, unit_price, purchase_price, gst_rate, last_purchase_date } = req.body;
     
     // Validate required fields
     if (!material_name || current_stock === undefined || min_stock === undefined) {
       return res.status(400).json({ message: "Material name, current stock, and min stock are required" });
+    }
+    // BUGFIX: parseFloat("abc") is NaN — previously a direct API call
+    // stored NaN rows that poisoned stock sums and the GST input ledger.
+    for (const [field, value] of Object.entries({ current_stock, min_stock, unit_price, purchase_price, gst_rate })) {
+      if (value !== undefined && value !== null && value !== "" && !Number.isFinite(Number(value))) {
+        return res.status(400).json({ message: `${field} must be a valid number` });
+      }
     }
 
     // Check for duplicate material names
@@ -3350,8 +3489,10 @@ app.post("/api/inventory", verifyToken, async (req, res) => {
       }
     }
 
-    // Auto-set status based on stock levels
-    const status = current_stock > min_stock ? "In Stock" : "Out of Stock";
+    // BUGFIX: was `current_stock > min_stock`, so stock sitting EXACTLY
+    // at the reorder level displayed "Out of Stock" while units still
+    // existed. Matches the frontend low-stock warning (<= min_stock).
+    const status = Number(current_stock) >= Number(min_stock) ? "In Stock" : "Out of Stock";
 
     if (!dbConnected) {
       const newItem = { 
@@ -3393,8 +3534,16 @@ app.post("/api/inventory", verifyToken, async (req, res) => {
 
 app.put("/api/inventory/:id", verifyToken, async (req, res) => {
   try {
+    if (!["admin", "manager"].includes(req.user?.role)) {
+      return res.status(403).json({ message: "Only admin or manager can manage inventory" });
+    }
     const { id } = req.params;
     const { current_stock, min_stock, status, operation, unit, supplier, unit_price, purchase_price, gst_rate, last_purchase_date } = req.body;
+    for (const [field, value] of Object.entries({ current_stock, min_stock, unit_price, purchase_price, gst_rate })) {
+      if (value !== undefined && value !== null && value !== "" && !Number.isFinite(Number(value))) {
+        return res.status(400).json({ message: `${field} must be a valid number` });
+      }
+    }
     
     if (!dbConnected) {
       const item = mockInventory.find((i) => i.id === parseInt(id));
@@ -3417,7 +3566,7 @@ app.put("/api/inventory/:id", verifyToken, async (req, res) => {
         if (status !== undefined) {
           item.status = status;
         } else {
-          item.status = item.current_stock > item.min_stock ? "In Stock" : "Out of Stock";
+          item.status = Number(item.current_stock) >= Number(item.min_stock) ? "In Stock" : "Out of Stock";
         }
         
         return res.json({ message: "Inventory item updated", item });
@@ -3453,7 +3602,7 @@ app.put("/api/inventory/:id", verifyToken, async (req, res) => {
     } else {
       const currentStock = updateData.current_stock !== undefined ? updateData.current_stock : inventoryItem.current_stock;
       const minStock = updateData.min_stock !== undefined ? updateData.min_stock : inventoryItem.min_stock;
-      updateData.status = currentStock > minStock ? "In Stock" : "Out of Stock";
+      updateData.status = Number(currentStock) >= Number(minStock) ? "In Stock" : "Out of Stock";
     }
 
     const [updated] = await Inventory.update(updateData, { where: { id } });
@@ -3472,6 +3621,9 @@ app.put("/api/inventory/:id", verifyToken, async (req, res) => {
 
 app.delete("/api/inventory/:id", verifyToken, async (req, res) => {
   try {
+    if (!["admin", "manager"].includes(req.user?.role)) {
+      return res.status(403).json({ message: "Only admin or manager can manage inventory" });
+    }
     const { id } = req.params;
     
     if (!dbConnected) {
@@ -3526,6 +3678,9 @@ app.post("/register", strictLimiter, verifyToken, async (req, res) => {
       password: hashedPassword,
       role,
       name,
+    });
+    logAudit(req, "user.create", "user", user.id, {
+      username: user.username, role: user.role, via: "/register",
     });
     res.status(201).json({
       message: "User registered",
@@ -3621,6 +3776,9 @@ app.post("/api/users", strictLimiter, verifyToken, async (req, res) => {
         role === "admin"
           ? null
           : branchId,
+    });
+    logAudit(req, "user.create", "user", user.id, {
+      username: user.username, role: user.role, branch: user.subfranchise_id,
     });
 
     if (role === "franchise" && linkLocationId) {
@@ -3790,6 +3948,9 @@ app.put("/api/users/:id", verifyToken, async (req, res) => {
     }
 
     await user.save();
+    logAudit(req, "user.update", "user", user.id, {
+      authChanged: !!authChanged, toRole: user.role,
+    });
 
     if (user.role === "franchise" && linkLocationId) {
       await SubFranchise.update(
@@ -3862,6 +4023,9 @@ app.delete("/api/users/:id", verifyToken, async (req, res) => {
     // Bump before destroy so any concurrently-issued tokens also fail the
     // version check (the row is gone, so findByPk returns null → revoked).
     await user.destroy();
+    logAudit(req, "user.delete", "user", deletedId, {
+      username: user.username, role: user.role,
+    });
     io.emit("user_deleted", { id: deletedId });
 
     res.json({ message: "User deleted successfully" });
@@ -4088,6 +4252,9 @@ app.put("/api/roles/:id/permissions", verifyToken, async (req, res) => {
       }
     }
 
+    logAudit(req, "role.permissions.update", "role", role.id, {
+      permissionsCount: Array.isArray(permissions) ? permissions.length : 0,
+    });
     res.json({
       message: "Role permissions updated successfully",
       role: { id: role.id, name: role.name, permissions },
@@ -4125,6 +4292,9 @@ app.post("/api/permissions", verifyToken, async (req, res) => {
       category: category || "general",
     });
 
+    logAudit(req, "permission.create", "permission", permission.id, {
+      name: permission.name,
+    });
     res.status(201).json({
       message: "Permission created successfully",
       permission,
@@ -4261,6 +4431,9 @@ app.put("/api/users/:id/permissions", verifyToken, async (req, res) => {
           }
         }
       }
+      logAudit(req, "user.permissions.update", "user", targetUser.id, {
+        role: targetUser.role, count: permissions?.length || 0,
+      });
       return res.json({
         message: "Permissions updated successfully",
         userId: id,
@@ -4308,6 +4481,7 @@ const PUBLIC_SETTING_KEYS = new Set([
   "siteBranding",
   "payment_qr_image",
   "restaurantName",
+  "rolePermissionsMatrix",
 ]);
 
 // Get all settings or a specific setting by key (publicly readable so QR menu can get tax rates)
@@ -4330,7 +4504,10 @@ app.get("/api/settings", optionalToken, async (req, res) => {
     }
     
     if (key) {
-      if (!PUBLIC_SETTING_KEYS.has(key) && !isAdminOrManager) {
+      if (key === 'payroll_staff_config' && !isAdminOrManager) {
+        return res.status(403).json({ message: "Not allowed to read this setting" });
+      }
+      if (!PUBLIC_SETTING_KEYS.has(key) && !isAdminOrManager && !req.user) {
         return res.status(403).json({ message: "Not allowed to read this setting" });
       }
       const setting = await Settings.findOne({ where: { key } });
@@ -4394,6 +4571,7 @@ app.put("/api/settings", verifyToken, async (req, res) => {
     });
     invalidateTaxDiscountCache();
     
+    logAudit(req, "settings.update", "setting", key);
     res.json({
       message: created ? "Setting created" : "Setting updated",
       key,
@@ -4431,6 +4609,9 @@ app.put("/api/settings/batch", verifyToken, async (req, res) => {
     }
     invalidateTaxDiscountCache();
     
+    logAudit(req, "settings.batch_update", "setting", null, {
+      keys: Object.keys(settings).length,
+    });
     res.json({
       message: "Settings updated successfully",
       settings: results
@@ -4625,6 +4806,7 @@ app.post("/api/subfranchises", verifyToken, franchiseManageAuth, async (req, res
       }
     }
     const created = await SubFranchise.create(sfData);
+    logAudit(req, "location.create", "location", created.id, { code: created.code, name: created.name });
     if (login_username && login_password) {
       const sfUser = await User.create({
         username: login_username,
@@ -4675,6 +4857,9 @@ app.put("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (req, 
       return res.status(400).json({ message: "Location code cannot be changed" });
     }
     await row.update(updates);
+    logAudit(req, "location.update", "location", id, {
+      transferredOwner: !!updates.owner_user_id,
+    });
 
     if (updates.owner_user_id && req.user.role === "admin") {
       const owner = await User.findByPk(updates.owner_user_id);
@@ -4751,6 +4936,7 @@ app.delete("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (re
       await DiningFloor.destroy({ where: { subfranchise_id: id } });
     } catch (_) { /* floor cleanup is best-effort */ }
     await row.destroy();
+    logAudit(req, "location.delete", "location", id, { name: row.name });
     io.emit("subfranchise_deleted", { id });
     res.json({ message: `Branch "${row.name}" deleted` });
   } catch (err) {
@@ -5680,6 +5866,7 @@ app.put('/api/payroll/:id/approve', authenticate, async (req, res) => {
     const record = await Payroll.findByPk(req.params.id);
     if (!record) return res.status(404).json({ message: 'Record not found' });
     await record.update({ status: 'approved', approved_by: req.user.id, approved_at: new Date() });
+    logAudit(req, "payroll.approve", "payroll", record.id, { staff: record.user_name });
     io.emit('payroll_update', { type: 'approve', record });
     res.json({ message: 'Approved', record });
   } catch (err) {
@@ -5700,6 +5887,7 @@ app.put('/api/payroll/:id/pay', authenticate, async (req, res) => {
       payment_reference: payment_reference || record.payment_reference,
       payment_date: payment_date || new Date().toISOString().split('T')[0],
     });
+    logAudit(req, "payroll.pay", "payroll", record.id, { method: payment_method || record.payment_method });
     io.emit('payroll_update', { type: 'paid', record });
     res.json({ message: 'Marked as paid', record });
   } catch (err) {
@@ -5715,6 +5903,7 @@ app.delete('/api/payroll/:id', authenticate, async (req, res) => {
     if (!record) return res.status(404).json({ message: 'Record not found' });
     if (!['draft', 'on_hold'].includes(record.status)) return res.status(400).json({ message: 'Only draft or on_hold records can be deleted' });
     await record.destroy();
+    logAudit(req, "payroll.delete", "payroll", record.id, { staff: record.user_name });
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });

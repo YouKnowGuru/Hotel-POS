@@ -14,13 +14,11 @@ import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 
 /* ── Design tokens ──────────────────────────────────────────────── */
-const NAVY = '#1E3A8A';
+const NAVY = '#4338CA';
 const GOLD = '#D4A017';
 
 const getGlass = (isDark) => ({
   background: isDark ? 'rgba(15, 29, 64, 0.70)' : '#FFFFFF',
-  backdropFilter: 'blur(20px) saturate(1.6)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
   border: isDark ? '1px solid rgba(255, 255, 255, 0.10)' : '1px solid #E2E8F0',
   borderRadius: 20,
   boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.30)' : '0 4px 18px rgba(0,0,0,0.04)',
@@ -142,14 +140,14 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
   const handlePrint = () => {
     const w = window.open('', '_blank');
     const css = `body{font-family:Arial,sans-serif;margin:20px;color:#1e293b}
-      .hdr{background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;padding:20px 24px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between}
+      .hdr{background:linear-gradient(135deg,#4338CA,#2563EB);color:#fff;padding:20px 24px;border-radius:12px;margin-bottom:20px;display:flex;justify-content:space-between}
       .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
       .box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;text-align:center}
       .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
       .earn{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px}
       .ded{background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px}
       .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;font-size:13px}
-      .net{background:linear-gradient(135deg,#1E3A8A,#2563EB);color:#fff;border-radius:12px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
+      .net{background:linear-gradient(135deg,#4338CA,#2563EB);color:#fff;border-radius:12px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center}
       .label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}`;
     w.document.write(`<html><head><title>Payslip - ${r.user_name}</title><style>${css}</style></head><body>${printRef.current.innerHTML}</body></html>`);
     w.document.close();
@@ -181,7 +179,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
   ].filter((x) => parseFloat(x.val || 0) > 0);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 780, maxHeight: '90vh', overflow: 'auto', borderRadius: 24,
         background: isDark ? '#0B1838' : '#FFFFFF',
@@ -219,7 +217,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
         {/* Printable section */}
         <div ref={printRef} style={{ padding: 24 }}>
           {/* Company block */}
-          <div style={{ background: 'linear-gradient(135deg,#1E3A8A,#2563EB)', borderRadius: 14, padding: '20px 28px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 14, padding: '20px 28px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#fff' }}>PAYSLIP</h1>
               <p style={{ margin: '2px 0', fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>
@@ -295,7 +293,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Net salary */}
-          <div style={{ background: 'linear-gradient(135deg,#1E3A8A,#2563EB)', borderRadius: 16, padding: '20px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 16, padding: '20px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>Net Salary Payable</div>
               <div style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginTop: 4, letterSpacing: '-0.03em' }}>{fmt(r.net_salary)}</div>
@@ -345,7 +343,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end' }}>
       <div style={{
         width: '100%', maxWidth: 720,
         background: isDark ? '#0B1838' : '#FFFFFF',
@@ -475,7 +473,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
   const [ref, setRef] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 440,
         background: isDark ? '#0B1838' : '#FFFFFF',
@@ -504,7 +502,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
               }}
             >
               {['cash','bank_transfer','cheque','upi','other'].map((m) => (
-                <option key={m} value={m} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                <option key={m} value={m} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                   {m.replace('_', ' ').toUpperCase()}
                 </option>
               ))}
@@ -515,7 +513,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
         </div>
         <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#475569', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Cancel</button>
-          <button onClick={() => onPay({ payment_method: method, payment_reference: ref, payment_date: date })} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#1E40AF)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => onPay({ payment_method: method, payment_reference: ref, payment_date: date })} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#4F46E5)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Banknote size={14} /> Confirm Payment
           </button>
         </div>
@@ -531,7 +529,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
   const [month, setMonth] = useState(String(now.getMonth() + 1));
   const [busy,  setBusy]  = useState(false);
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 440,
         background: isDark ? '#0B1838' : '#FFFFFF',
@@ -578,7 +576,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
               }}
             >
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i + 1)} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i + 1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
           </div>
@@ -841,7 +839,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{
         width: '100%', maxWidth: 840, maxHeight: '92vh',
         background: isDark ? '#0B1838' : '#FFFFFF',
@@ -942,9 +940,9 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       fontSize: 13, outline: 'none'
                     }}
                   >
-                    <option value="" disabled style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>-- Select Employee --</option>
+                    <option value="" disabled style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>-- Select Employee --</option>
                     {users.map((u) => (
-                      <option key={u.id} value={u.id} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                      <option key={u.id} value={u.id} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                         {u.name} ({u.role.toUpperCase()})
                       </option>
                     ))}
@@ -974,7 +972,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       }}
                     >
                       {MONTHS.map((m, i) => (
-                        <option key={m} value={String(i + 1)} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                        <option key={m} value={String(i + 1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
                       ))}
                     </select>
                   </div>
@@ -1049,7 +1047,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       padding: '7px 14px', borderRadius: 8,
                       border: isDark ? '1px solid rgba(59,130,246,0.4)' : '1px solid #93C5FD',
                       background: isDark ? 'rgba(59,130,246,0.15)' : '#DBEAFE',
-                      color: isDark ? '#60A5FA' : '#1D4ED8',
+                      color: isDark ? '#60A5FA' : '#4F46E5',
                       cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6
                     }}
                   >
@@ -1179,7 +1177,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                     }}
                   >
                     {['draft','pending','approved','paid','on_hold'].map((st) => (
-                      <option key={st} value={st} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                      <option key={st} value={st} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                         {STATUS_STYLES[st]?.label || st}
                       </option>
                     ))}
@@ -1200,7 +1198,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                     }}
                   >
                     {['bank_transfer','cash','cheque','upi','other'].map((m) => (
-                      <option key={m} value={m} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m.replace('_', ' ').toUpperCase()}</option>
+                      <option key={m} value={m} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m.replace('_', ' ').toUpperCase()}</option>
                     ))}
                   </select>
                 </div>
@@ -1515,7 +1513,7 @@ const PayrollSystem = ({ currentUser }) => {
 
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 2000, padding: '12px 20px', borderRadius: 14, background: toast.type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)', backdropFilter: 'blur(12px)', color: '#fff', fontWeight: 700, fontSize: 13, boxShadow: '0 8px 32px rgba(0,0,0,0.3)', animation: 'slideIn 0.3s ease' }}>
+        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 2000, padding: '12px 20px', borderRadius: 14, background: toast.type === 'error' ? 'rgba(239,68,68,0.95)' : 'rgba(16,185,129,0.95)', color: '#fff', fontWeight: 700, fontSize: 13, boxShadow: '0 8px 32px rgba(0,0,0,0.3)', animation: 'slideIn 0.3s ease' }}>
           {toast.msg}
         </div>
       )}
@@ -1628,7 +1626,7 @@ const PayrollSystem = ({ currentUser }) => {
           <div style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', alignItems: 'center' }}>
             <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={selWrap()}>
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i+1)} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
             <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 90 }} />
@@ -1813,14 +1811,14 @@ const PayrollSystem = ({ currentUser }) => {
             </div>
             <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={selWrap()}>
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i+1)} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
             <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 90 }} />
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={selWrap()}>
-              <option value="" style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>All Status</option>
+              <option value="" style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>All Status</option>
               {Object.keys(STATUS_STYLES).map((s) => (
-                <option key={s} value={s} style={{ background: isDark ? '#1E3A8A' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{STATUS_STYLES[s].label}</option>
+                <option key={s} value={s} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{STATUS_STYLES[s].label}</option>
               ))}
             </select>
             <button

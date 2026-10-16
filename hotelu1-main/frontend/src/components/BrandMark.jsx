@@ -58,7 +58,7 @@ const BrandMark = ({
           borderRadius: radius,
           background: branding.logo
             ? 'rgba(255,255,255,0.95)'
-            : 'linear-gradient(135deg, #D4A017 0%, #A16207 100%)',
+            : '#D4A017',
           boxShadow: '0 4px 16px rgba(212, 160, 23, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
         }}
       >
@@ -76,7 +76,7 @@ const BrandMark = ({
         <p
           className={`${nameClass} leading-tight truncate ${light ? 'text-white' : ''}`}
           style={{
-            fontFamily: '"Playfair Display SC", Georgia, serif',
+            fontFamily: 'Inter, system-ui, sans-serif',
             color: light ? undefined : 'var(--text-primary)',
           }}
         >

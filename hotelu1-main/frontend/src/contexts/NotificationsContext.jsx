@@ -138,27 +138,8 @@ const buildInventoryNotifications = (items) => {
     });
 };
 
-const SYSTEM_NOTIFICATIONS = [
-  {
-    id: 'system-update-2026-05',
-    category: 'system',
-    type: 'system-update',
-    severity: 'info',
-    title: 'System Update Complete',
-    message:
-      'POS dashboard has been updated with new analytics, settings, and notification modules.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: 'security-login-admin',
-    category: 'security',
-    type: 'admin-login',
-    severity: 'info',
-    title: 'New Administrator Login',
-    message: 'An administrator account has signed in to the dashboard.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-  },
-];
+// System notifications (empty by default; alerts are generated dynamically from real orders and inventory)
+const SYSTEM_NOTIFICATIONS = [];
 
 export const NotificationsProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);

@@ -40,7 +40,7 @@ const LoginCardMark = () => {
         borderRadius: radius,
         background: branding.logo
           ? '#FFFFFF'
-          : 'linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)',
+          : '#4F46E5',
         boxShadow: '0 4px 16px rgba(30, 58, 138, 0.25)',
       }}
     >
@@ -109,7 +109,7 @@ const Login = ({ onLogin }) => {
           />
           <div
             className="absolute inset-0"
-            style={{ background: 'linear-gradient(160deg, #0A1628 0%, #0F2045 35%, #1E3A8A 100%)' }}
+            style={{ background: 'linear-gradient(160deg, #0B1220 0%, #131B33 35%, #4338CA 100%)' }}
           />
           {/* Gold ambient glow — top left */}
           <div
@@ -168,7 +168,7 @@ const Login = ({ onLogin }) => {
               {FEATURE_PILLS.map(({ icon: Icon, label }, idx) => (
                 <div
                   key={label}
-                  className="flex items-center gap-2.5 rounded-xl px-4 py-3 backdrop-blur-md transition-all duration-300 hover:scale-[1.02]"
+                  className="flex items-center gap-2.5 rounded-xl px-4 py-3 transition-all duration-300 hover:scale-[1.02]"
                   style={{
                     background: 'rgba(255, 255, 255, 0.07)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -192,7 +192,7 @@ const Login = ({ onLogin }) => {
           {/* Bottom trust line */}
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              {['#1E3A8A', '#D4A017', '#059669', '#7C3AED'].map((c, i) => (
+              {['#4338CA', '#D4A017', '#059669', '#7C3AED'].map((c, i) => (
                 <div
                   key={i}
                   className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white"
@@ -224,8 +224,6 @@ const Login = ({ onLogin }) => {
             className="glass-card rounded-2xl p-8 sm:p-10"
             style={{
               background: 'var(--card-bg)',
-              backdropFilter: 'blur(20px) saturate(1.4)',
-              WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
               border: '1px solid var(--border)',
               boxShadow: 'var(--shadow-lg)',
             }}
@@ -261,7 +259,7 @@ const Login = ({ onLogin }) => {
                   autoComplete="username"
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl text-slate-800 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2"
                   style={{
-                    background: 'var(--glass-bg)',
+                    background: 'var(--card-bg)',
                     border: '1px solid var(--border)',
                     color: 'var(--text-primary)',
                     '--tw-ring-color': 'rgba(59, 130, 246, 0.2)',
@@ -271,7 +269,7 @@ const Login = ({ onLogin }) => {
                     e.target.style.borderColor = 'var(--accent-light)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.background = 'var(--glass-bg)';
+                    e.target.style.background = 'var(--card-bg)';
                     e.target.style.borderColor = 'var(--border)';
                   }}
                 />
@@ -292,7 +290,7 @@ const Login = ({ onLogin }) => {
                   autoComplete="current-password"
                   className="w-full pl-12 pr-12 py-3.5 rounded-xl text-slate-800 placeholder-slate-400 transition-all duration-200 focus:outline-none focus:ring-2"
                   style={{
-                    background: 'var(--glass-bg)',
+                    background: 'var(--card-bg)',
                     border: '1px solid var(--border)',
                     color: 'var(--text-primary)',
                     '--tw-ring-color': 'rgba(59, 130, 246, 0.2)',
@@ -302,7 +300,7 @@ const Login = ({ onLogin }) => {
                     e.target.style.borderColor = 'var(--accent-light)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.background = 'var(--glass-bg)';
+                    e.target.style.background = 'var(--card-bg)';
                     e.target.style.borderColor = 'var(--border)';
                   }}
                 />
@@ -328,7 +326,7 @@ const Login = ({ onLogin }) => {
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
                     className="w-4 h-4 rounded"
-                    style={{ accentColor: '#1E3A8A' }}
+                    style={{ accentColor: '#4338CA' }}
                   />
                   <span style={{ color: 'var(--text-secondary)' }}>Remember me</span>
                 </label>
@@ -363,7 +361,7 @@ const Login = ({ onLogin }) => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl text-white font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
                 style={{
-                  background: 'linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%)',
+                  background: '#4F46E5',
                   boxShadow: '0 4px 16px rgba(30, 58, 138, 0.2)',
                 }}
               >

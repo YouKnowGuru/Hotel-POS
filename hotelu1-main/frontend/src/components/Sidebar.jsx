@@ -42,25 +42,22 @@ import { loadBranding } from '../utils/branding';
 const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
   <button
     onClick={onClick}
-    className="group relative flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+    aria-current={active ? 'page' : undefined}
+    className="group relative flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
     style={{
-      background: active
-        ? 'rgba(255,255,255,0.12)'
-        : 'transparent',
-      backdropFilter: active ? 'blur(8px)' : 'none',
-      WebkitBackdropFilter: active ? 'blur(8px)' : 'none',
-      color: active ? '#FFFFFF' : '#CBD5E1',
+      background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
+      color: active ? '#FFFFFF' : '#A9B7CE',
     }}
     onMouseEnter={(e) => {
       if (!active) {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
         e.currentTarget.style.color = '#FFFFFF';
       }
     }}
     onMouseLeave={(e) => {
       if (!active) {
         e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.color = '#CBD5E1';
+        e.currentTarget.style.color = '#A9B7CE';
       }
     }}
   >
@@ -68,27 +65,18 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
     {active && (
       <span
         className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full"
-        style={{
-          background: 'linear-gradient(180deg, #F0C050, #D4A017, #A16207)',
-          boxShadow: '0 0 8px rgba(212, 160, 23, 0.4)',
-        }}
+        style={{ background: '#F0C050' }}
       />
     )}
     <Icon
-      className="w-[18px] h-[18px] shrink-0 transition-all duration-200"
-      style={{
-        color: active ? '#FBBF24' : 'var(--text-muted)',
-        filter: active ? 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.3))' : 'none',
-      }}
+      className="w-[18px] h-[18px] shrink-0 transition-colors duration-150"
+      style={{ color: active ? '#F0C050' : '#7C8DA6' }}
     />
-    <span className="truncate flex-1 text-left tracking-wide">{label}</span>
+    <span className="truncate flex-1 text-left">{label}</span>
     {badge != null && badge > 0 && (
       <span
         className="ml-auto min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[10px] font-bold text-white"
-        style={{
-          background: 'linear-gradient(135deg, #D4A017, #A16207)',
-          boxShadow: '0 2px 8px rgba(212, 160, 23, 0.35)',
-        }}
+        style={{ background: '#D4A017' }}
       >
         {badge > 99 ? '99+' : badge}
       </span>
@@ -224,8 +212,6 @@ const Sidebar = ({
           className="flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200"
           style={{
             background: 'rgba(255,255,255,0.06)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
             border: '1px solid rgba(255,255,255,0.08)',
             boxShadow: '0 2px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
@@ -237,7 +223,7 @@ const Sidebar = ({
               border: '1px solid rgba(212,160,23,0.2)',
             }}
           >
-            <Store className="w-4 h-4" style={{ color: '#FBBF24' }} />
+            <Store className="w-4 h-4" style={{ color: '#F0C050' }} />
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-sm font-semibold text-white leading-tight truncate">
@@ -266,8 +252,6 @@ const Sidebar = ({
           className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs"
           style={{
             background: 'rgba(212,160,23,0.08)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(212,160,23,0.15)',
           }}
         >
@@ -275,7 +259,7 @@ const Sidebar = ({
           <span
             className="font-bold text-[11px] px-2.5 py-1 rounded-lg"
             style={{
-              color: '#FBBF24',
+              color: '#F0C050',
               background: 'rgba(212,160,23,0.12)',
               border: '1px solid rgba(212,160,23,0.2)',
             }}
@@ -287,7 +271,7 @@ const Sidebar = ({
 
       {/* ── Section label ────────────────────────────────────── */}
       <div className="px-5 mb-2">
-        <p className="text-[10px] font-bold tracking-widest" style={{ color: 'rgba(212,160,23,0.7)' }}>NAVIGATION</p>
+        <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748B' }}>NAVIGATION</p>
       </div>
 
       {/* ── Navigation ───────────────────────────────────────── */}
@@ -536,47 +520,40 @@ const Sidebar = ({
         </ul>
       </nav>
 
-      {/* ── Help glass card ──────────────────────────────────── */}
+      {/* ── Help card ────────────────────────────────────────── */}
       <div className="px-4 pb-3 pt-2">
         <div
-          className="rounded-2xl p-4 transition-all duration-200"
+          className="rounded-xl p-4"
           style={{
-            background: 'rgba(255,255,255,0.06)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)',
           }}
         >
           <div className="flex items-center gap-2.5 mb-3">
             <div
               className="w-8 h-8 rounded-full flex items-center justify-center"
               style={{
-                background: 'linear-gradient(135deg, rgba(212,160,23,0.2), rgba(212,160,23,0.1))',
-                border: '1px solid rgba(212,160,23,0.2)',
+                background: 'rgba(212,160,23,0.14)',
               }}
             >
-              <HelpCircle className="w-4 h-4" style={{ color: '#FBBF24' }} />
+              <HelpCircle className="w-4 h-4" style={{ color: '#F0C050' }} />
             </div>
             <div>
               <p className="text-sm font-semibold text-white leading-tight">Need Help?</p>
-              <p className="text-[11px] leading-tight" style={{ color: 'var(--text-muted)' }}>We are here for you</p>
+              <p className="text-[11px] leading-tight" style={{ color: '#7C8DA6' }}>We are here for you</p>
             </div>
           </div>
           <button
-            className="w-full py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full py-2.5 text-xs font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center gap-2"
             style={{
-              background: 'linear-gradient(135deg, #D4A017 0%, #A16207 100%)',
+              background: '#D4A017',
               color: '#fff',
-              boxShadow: '0 4px 12px rgba(212, 160, 23, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(212, 160, 23, 0.4), inset 0 1px 0 rgba(255,255,255,0.15)';
+              e.currentTarget.style.background = '#B8860B';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(212, 160, 23, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)';
+              e.currentTarget.style.background = '#D4A017';
             }}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -632,8 +609,6 @@ const Sidebar = ({
         className="lg:hidden fixed top-0 left-0 right-0 z-50 px-4 py-3"
         style={{
           background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(20px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
         }}
@@ -655,7 +630,7 @@ const Sidebar = ({
             <div
               className="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs text-white"
               style={{
-                background: 'linear-gradient(135deg, #D4A017, #A16207)',
+                background: '#D4A017',
                 boxShadow: '0 2px 8px rgba(212, 160, 23, 0.25)',
               }}
             >
@@ -671,8 +646,6 @@ const Sidebar = ({
           className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
           style={{
             background: 'rgba(15, 23, 42, 0.6)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
           }}
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -680,27 +653,29 @@ const Sidebar = ({
 
       {/* ── Sidebar ───────────────────────────────────────────── */}
       <aside
-        className={`fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 w-72 flex flex-col h-screen
-        transform transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+        className={`fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 w-[76vw] max-w-[19rem] lg:w-64 flex flex-col h-screen
+        transform transition-transform duration-300
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
         style={{
-          background: 'linear-gradient(180deg, #0A1628 0%, #0F2045 40%, #1E3A8A 100%)',
+          background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
         }}
       >
         {/* Close button (mobile) */}
-        <div className="lg:hidden flex justify-end p-3">
+        <div className="lg:hidden flex justify-between items-center px-4 pt-4 pb-1">
+          <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748B' }}>MENU</span>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-xl transition-all duration-200"
+            aria-label="Close menu"
+            className="p-2.5 rounded-lg transition-colors duration-150"
             style={{
-              color: 'var(--text-muted)',
+              color: '#CBD5E1',
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 

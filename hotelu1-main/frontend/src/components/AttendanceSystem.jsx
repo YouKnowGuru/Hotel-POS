@@ -183,7 +183,7 @@ function LiveClockWidget({
   const scfg = myStatus ? STATUS_CONFIG[myStatus.status] : null;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1E36] via-[#162B4D] to-[#0A1628] text-white p-6 sm:p-8 shadow-xl border border-blue-900/40">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1E36] via-[#162B4D] to-[#0B1220] text-white p-6 sm:p-8 shadow-xl border border-blue-900/40">
       {/* Decorative ambient background glows */}
       <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
@@ -215,7 +215,7 @@ function LiveClockWidget({
 
           {/* Active status indicator */}
           <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/15">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/10 border border-white/15">
               <span
                 className={`w-2.5 h-2.5 rounded-full ${
                   isIn
@@ -249,7 +249,7 @@ function LiveClockWidget({
         </div>
 
         {/* Right Column: Shift Controls */}
-        <div className="flex flex-col gap-3 min-w-[280px] max-w-md w-full bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+        <div className="flex flex-col gap-3 min-w-[280px] max-w-md w-full bg-[#132043] border border-white/10 p-5 rounded-2xl">
           {!isIn ? (
             <>
               <div>
@@ -410,7 +410,7 @@ function AttendanceTable({ records, isAdmin, onApprove, onEdit, onDelete }) {
     <div className="overflow-x-auto">
       <table className="w-full text-left text-xs sm:text-sm">
         <thead>
-          <tr className="bg-gray-50/80 dark:bg-slate-900/60 text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-gray-200/80 dark:border-slate-800">
+          <tr className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-gray-200/80 dark:border-slate-800">
             <th className="py-3 px-4">Date</th>
             <th className="py-3 px-4">Staff Member</th>
             <th className="py-3 px-4">Shift</th>
@@ -428,7 +428,7 @@ function AttendanceTable({ records, isAdmin, onApprove, onEdit, onDelete }) {
             return (
               <tr
                 key={r.id}
-                className="hover:bg-gray-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 <td className="py-3.5 px-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {fmt.date(r.date)}
@@ -566,7 +566,7 @@ function RecordModal({ record, staff, onClose, onSave }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fade-in"
       onClick={onClose}
     >
       <div

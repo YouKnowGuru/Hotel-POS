@@ -169,8 +169,14 @@ export const savePermissionsMatrix = (matrix) => {
  */
 export const fetchPermissionsMatrixFromServer = async () => {
   try {
+    const headers = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(
-      `${getAPI_URL()}/api/settings?key=${encodeURIComponent(SETTING_KEY)}`
+      `${getAPI_URL()}/api/settings?key=${encodeURIComponent(SETTING_KEY)}`,
+      { headers }
     );
     if (!res.ok) return null;
     const data = await res.json();

@@ -132,6 +132,21 @@ async function runSafeMigrations(sequelize, models = {}) {
       // Bring older databases up to the current Order model as well. Missing
       // columns otherwise make Sequelize's SELECT fail before an order can be
       // displayed, even if the new payment feature is not being used.
+      // Per-order tax/SC snapshot (see GSTLedger bugfix): additive columns,
+      // old rows stay NULL and keep using the back-calculation fallback.
+      const taxSnapshotColumns = {
+        subtotal: { type: DataTypes.FLOAT, allowNull: true },
+        tax_percent: { type: DataTypes.FLOAT, allowNull: true },
+        tax_amount: { type: DataTypes.FLOAT, allowNull: true },
+        service_charge: { type: DataTypes.FLOAT, allowNull: true },
+      };
+      for (const [column, definition] of Object.entries(taxSnapshotColumns)) {
+        if (!ordersDesc[column]) {
+          await qi.addColumn('orders', column, definition);
+          console.log(`Migration: added orders.${column}`);
+        }
+      }
+
       const legacyOrderColumns = {
         bill_requested: { type: DataTypes.BOOLEAN, defaultValue: false },
         delivered_at: { type: DataTypes.DATE, allowNull: true },
@@ -316,6 +331,40 @@ async function runSafeMigrations(sequelize, models = {}) {
       await SubFranchise.sync();
       console.log("Migration: sub_franchises table ready");
     }
+
+    // ── Dashboard/query performance indexes (idempotent) ──────────────────
+    // The orders/order_items tables previously had ONLY their PRIMARY keys.
+    // Every dashboard/analytics query filters by timestamp range and tenant
+    // (subfranchise_id), and every /api/orders fetch joins order_items by
+    // orderId. With real production volumes those paths become full table
+    // scans. Checked against information_schema on every boot, so this is
+    // safe to run repeatedly and cheap when the indexes already exist.
+    async function addIndexIfMissing(table, indexName, columns) {
+      const existing = await sequelize.query(
+        "SELECT 1 AS x FROM information_schema.statistics WHERE table_schema=(SELECT DATABASE()) AND table_name=? AND index_name=? LIMIT 1",
+        { replacements: [table, indexName], type: sequelize.Sequelize.QueryTypes.SELECT }
+      );
+      if (existing.length > 0) return;
+      try {
+        await qi.addIndex(table, columns, { name: indexName });
+        console.log(`PERF-INDEX: added ${indexName} on ${table}(${columns.join(",")})`);
+      } catch (e) {
+        console.warn(`PERF-INDEX: could not add ${indexName}:`, e.message);
+      }
+    }
+
+    if (tableNames.includes("orders")) {
+      // Dashboard/date-window fetches: WHERE timestamp BETWEEN ?
+      await addIndexIfMissing("orders", "idx_orders_timestamp", ["timestamp"]);
+      // Tenant-scoped live panels: WHERE subfranchise_id=? (+timestamp sort)
+      await addIndexIfMissing("orders", "idx_orders_subfranchise_timestamp", ["subfranchise_id", "timestamp"]);
+    }
+    if (tableNames.includes("order_items")) {
+      // /api/orders' hasMany JOIN resolves items by orderId — without an
+      // FK index MySQL scans all order_items for every fetch at scale.
+      await addIndexIfMissing("order_items", "idx_order_items_orderId", ["orderId"]);
+    }
+    // ───────────────────────────────────────────────────────────────────
 
     // ── Attendance table ─────────────────────────────────────────────────────
     if (!tableNames.includes("attendance")) {

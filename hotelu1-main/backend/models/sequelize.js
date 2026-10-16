@@ -38,8 +38,25 @@ if (process.env.DATABASE_URL) {
   sequelize = new Sequelize(cleanUrl, {
     dialect,
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
-    dialectOptions: { ssl: sslOptions },
-    pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    dialectOptions: {
+      ssl: sslOptions,
+      // PERF: the DB is commonly hosted on a remote managed service where
+      // establishing a connection (TCP + TLS handshake + auth) costs 1–2s.
+      // With the previous pool (min:0, idle:10s) every poll after a 10s
+      // gap paid that full cost again — most dashboard latency was
+      // re-connection, not query time. mysql2's keep-alive keeps pooled
+      // sockets alive through NAT/firewall idle timeouts (common on
+      // managed MySQL/TiDB providers) instead of dropping them.
+      ...(dialect === 'mysql'
+        ? { enableKeepAlive: true, keepAliveInitialDelay: 10000 }
+        : {}),
+      // Safety: never let a hung connection block a request forever.
+      connectTimeout: 15000,
+    },
+    // Warm pool: keep one connection always established so the first
+    // dashboard/auth request after an idle gap is query-time only. Keep
+    // idle slightly below typical provider TCP idle-cut (60s is safe).
+    pool: { max: 10, min: 1, acquire: 30000, idle: 60000, evict: 10000 },
   });
 } else {
   const dialect = process.env.DB_DIALECT || 'mysql';
@@ -52,8 +69,21 @@ if (process.env.DATABASE_URL) {
       port: process.env.DB_PORT || (dialect === 'postgres' ? 5432 : 3306),
       dialect,
       logging: process.env.NODE_ENV === 'development' ? console.log : false,
-      dialectOptions: { ssl: sslOptions },
-      pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+      dialectOptions: {
+        ssl: sslOptions,
+        // PERF: same rationale as the DATABASE_URL branch above — remote
+        // MySQL connections cost 1–2s to establish; dropping them after
+        // 10s of idle made almost every dashboard poll a full reconnect.
+        ...(dialect === 'mysql'
+          ? { enableKeepAlive: true, keepAliveInitialDelay: 10000 }
+          : {}),
+        // Safety: never let a hung connection block a request forever.
+        connectTimeout: 15000,
+      },
+      // Warm pool: keep one connection always established so the first
+      // dashboard/auth request after an idle gap is query-time only. Keep
+      // idle slightly below typical provider TCP idle-cut (60s is safe).
+      pool: { max: 10, min: 1, acquire: 30000, idle: 60000, evict: 10000 },
     }
   );
 }

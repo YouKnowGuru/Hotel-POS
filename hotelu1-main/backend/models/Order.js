@@ -19,6 +19,15 @@ const Order = sequelize.define(
       defaultValue: "pending",
     },
     total: { type: DataTypes.FLOAT, allowNull: false },
+    // Tax/SC breakdown SNAPSHOT taken at order time (BUGFIX: the GST and
+    // Service-Charge ledgers used to back-calculate these from `total`
+    // using the CURRENT taxPercent — changing the rate retroactively
+    // rewrote every historical ledger row. New orders store their own
+    // truth; older rows (null here) keep using the back-calc fallback.
+    subtotal: { type: DataTypes.FLOAT, allowNull: true },
+    tax_percent: { type: DataTypes.FLOAT, allowNull: true },
+    tax_amount: { type: DataTypes.FLOAT, allowNull: true },
+    service_charge: { type: DataTypes.FLOAT, allowNull: true },
     timestamp: { type: DataTypes.DATE, allowNull: false },
     type: { type: DataTypes.STRING, allowNull: false },
     // Number of guests seated at the table for this order (dine-in).

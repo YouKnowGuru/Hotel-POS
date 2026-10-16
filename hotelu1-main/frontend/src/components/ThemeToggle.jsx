@@ -16,9 +16,8 @@ const ThemeToggle = ({ className = '' }) => {
       title={label}
       className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${className}`}
       style={{
-        background: hovered ? 'var(--glass-bg)' : 'transparent',
-        border: hovered ? '1px solid var(--glass-border)' : '1px solid transparent',
-        backdropFilter: hovered ? 'blur(8px)' : 'none',
+        background: hovered ? 'var(--card-bg)' : 'transparent',
+        border: hovered ? '1px solid var(--border)' : '1px solid transparent',
         transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -33,7 +32,7 @@ const ThemeToggle = ({ className = '' }) => {
         <Moon
           className={'absolute inset-0 w-5 h-5 transition-all duration-300 ' +
             (isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50')}
-          style={{ color: hovered ? '#1E3A8A' : '#94A3B8' }}
+          style={{ color: hovered ? '#4338CA' : '#94A3B8' }}
         />
       </span>
     </button>

@@ -560,7 +560,7 @@ const getCss = (isDark) => ({
   addBtn: { display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #f97316, #e11d48)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 6px 24px rgba(249,115,22,0.35)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)' },
 
   /* Search */
-  searchBox: { display: 'flex', alignItems: 'center', gap: 10, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)', backdropFilter: 'blur(12px)', border: isDark ? '1.5px solid rgba(255,255,255,0.10)' : '1.5px solid rgba(0,0,0,0.05)', borderRadius: 14, padding: '10px 14px', marginBottom: 16, transition: 'border-color 0.2s, box-shadow 0.2s' },
+  searchBox: { display: 'flex', alignItems: 'center', gap: 10, background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.65)', border: isDark ? '1.5px solid rgba(255,255,255,0.10)' : '1.5px solid rgba(0,0,0,0.05)', borderRadius: 14, padding: '10px 14px', marginBottom: 16, transition: 'border-color 0.2s, box-shadow 0.2s' },
   searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: isDark ? '#f1f5f9' : '#1e293b', fontFamily: 'inherit' },
   clearBtn: { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', border: 'none', borderRadius: 8, width: 26, height: 26, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: 'background 0.15s' },
 
@@ -589,11 +589,11 @@ const getCss = (isDark) => ({
   emptyBtn: { marginTop: 18, padding: '11px 24px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #f97316, #e11d48)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 6px 20px rgba(249,115,22,0.3)', transition: 'all 0.2s' },
 
   /* Card */
-  card: { borderRadius: 18, overflow: 'hidden', background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)', boxShadow: isDark ? '0 2px 16px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.05)', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
+  card: { borderRadius: 18, overflow: 'hidden', background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.8)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)', boxShadow: isDark ? '0 2px 16px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.05)', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
   cardImgWrap: { position: 'relative', height: 180, overflow: 'hidden', background: isDark ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)' },
   cardImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
   cardImgPH: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  badge: { position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 50, fontSize: 11, fontWeight: 700, backdropFilter: 'blur(8px)' },
+  badge: { position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 50, fontSize: 11, fontWeight: 700 },
   catTag: { position: 'absolute', bottom: 10, left: 10, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, color: '#fff' },
   cardBody: { padding: '14px 16px 16px' },
   cardName: { margin: '0 0 4px', fontSize: 15, fontWeight: 800, color: isDark ? '#f1f5f9' : '#1e293b', lineHeight: 1.3 },
@@ -608,7 +608,7 @@ const getCss = (isDark) => ({
   deleteAction: { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', color: isDark ? '#94a3b8' : '#64748b' },
 
   /* Row */
-  row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.3)' : '0 1px 8px rgba(0,0,0,0.03)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)' },
+  row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.7)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.3)' : '0 1px 8px rgba(0,0,0,0.03)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)' },
   rowImgWrap: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: isDark ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)' },
   rowImg: { width: '100%', height: '100%', objectFit: 'cover' },
   rowImgPH: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
@@ -622,7 +622,7 @@ const getCss = (isDark) => ({
   rowActions: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
 
   /* Modal */
-  overlay: { position: 'fixed', inset: 0, zIndex: 100, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, animation: 'fadeIn 0.2s ease both' },
+  overlay: { position: 'fixed', inset: 0, zIndex: 100, background: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, animation: 'fadeIn 0.2s ease both' },
   modal: { background: isDark ? '#1e293b' : '#fff', borderRadius: 20, width: '100%', maxWidth: 640, maxHeight: '90vh', overflow: 'auto', boxShadow: isDark ? '0 24px 80px rgba(0,0,0,0.6)' : '0 24px 80px rgba(0,0,0,0.2)', animation: 'slideModal 0.35s cubic-bezier(0.4,0,0.2,1)' },
   modalHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px 16px', borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)' },
   modalHeadLeft: { display: 'flex', alignItems: 'center', gap: 10 },

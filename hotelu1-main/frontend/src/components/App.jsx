@@ -49,9 +49,9 @@ const PayrollSystem = lazy(() => import('./PayrollSystem'));
 
 // Loading component for Suspense fallback - Reference Image Design
 const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#FFF8F0]">
-    <div className="text-center bg-white rounded-2xl shadow-lg p-8">
-      <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-100 border-t-orange-500 mx-auto mb-4"></div>
+  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+    <div className="text-center bg-white rounded-2xl shadow-md p-8">
+      <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4"></div>
       <p className="text-gray-600 font-medium">Loading...</p>
     </div>
   </div>
@@ -274,7 +274,7 @@ const App = () => {
     }
 
     return (
-      <div className="flex min-h-screen font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
+      <div className="flex h-screen overflow-hidden font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -283,9 +283,9 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+        <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0B1220]">{children}</main>
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{children}</main>
         </div>
       </div>
     );
@@ -305,7 +305,7 @@ const App = () => {
     }
 
     return (
-      <div className="flex min-h-screen font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
+      <div className="flex h-screen overflow-hidden font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -314,9 +314,9 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0 pt-16 lg:pt-0">
+        <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0B1220]">{renderContent()}</main>
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{renderContent()}</main>
         </div>
       </div>
     );

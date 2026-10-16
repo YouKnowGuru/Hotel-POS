@@ -50,23 +50,21 @@ import DatePickerButton, {
    Liquid Glass — Design Tokens
    ================================================================= */
 
-const NAVY = '#1E3A8A';
-const NAVY_DEEP = '#0F172A';
+const NAVY = '#4F46E5';
+const NAVY_DEEP = '#312E81';
 const GOLD = '#D4A017';
 const GOLD_LIGHT = '#F0C050';
 const GOLD_DARK = '#A16207';
 
 const glassCard = {
-  background: 'var(--glass-bg)',
-  backdropFilter: 'blur(20px) saturate(1.8)',
-  WebkitBackdropFilter: 'blur(20px) saturate(1.8)',
+  background: 'var(--card-bg)',
   borderRadius: 16,
-  border: '1px solid var(--glass-border)',
-  boxShadow: 'var(--shadow-glass)',
+  border: '1px solid var(--border)',
+  boxShadow: 'var(--shadow-sm)',
 };
 
 const glassCardHover = {
-  boxShadow: 'var(--shadow-glass-hover)',
+  boxShadow: 'var(--shadow-lg)',
   transform: 'translateY(-3px)',
 };
 
@@ -130,7 +128,7 @@ const GlassTooltip = ({ active, payload, label, fmt }) => {
         ...glassCard,
         padding: '10px 14px',
         borderRadius: 12,
-        border: '1px solid var(--glass-border)',
+        border: '1px solid var(--border)',
       }}
     >
       <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -181,24 +179,23 @@ const KpiCard = ({
           left: 0,
           right: 0,
           height: 3,
-          background: `linear-gradient(90deg, ${accentFrom}, ${accentTo})`,
+          background: accentFrom,
           borderRadius: '16px 16px 0 0',
         }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div
-          style={{
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>      <div
+        style={{
             width: 44,
             height: 44,
             borderRadius: 12,
-            background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
+            background: accentFrom,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            transition: 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)',
-            transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            transition: 'transform 0.2s ease',
+            transform: hovered ? 'scale(1.05)' : 'scale(1)',
           }}
-        >
+      >
           <Icon style={{ width: 20, height: 20, color: '#fff' }} />
         </div>
       </div>
@@ -262,7 +259,7 @@ const GlassSection = ({ icon: Icon, title, right, children, className = '' }) =>
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: `linear-gradient(135deg, ${NAVY}, #2563EB)`,
+              background: NAVY,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -289,9 +286,9 @@ const GlassPill = ({ children }) => (
       fontFamily: "Inter, system-ui, sans-serif",
       padding: '4px 12px',
       borderRadius: 9999,
-      background: 'var(--glass-bg)',
+      background: 'var(--card-bg)',
       color: 'var(--text-primary)',
-      border: '1px solid var(--glass-border)',
+      border: '1px solid var(--border)',
     }}
   >
     {children}
@@ -304,7 +301,7 @@ const StatusPill = ({ status }) => {
     preparing: { bg: `rgba(212,160,23,0.10)`, color: GOLD_DARK, dot: GOLD },
     ready: { bg: 'rgba(5,150,105,0.10)', color: '#059669', dot: '#059669' },
     pending: { bg: `rgba(212,160,23,0.10)`, color: GOLD_DARK, dot: GOLD },
-    completed: { bg: 'var(--glass-bg)', color: 'var(--text-primary)', dot: NAVY },
+    completed: { bg: 'var(--card-bg)', color: 'var(--text-primary)', dot: NAVY },
     delivered: { bg: 'rgba(5,150,105,0.10)', color: '#059669', dot: '#059669' },
   };
   const style = map[s] || { bg: 'rgba(100,116,139,0.08)', color: 'var(--text-secondary)', dot: 'var(--text-muted)' };
@@ -349,8 +346,8 @@ const Dashboard = ({ locationSettings }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
-  const [selectedDate, setSelectedDate] = useState(getTodayLocalDate);
-  const socketRef = useRef(null);
+  const [selectedDate, setSelectedDate] = useState(getTodayLocalDate);    const socketRef = useRef(null);
+    const refreshTimer = useRef(null);
   const todayLocalDate = getTodayLocalDate();
   const isViewingToday = selectedDate === todayLocalDate;
   // eslint-disable-next-line
@@ -392,7 +389,14 @@ const Dashboard = ({ locationSettings }) => {
 
     const socket = io(getSocketUrl(), { auth: { token: localStorage.getItem('token') } });
     socketRef.current = socket;
-    const refresh = () => loadData();
+    // PERF: a burst of order events (kitchen pushing preparing→ready for
+    // several tickets at once) used to fire one full 30-day refetch per
+    // event, serially hammering the orders query. Coalesce trailing
+    // events into a single reload ~800ms after the last one.
+    const refresh = () => {
+      clearTimeout(refreshTimer.current);
+      refreshTimer.current = setTimeout(loadData, 800);
+    };
     socket.on('order_created', refresh);
     socket.on('order_status_updated', refresh);
     socket.on('order_deleted', refresh);
@@ -407,6 +411,7 @@ const Dashboard = ({ locationSettings }) => {
       socket.disconnect();
       clearInterval(pollInterval);
       clearInterval(tickInterval);
+      clearTimeout(refreshTimer.current);
     };
   }, [loadData, isViewingToday]);
 
@@ -621,17 +626,17 @@ const Dashboard = ({ locationSettings }) => {
 
   /* ----------------- render ----------------- */
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1600px] mx-auto">
       {/* ===== Page header ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h1
               style={{
-                fontFamily: '"Playfair Display SC", Georgia, serif',
-                fontSize: 28,
-                fontWeight: 700,
-                letterSpacing: '0.02em',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: 24,
+                fontWeight: 800,
+                letterSpacing: '-0.02em',
                 color: 'var(--text-primary)',
                 margin: 0,
               }}
@@ -646,9 +651,9 @@ const Dashboard = ({ locationSettings }) => {
                   gap: 6,
                   padding: '4px 12px',
                   borderRadius: 9999,
-                  background: 'var(--glass-bg)',
+                  background: 'var(--card-bg)',
                   color: 'var(--text-primary)',
-                  border: '1px solid var(--glass-border)',
+                  border: '1px solid var(--border)',
                   fontSize: 11,
                   fontWeight: 700,
                   fontFamily: "Inter, system-ui, sans-serif"
@@ -689,14 +694,14 @@ const Dashboard = ({ locationSettings }) => {
               gap: 8,
               padding: '10px 20px',
               borderRadius: 12,
-              background: `linear-gradient(135deg, ${NAVY}, #2563EB)`,
+              background: NAVY,
               color: '#fff',
               fontSize: 14,
               fontWeight: 600,
               fontFamily: "Inter, system-ui, sans-serif",
               border: 'none',
               cursor: 'pointer',
-              boxShadow: `0 4px 16px rgba(30,58,138,0.25)`,
+              boxShadow: `0 4px 12px rgba(79,70,229,0.25)`,
               transition: 'all 0.2s ease',
             }}
           >
@@ -710,7 +715,7 @@ const Dashboard = ({ locationSettings }) => {
         <KpiCard
           icon={ShoppingCart}
           accentFrom={NAVY}
-          accentTo="#2563EB"
+          accentTo="#6366F1"
           label="Total Orders"
           value={totalOrders}
           delta={ordersDelta}
@@ -733,12 +738,12 @@ const Dashboard = ({ locationSettings }) => {
         />
         <KpiCard
           icon={Package}
-          accentFrom="#7C3AED"
+          accentFrom="#8B5CF6"
           accentTo="#A78BFA"
           label="Total Items"
           value={totalItems}
           delta={itemsDelta}
-          sparkColor="#7C3AED"
+          sparkColor="#8B5CF6"
           sparkData={itemsSpark}
           gradientId="spark-items"
           index={2}
@@ -811,7 +816,7 @@ const Dashboard = ({ locationSettings }) => {
                   tickLine={false}
                   tickFormatter={(v) => fmt(v)}
                 />
-                <Tooltip content={<GlassTooltip fmt={fmt} />} cursor={{ stroke: 'var(--glass-border)', strokeWidth: 2 }} />
+                <Tooltip content={<GlassTooltip fmt={fmt} />} cursor={{ stroke: 'var(--border)', strokeWidth: 2 }} />
                 <Area
                   type="monotone"
                   dataKey="sales"
@@ -923,16 +928,16 @@ const Dashboard = ({ locationSettings }) => {
                     gap: 12,
                     padding: 12,
                     borderRadius: 12,
-                    border: '1px solid var(--glass-border)',
+                    border: '1px solid var(--border)',
                     transition: 'all 0.2s ease',
                     cursor: 'default',
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = `rgba(212,160,23,0.3)`;
-                    e.currentTarget.style.background = 'var(--glass-bg)';
+                    e.currentTarget.style.background = 'var(--card-bg)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--glass-border)';
+                    e.currentTarget.style.borderColor = 'var(--border)';
                     e.currentTarget.style.background = 'transparent';
                   }}
                 >
@@ -941,7 +946,7 @@ const Dashboard = ({ locationSettings }) => {
                       width: 36,
                       height: 36,
                       borderRadius: 10,
-                      background: `linear-gradient(135deg, ${NAVY}, #2563EB)`,
+                      background: NAVY,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1000,7 +1005,7 @@ const Dashboard = ({ locationSettings }) => {
                     borderRadius: idx === 0 ? 8 : '50%',
                     background: idx === 0
                       ? `linear-gradient(135deg, ${GOLD}, ${GOLD_LIGHT})`
-                      : 'var(--glass-bg)',
+                      : 'var(--card-bg)',
                     color: idx === 0 ? '#fff' : 'var(--text-primary)',
                     fontSize: 12,
                     fontWeight: 700,
@@ -1022,14 +1027,14 @@ const Dashboard = ({ locationSettings }) => {
                       {fmt(it.revenue)}
                     </p>
                   </div>
-                  <div style={{ marginTop: 4, height: 6, borderRadius: 9999, background: 'var(--glass-bg)', overflow: 'hidden' }}>
+                  <div style={{ marginTop: 4, height: 6, borderRadius: 9999, background: 'var(--card-bg)', overflow: 'hidden' }}>
                     <div
                       style={{
                         height: '100%',
                         borderRadius: 9999,
                         background: idx === 0
-                          ? `linear-gradient(90deg, ${GOLD_DARK}, ${GOLD})`
-                          : `linear-gradient(90deg, ${NAVY}, #3B82F6)`,
+                          ? GOLD
+                          : NAVY,
                         width: `${Math.max(8, (it.revenue / maxItemRevenue) * 100)}%`,
                         transition: 'width 0.6s cubic-bezier(0.34,1.56,0.64,1)',
                       }}
@@ -1078,7 +1083,7 @@ const Dashboard = ({ locationSettings }) => {
                   {peakHours.map((p, idx) => (
                     <Cell
                       key={idx}
-                      fill={p.period === peakMax.period && peakMax.sales > 0 ? GOLD : 'var(--glass-border)'}
+                      fill={p.period === peakMax.period && peakMax.sales > 0 ? GOLD : 'var(--border)'}
                     />
                   ))}
                 </Bar>
@@ -1104,7 +1109,7 @@ const Dashboard = ({ locationSettings }) => {
                     transition: 'background 0.2s ease',
                     cursor: 'default',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--glass-bg)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--card-bg)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
@@ -1180,7 +1185,7 @@ const Dashboard = ({ locationSettings }) => {
         />
         <BottomKpi
           icon={Repeat}
-          accentFrom="#7C3AED"
+          accentFrom="#8B5CF6"
           accentTo="#A78BFA"
           label="REPEAT CUSTOMERS"
           value={`${repeatPct}%`}
@@ -1197,11 +1202,11 @@ const Dashboard = ({ locationSettings }) => {
           style={{
             borderRadius: 16,
             padding: 16,
-            background: `linear-gradient(135deg, ${NAVY}, #1E40AF, ${NAVY_DEEP})`,
+            background: NAVY,
             color: '#fff',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: 'var(--shadow-glass-hover)',
+            boxShadow: 'var(--shadow-lg)',
           }}
         >
           <div
@@ -1264,7 +1269,7 @@ const BottomKpi = ({ icon: Icon, accentFrom, accentTo, label, value }) => {
             width: 40,
             height: 40,
             borderRadius: 10,
-            background: `linear-gradient(135deg, ${accentFrom}, ${accentTo})`,
+            background: accentFrom,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
