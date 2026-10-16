@@ -57,7 +57,7 @@ node_modules/.cache/
 
 # Service worker
 *.worker.js
-service-worker.js
+!frontend/public/service-worker.js
 sw.js
 
 # Documentation files (optional - uncomment if needed)

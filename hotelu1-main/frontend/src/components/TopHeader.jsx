@@ -20,6 +20,7 @@ import {
 import { authFetch } from '../utils/api';
 import { useNotifications } from '../contexts/NotificationsContext';
 import ThemeToggle from './ThemeToggle';
+import PwaInstallButton from './PwaInstallButton';
 
 /* ------------------------------------------------------------------ */
 /*  Defaults                                                           */
@@ -459,6 +460,9 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               </span>
             )}
           </div>
+
+          {/* Install PWA button */}
+          <PwaInstallButton />
 
           {/* Theme toggle */}
           <ThemeToggle />

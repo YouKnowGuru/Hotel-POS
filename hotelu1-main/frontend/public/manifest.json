@@ -1,0 +1,56 @@
+{
+  "short_name": "Hotel POS",
+  "name": "Hotel & Restaurant POS System",
+  "description": "Professional Cloud POS, Kitchen Display & Order Management System",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "categories": ["business", "food", "productivity"],
+  "shortcuts": [
+    {
+      "name": "New Order / POS",
+      "short_name": "POS",
+      "description": "Take customer order at table",
+      "url": "/pos"
+    },
+    {
+      "name": "Live Orders",
+      "short_name": "Orders",
+      "description": "Monitor active orders",
+      "url": "/orders"
+    },
+    {
+      "name": "Kitchen Display (KDS)",
+      "short_name": "Kitchen",
+      "description": "Chef view for active tickets",
+      "url": "/kitchen"
+    }
+  ]
+}

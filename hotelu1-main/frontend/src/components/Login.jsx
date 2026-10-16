@@ -16,6 +16,7 @@ import {
 import { getAPI_URL } from '../utils/api';
 import BrandMark from './BrandMark';
 import { loadBranding } from '../utils/branding';
+import PwaInstallButton from './PwaInstallButton';
 
 const FEATURE_PILLS = [
   { icon: BarChart3, label: 'Real-time Analytics' },
@@ -221,13 +222,18 @@ const Login = ({ onLogin }) => {
 
           {/* ── Login Card (glass) ── */}
           <div
-            className="glass-card rounded-2xl p-8 sm:p-10"
+            className="glass-card rounded-2xl p-8 sm:p-10 relative"
             style={{
               background: 'var(--card-bg)',
               border: '1px solid var(--border)',
               boxShadow: 'var(--shadow-lg)',
             }}
           >
+            {/* Quick Install PWA Pill */}
+            <div className="flex justify-end mb-2">
+              <PwaInstallButton />
+            </div>
+
             {/* Icon + heading */}
             <div className="flex justify-center mb-5">
               <LoginCardMark />

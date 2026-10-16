@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './components/App';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, applyThemeEarly } from './contexts/ThemeContext';
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 import './index.css';
 
 // Apply saved theme to <html> synchronously, before React renders,
@@ -34,3 +35,6 @@ root.render(
     </BrowserRouter>
   </React.StrictMode>
 );
+
+// Register PWA service worker to enable app installation and offline caching
+serviceWorkerRegistration.register();
