@@ -36,5 +36,9 @@ root.render(
   </React.StrictMode>
 );
 
-// Register PWA service worker to enable app installation and offline caching
-serviceWorkerRegistration.register();
+// BUGFIX: the registered PWA service worker precached the old JS bundle and
+// kept serving it after deployments, so UI changes never appeared for
+// returning visitors ("the hero still looks the same"). Unregistering makes
+// the browser fetch the fresh hashed bundle on every load. Re-enable with
+// an update-on-reload strategy once a stable offline shell is needed.
+serviceWorkerRegistration.unregister();

@@ -15,6 +15,9 @@ import {
  Utensils,
  ShoppingBag,
  QrCode,
+ Truck,
+ Phone,
+ Mail,
  CreditCard,
  Banknote,
  X as XIcon,
@@ -53,6 +56,7 @@ const STATUS_COLORS = {
  awaiting_payment: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
  verification_pending: { bg: 'bg-amber-50', text: 'text-amber-600' },
  cash_pending: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+ cash_pending_admin: { bg: 'bg-amber-50', text: 'text-amber-600' },
  rejected: { bg: 'bg-rose-50', text: 'text-rose-600' },
  pending: { bg: 'bg-amber-50', text: 'text-amber-600' },
  preparing: { bg: 'bg-indigo-50', text: 'text-indigo-600' },
@@ -63,8 +67,8 @@ const STATUS_COLORS = {
  paid: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
 };
 
-const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, QR_CODE: QrCode };
-const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', QR_CODE: 'QR Order' };
+const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, QR_CODE: QrCode, DELIVERY: Truck };
+const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', QR_CODE: 'QR Order', DELIVERY: 'Home Delivery' };
 
 const TYPE_FILTER_OPTIONS = [
  { id: 'all', label: 'All Types' },
@@ -85,7 +89,8 @@ const StatusPill = ({ status, dot = true }) => {
  const key = (status || '').toLowerCase();
  const c = STATUS_COLORS[key] || { bg: 'bg-gray-100', text: 'text-gray-600' };
  let label = (status || 'pending').charAt(0).toUpperCase() + (status || 'pending').slice(1);
- if (key === 'cash_pending') label = 'Cash Pending';
+ if (key === 'cash_pending') label = 'Cash Pending — Unpaid';
+ else if (key === 'cash_pending_admin') label = 'Cash Collected — Awaiting Approval';
  else if (key === 'verification_pending') label = 'Review Payment';
  else if (key === 'awaiting_payment') label = 'Awaiting Payment';
  return (
@@ -684,6 +689,24 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  }
  };
 
+ // Admin sign-off for cash payments already collected by staff.
+ const approveCashPayment = async () => {
+ setReviewing(true);
+ setReviewError('');
+ try {
+ const res = await authFetch(`/api/orders/${order.id}/approve-cash`, {
+ method: 'PUT',
+ });
+ const data = await safeJson(res);
+ if (!res.ok) throw new Error(data.message || 'Could not approve cash payment');
+ onPaymentReviewed?.();
+ } catch (e) {
+ setReviewError(e.message || 'Could not approve cash payment');
+ } finally {
+ setReviewing(false);
+ }
+ };
+
  const handleCollectCash = async () => {
  setReviewing(true);
  setReviewError('');
@@ -775,6 +798,12 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <p className="text-sm font-semibold text-gray-800">
  {order.table_name || order.customer_name || 'Counter'}
  </p>
+ {typeKey === 'DELIVERY' && order.customer_phone && (
+ <a href={`tel:${String(order.customer_phone).replace(/\s+/g, '')}`}
+ className="mt-0.5 inline-flex items-center gap-1 text-xs text-indigo-600 font-semibold hover:underline">
+ <Phone size={12} aria-hidden="true" /> {order.customer_phone}
+ </a>
+ )}
  </div>
  <div>
  <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
@@ -784,7 +813,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  {TYPE_LABEL[typeKey] || 'Dine-In'}
  </p>
  </div>
- <div>
+  <div>
  <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
  Token
  </p>
@@ -805,6 +834,20 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </p>
  </div>
  </div>
+
+ {typeKey === 'DELIVERY' && order.delivery_address && (
+ <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+ <p className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-500">Delivery address</p>
+ <p className="mt-1 text-sm text-gray-800 break-words leading-snug">
+ {order.delivery_address}
+ </p>
+ {order.customer_email && (
+ <p className="mt-1 text-xs text-gray-500 break-words flex items-center gap-1">
+ <Mail size={12} className="shrink-0" aria-hidden="true" /> {order.customer_email}
+ </p>
+ )}
+ </div>
+ )}
 
  {order.payment_status === 'verification_pending' && (
  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -835,24 +878,61 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
  )}
 
- {/* Cash payment notice & action */}
+ {/* Cash-on-delivery notice.
+ Approving the order dispatches it but does NOT mark it paid — payment
+ stays "cash_pending" until the delivery staff physically receive the
+ cash. "Customer already paid" below is only for money collected at the
+ counter (e.g. pickup at reception). */}
  {order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">💵</span>
- <p className="font-bold text-emerald-900">Cash Payment — Collect from Customer</p>
+ <p className="font-bold text-emerald-900">Cash on Delivery — not collected yet</p>
  </div>
  <p className="text-sm text-emerald-800">
- Confirming the cash collection dispatches this order straight to the <b>Waiter Panel</b> for serving — no kitchen/approval step needed.
+ Approving sends this order to the <b>Waiter Panel</b> for delivery but keeps it <b>UNPAID</b>. The delivery staff marks it paid only after they receive the cash and confirm collection.
+ </p>
+ {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
+ {(status === 'pending' || status === 'preparing') && (
+ <button
+ disabled={reviewing}
+ onClick={approveOrderDirectly}
+ className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
+ >
+ <CheckCircle2 className="w-4 h-4" />
+ {reviewing ? 'Approving…' : 'Approve & Send to Waiter (stays unpaid)'}
+ </button>
+ )}
+ <button
+ disabled={reviewing}
+ onClick={handleCollectCash}
+ className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 font-semibold py-2 px-4 text-xs transition disabled:opacity-50"
+ title="Only use when the money was already handed over at the counter"
+ >
+ <Banknote className="w-3.5 h-3.5" />
+ Customer already paid — Mark as Paid ({fmt(order.total)})
+ </button>
+ </div>
+ )}
+
+ {/* Legacy: cash marked by staff, waiting for an admin sign-off. */}
+ {order.payment_status === 'cash_pending_admin' && (
+ <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+ <div className="flex items-center gap-2 mb-1">
+ <span className="text-xl">🧾</span>
+ <p className="font-bold text-amber-900">Cash collected by staff — awaiting your approval</p>
+ </div>
+ <p className="text-sm text-amber-800">
+ The delivery staff marked the cash ({fmt(order.total)}) as received. Approving records it as paid revenue (GST &amp; service charge). Legacy orders only — new deliveries are marked paid directly by the collecting staff member.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
  <button
  disabled={reviewing}
- onClick={handleCollectCash}
- className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
+ onClick={approveCashPayment}
+ className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
  >
- <Banknote className="w-4 h-4" />
- {reviewing ? 'Recording…' : `Confirm Cash Collected & Send to Waiter (${fmt(order.total)})`}
+ <CheckCircle2 className="w-4 h-4" />
+ {reviewing ? 'Approving…' : `Approve Cash Payment (${fmt(order.total)})`}
  </button>
  </div>
  )}
@@ -868,9 +948,8 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
 
  {/* Pending Order Approval for Admin.
- - Shown only for non-cash, non-QR-payment-pending orders.
- - Cash orders (cash_pending) go directly to the kitchen and need no approval.
- - QR payment orders (verification_pending) use the payment review panel above. */}
+ - Cash orders (cash_pending) use the panel above: approve dispatches to
+ the waiter, but the order stays unpaid until staff collect the cash. */}
  {status === 'pending'
  && order.payment_status !== 'verification_pending'
  && order.payment_status !== 'cash_pending'

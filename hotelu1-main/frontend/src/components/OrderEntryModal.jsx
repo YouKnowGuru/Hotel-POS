@@ -183,24 +183,29 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  if (!pendingOrder) return;
 
  try {
- // Update order status to completed/delivered
- const response = await authFetch(`/api/orders/${pendingOrder.id}/status`, {
+ // Complete payment + close the order on the server.
+ // BUGFIX: this used to call /api/orders/:id/status — an endpoint that
+ // does not exist — so the request always 404'd and the warn() below
+ // hid it. The order stayed "pending"/unpaid while a receipt claiming
+ // "PAID" was printed. /complete-payment sets status completed,
+ // payment paid and closes the bill in one go.
+ const response = await authFetch(`/api/orders/${pendingOrder.id}/complete-payment`, {
  method: 'PUT',
  headers: { 'Content-Type': 'application/json' },
  body: JSON.stringify({
- status: 'completed',
- paymentMethod: paymentMethod,
- paymentStatus: 'paid'
+ payment_method: paymentMethod
  })
  });
 
  if (!response.ok) {
  // If status update fails, still proceed with receipt
- console.warn('Status update failed, proceeding with receipt');
+ console.warn('Payment completion failed, proceeding with receipt');
  }
 
- const updatedOrder = await response.json().catch(() => pendingOrder);
- const finalOrder = { ...pendingOrder, ...updatedOrder, paymentMethod };
+ const data = await response.json().catch(() => ({}));
+ const finalOrder = { ...pendingOrder, ...(data?.order || {}), paymentMethod };
+ finalOrder.status = 'completed';
+ finalOrder.payment_status = 'paid';
 
  // Close payment modal
  setShowPaymentModal(false);

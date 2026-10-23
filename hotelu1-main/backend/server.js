@@ -1554,11 +1554,29 @@ app.use("/api/orders", (req, res, next) => {
 
 app.get("/api/orders", optionalToken, async (req, res) => {
   try {
-    const { status, type, table_name, tableId, date, startDate, endDate } = req.query;
+    const { status, type, table_name, tableId, date, startDate, endDate, ids } = req.query;
+    // SECURITY: anonymous (no token) callers must narrow the list. The public
+    // delivery tracker used to poll /api/orders?type=DELIVERY unfiltered, so
+    // EVERY anonymous visitor received EVERY customer's delivery order —
+    // names, phone numbers and home addresses — every few seconds. Anonymous
+    // list calls are now limited to an explicit capped `ids` list or a table
+    // filter; anything broader requires a login.
+    const anonIds = String(ids || "")
+      .split(",")
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n > 0)
+      .slice(0, 50);
+    if (!req.user && anonIds.length === 0 && !table_name && !tableId) {
+      return res.status(403).json({
+        message: "Anonymous access requires a table or ids filter",
+      });
+    }
     if (!dbConnected) {
       // Return mock data in demo mode
       let filteredOrders = scopeOrdersForUser([...mockOrders], req.user, req.query);
 
+      if (anonIds.length > 0)
+        filteredOrders = filteredOrders.filter((o) => anonIds.includes(Number(o.id)));
       if (status)
         filteredOrders = filteredOrders.filter((o) => o.status === status);
       if (type) filteredOrders = filteredOrders.filter((o) => o.type === type);
@@ -1592,6 +1610,7 @@ app.get("/api/orders", optionalToken, async (req, res) => {
     }
     
     let whereClause = {};
+    if (anonIds.length > 0) whereClause.id = { [Op.in]: anonIds };
     if (status) {
       // Comma-separated lists are used by live panels to fetch exactly the
       // statuses they render (e.g. status=pending,preparing,ready).
@@ -2269,6 +2288,12 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
 });
 
 // Direct admin order approval (Bypasses kitchen, sends directly to waiter)
+// NOTE: approving an order is NOT collecting money. Cash-on-delivery orders
+// (payment_method "cash" / payment_status "cash_pending") stay UNPAID here —
+// only the delivery staff who physically receive the cash mark the order
+// paid (confirm-delivery with collect_cash, or /collect-cash). Only QR orders
+// (verification_pending) become paid here, because admin approval IS the
+// payment verification for them.
 app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
   try {
     const allowedRoles = ["admin", "manager", "franchise", "subfranchise"];
@@ -2280,7 +2305,10 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
       if (!order || !(await assertOrderInScope(req, order, res))) return;
       order.status = "ready";
       order.ready_at = new Date().toISOString();
-      if (order.payment_status === "verification_pending") {
+      // Cash orders stay unpaid on approval — staff marks paid on collection.
+      const isCashOrder = String(order.payment_method || "").toLowerCase() === "cash" ||
+        order.payment_status === "cash_pending";
+      if (!isCashOrder && order.payment_status === "verification_pending") {
         order.payment_status = "paid";
         order.payment_verified_by = req.user.id;
         order.payment_verified_at = new Date();
@@ -2300,7 +2328,11 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
     if (!(await assertOrderInScope(req, order, res))) return;
     order.status = "ready";
     order.ready_at = new Date();
-    if (order.payment_status === "verification_pending") {
+    // Cash orders stay unpaid on approval — staff marks paid on collection.
+    const isCashOrder =
+      String(order.payment_method || "").toLowerCase() === "cash" ||
+      order.payment_status === "cash_pending";
+    if (!isCashOrder && order.payment_status === "verification_pending") {
       order.payment_status = "paid";
       order.payment_verified_by = req.user.id;
       order.payment_verified_at = new Date();
@@ -3309,22 +3341,36 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
         order.delivered_at = new Date();
         order.bill_generated = true;
         if (req.body.collect_cash) {
-          // Cash-on-delivery: the staff member has physically received the
-          // cash. GST & service charge are only RECORDED after an admin
-          // signs it off (see /api/orders/:id/approve-cash), so we stop at
-          // "cash_pending_admin" and never set paid_at here.
-          order.payment_status = "cash_pending_admin";
+          // Cash-on-delivery: the staff member physically received the cash,
+          // so the order IS paid now (this is the "staff marks paid" step).
+          // paid_at + payment_verified_by record who collected it.
+          order.payment_status = "paid";
+          order.payment_method = "cash";
+          order.paid_at = new Date();
+          order.payment_verified_by = req.user.id;
+          order.payment_verified_at = new Date();
+        } else if (
+          String(order.payment_method || "").toLowerCase() === "cash" &&
+          order.payment_status !== "paid"
+        ) {
+          // Served without collecting cash — payment stays UNPAID until staff
+          // actually receive the money. No cash_pending_admin stage: whoever
+          // collects marks it paid (this endpoint or /api/orders/:id/collect-cash).
+          order.payment_status = "cash_pending";
           order.payment_method = "cash";
         }
         
         // Emit socket event to update dashboard
         io.emit('order_status_updated', { orderId: req.params.id, status: 'delivered', payment_status: order.payment_status });
+        if (req.body.collect_cash) {
+          io.emit('payment_verified', { orderId: req.params.id, payment_status: 'paid' });
+        }
         // Customer email #3: food delivered.
         mailer.sendDeliveredEmail(order);
         
         return res.json({
           message: req.body.collect_cash
-            ? "Order delivered — cash received, waiting for admin approval"
+            ? "Order delivered — cash received, payment marked as paid"
             : "Order delivered and bill generated",
           order,
         });
@@ -3351,12 +3397,22 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     order.delivered_at = new Date();
     order.bill_generated = true;
     if (collect_cash) {
-      // Cash-on-delivery: staff physically received the cash, but per the
-      // business rule GST & service charge are only recorded (the ledgers
-      // only count "paid" orders) AFTER an admin approves. Setting
-      // paid_at here would instantly make the order appear as paid in
-      // the GST/Service-Charge ledgers, so it is deliberately withheld.
-      order.payment_status = "cash_pending_admin";
+      // Cash-on-delivery: the staff member physically received the cash at
+      // the door, so the order IS paid now (this is the "staff marks paid"
+      // step). paid_at + payment_verified_by record who collected it.
+      order.payment_status = "paid";
+      order.payment_method = "cash";
+      order.paid_at = new Date();
+      order.payment_verified_by = req.user.id;
+      order.payment_verified_at = new Date();
+    } else if (
+      String(order.payment_method || "").toLowerCase() === "cash" &&
+      order.payment_status !== "paid"
+    ) {
+      // Served without collecting cash — payment stays UNPAID until staff
+      // actually receive the money. No cash_pending_admin stage: whoever
+      // collects marks it paid (this endpoint or /api/orders/:id/collect-cash).
+      order.payment_status = "cash_pending";
       order.payment_method = "cash";
       order.paid_at = null;
     }
@@ -3364,6 +3420,9 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
 
     // Emit socket event to update dashboard
     io.emit('order_status_updated', { orderId: id, status: 'delivered', payment_status: order.payment_status });
+    if (collect_cash) {
+      io.emit('payment_verified', { orderId: id, payment_status: 'paid' });
+    }
     // Customer email #3: food delivered (COD or prepaid).
     mailer.sendDeliveredEmail(order);
 
@@ -3386,7 +3445,7 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
 
     res.json({
       message: collect_cash
-        ? "Order delivered — cash received by staff, waiting for admin approval"
+        ? "Order delivered — cash received by staff, payment marked as paid"
         : "Order delivered and bill generated",
       order,
       bill,

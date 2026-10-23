@@ -46,6 +46,12 @@ const GSTLedger = lazy(() => import('./GSTLedger'));
 const ServiceChargeLedger = lazy(() => import('./ServiceChargeLedger'));
 const AttendanceSystem = lazy(() => import('./AttendanceSystem'));
 const PayrollSystem = lazy(() => import('./PayrollSystem'));
+const LandingPage = lazy(() => import('./LandingPage'));
+const HomeLanding = lazy(() => import('./HomeLanding'));
+const DeliveryMenu = lazy(() => import('./DeliveryMenu'));
+const AboutPage = lazy(() => import('./AboutPage'));
+const PrivacyPage = lazy(() => import('./PrivacyPage'));
+const TermsPage = lazy(() => import('./TermsPage'));
 
 // Loading component for Suspense fallback - Reference Image Design
 const LoadingSpinner = () => (
@@ -325,234 +331,238 @@ const App = () => {
   return (
     <ErrorBoundary>
       <NotificationsProvider>
-      <Suspense fallback={<LoadingSpinner />}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={
-            currentUser
-              ? <Navigate to="/dashboard" replace />
-              : <Navigate to="/login" replace />
-          } />
-          <Route 
-            path="/login" 
-            element={
-              currentUser ? 
-              <Navigate to="/dashboard" replace /> : 
-              <Login onLogin={handleLogin} />
-            } 
-          />
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={
+              currentUser
+                ? <Navigate to="/dashboard" replace />
+                : <HomeLanding />
+            } />
+            <Route path="/order" element={<DeliveryMenu />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route
+              path="/login"
+              element={
+                currentUser ?
+                  <Navigate to="/dashboard" replace /> :
+                  <Login onLogin={handleLogin} />
+              }
+            />
 
-          {/* Protected Routes */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          } />
+            {/* Protected Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/orders" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'subfranchise', 'franchise', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
-                <MenuLayout>
-                  <OrdersPage locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/menu" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="menu_management" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_menu', 'manage_menu', 'create_menu_item', 'edit_menu_item', 'delete_menu_item']}>
-                <MenuLayout>
-                  <MenuManagement locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/dinein" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'subfranchise', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
-                <MenuLayout>
-                  <DineInManagement locationSettings={locationSettings} nextOrderId={nextOrderId} setNextOrderId={setNextOrderId} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/inventory" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="inventory" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_inventory', 'manage_inventory', 'edit_inventory']}>
-                <MenuLayout>
-                  <InventoryManagement />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/billing" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="billing" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_billing', 'process_payments', 'view_bills']}>
-                <MenuLayout>
-                  <BillingPage locationSettings={locationSettings} currentUser={currentUser} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/reports" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="reports" requiredRoles={['admin', 'manager']} requiredPermissions={['view_reports', 'view_dashboard']}>
-                <MenuLayout>
-                  <Reports locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/delivery" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['confirm_order_delivery']}>
-                <MenuLayout>
-                  <WaiterDeliveryPanel locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/qr-management" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="qr_management" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['manage_qr_codes']}>
-                <MenuLayout>
-                  <QRManagement locationSettings={locationSettings} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/takeaway" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="takeaway" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
-                <MenuLayout>
-                  <TakeawayManagement locationSettings={locationSettings} nextOrderId={nextOrderId} setNextOrderId={setNextOrderId} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
+            <Route path="/orders" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'subfranchise', 'franchise', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
+                  <MenuLayout>
+                    <OrdersPage locationSettings={locationSettings} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
 
-          <Route path="/users" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin']}>
+            <Route path="/menu" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="menu_management" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_menu', 'manage_menu', 'create_menu_item', 'edit_menu_item', 'delete_menu_item']}>
+                  <MenuLayout>
+                    <MenuManagement locationSettings={locationSettings} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/dinein" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'subfranchise', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
+                  <MenuLayout>
+                    <DineInManagement locationSettings={locationSettings} nextOrderId={nextOrderId} setNextOrderId={setNextOrderId} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/inventory" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="inventory" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_inventory', 'manage_inventory', 'edit_inventory']}>
+                  <MenuLayout>
+                    <InventoryManagement />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/billing" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="billing" requiredRoles={['admin', 'manager', 'subfranchise']} requiredPermissions={['view_billing', 'process_payments', 'view_bills']}>
+                  <MenuLayout>
+                    <BillingPage locationSettings={locationSettings} currentUser={currentUser} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/reports" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="reports" requiredRoles={['admin', 'manager']} requiredPermissions={['view_reports', 'view_dashboard']}>
+                  <MenuLayout>
+                    <Reports locationSettings={locationSettings} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/delivery" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="dine_in" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['confirm_order_delivery']}>
+                  <MenuLayout>
+                    <WaiterDeliveryPanel locationSettings={locationSettings} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/qr-management" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="qr_management" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['manage_qr_codes']}>
+                  <MenuLayout>
+                    <QRManagement locationSettings={locationSettings} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/takeaway" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="takeaway" requiredRoles={['admin', 'manager', 'waiter']} requiredPermissions={['view_orders', 'manage_orders', 'create_order']}>
+                  <MenuLayout>
+                    <TakeawayManagement locationSettings={locationSettings} nextOrderId={nextOrderId} setNextOrderId={setNextOrderId} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin']}>
+                  <MenuLayout>
+                    <UserManagement token={localStorage.getItem('token')} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/permissions" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin']}>
+                  <MenuLayout>
+                    <PermissionManagementNew token={localStorage.getItem('token')} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/franchise-overview" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin', 'franchise']}>
+                  <MenuLayout>
+                    <FranchiseDashboard currentUser={currentUser} locationSettings={locationSettings} setActiveTab={setActiveTab} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/manage-sub-franchises" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin', 'franchise']}>
+                  <MenuLayout>
+                    <SubFranchiseManagement currentUser={currentUser} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/notifications" element={
+              <ProtectedRoute>
                 <MenuLayout>
-                  <UserManagement token={localStorage.getItem('token')} />
+                  <NotificationsPage />
                 </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/permissions" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin']}>
+            <Route path="/staff" element={
+              <ProtectedRoute>
+                <PermissionBasedRoute requiredModule="staff_directory" requiredRoles={['admin', 'manager', 'franchise', 'subfranchise']}>
+                  <MenuLayout>
+                    <StaffByBranch token={localStorage.getItem('token')} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin', 'manager', 'subfranchise', 'franchise']}>
+                  <MenuLayout>
+                    <SettingsPage />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/gst-ledger" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin', 'manager']}>
+                  <MenuLayout>
+                    <GSTLedger locationSettings={locationSettings} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/service-charge" element={
+              <ProtectedRoute>
+                <RoleBasedRoute allowedRoles={['admin', 'manager']}>
+                  <MenuLayout>
+                    <ServiceChargeLedger locationSettings={locationSettings} />
+                  </MenuLayout>
+                </RoleBasedRoute>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/attendance" element={
+              <ProtectedRoute>
                 <MenuLayout>
-                  <PermissionManagementNew token={localStorage.getItem('token')} />
+                  <AttendanceSystem currentUser={currentUser} />
                 </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/franchise-overview" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'franchise']}>
+            <Route path="/payroll" element={
+              <ProtectedRoute>
                 <MenuLayout>
-                  <FranchiseDashboard currentUser={currentUser} locationSettings={locationSettings} setActiveTab={setActiveTab} />
+                  <PayrollSystem currentUser={currentUser} />
                 </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
+              </ProtectedRoute>
+            } />
 
-          <Route path="/manage-sub-franchises" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'franchise']}>
-                <MenuLayout>
-                  <SubFranchiseManagement currentUser={currentUser} />
-                </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
+            {/* QR Ordering Route - Public */}
+            <Route path="/qr-ordering" element={<QRCodeOrdering locationSettings={locationSettings} />} />
 
-          <Route path="/notifications" element={
-            <ProtectedRoute>
-              <MenuLayout>
-                <NotificationsPage />
-              </MenuLayout>
-            </ProtectedRoute>
-          } />
+            {/* Order Confirmation Route - Public */}
+            <Route path="/order-confirmation/:tableId?" element={<OrderConfirmation />} />
 
-          <Route path="/staff" element={
-            <ProtectedRoute>
-              <PermissionBasedRoute requiredModule="staff_directory" requiredRoles={['admin', 'manager', 'franchise', 'subfranchise']}>
-                <MenuLayout>
-                  <StaffByBranch token={localStorage.getItem('token')} />
-                </MenuLayout>
-              </PermissionBasedRoute>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'manager', 'subfranchise', 'franchise']}>
-                <MenuLayout>
-                  <SettingsPage />
-                </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/gst-ledger" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'manager']}>
-                <MenuLayout>
-                  <GSTLedger locationSettings={locationSettings} />
-                </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/service-charge" element={
-            <ProtectedRoute>
-              <RoleBasedRoute allowedRoles={['admin', 'manager']}>
-                <MenuLayout>
-                  <ServiceChargeLedger locationSettings={locationSettings} />
-                </MenuLayout>
-              </RoleBasedRoute>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/attendance" element={
-            <ProtectedRoute>
-              <MenuLayout>
-                <AttendanceSystem currentUser={currentUser} />
-              </MenuLayout>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/payroll" element={
-            <ProtectedRoute>
-              <MenuLayout>
-                <PayrollSystem currentUser={currentUser} />
-              </MenuLayout>
-            </ProtectedRoute>
-          } />
-
-          {/* QR Ordering Route - Public */}
-          <Route path="/qr-ordering" element={<QRCodeOrdering locationSettings={locationSettings} />} />
-
-          {/* Order Confirmation Route - Public */}
-          <Route path="/order-confirmation/:tableId?" element={<OrderConfirmation />} />
-
-          {/* Fallback route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </NotificationsProvider>
     </ErrorBoundary>
   );

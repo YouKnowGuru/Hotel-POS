@@ -294,7 +294,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  setItems(av);
  const c = [...new Set(av.map(i => i.category).filter(Boolean))];
  setCats(c);
- setCat(prev => prev || c[0] || '');
+ setCat('');
  setLoading(false);
  }
  }
@@ -304,7 +304,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const av = (data || []).filter(i => i.isAvailable !== false);
  setItems(av);
  const c = [...new Set(av.map(i => i.category).filter(Boolean))];
- setCats(c); setCat(prev => av.some(i => i.category === prev) ? prev : (c[0] || '')); setLoading(false);
+ setCats(c); setCat(''); setLoading(false);
  try { localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(av)); } catch (_) { /* quota — non-fatal */ }
  }).catch(() => setLoading(false));
  }, []);

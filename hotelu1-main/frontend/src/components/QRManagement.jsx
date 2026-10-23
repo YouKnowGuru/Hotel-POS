@@ -152,9 +152,12 @@ const QRManagement = ({ locationSettings }) => {
  const fetchAll = async () => {
  try {
  const token = localStorage.getItem('token');
- const response = token
- ? await authFetch('/api/orders?type=DINE_IN')
- : await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN`);
+ // SECURITY: this is a staff KPI poll — never fetch it anonymously. The
+ // unauthenticated fallback used to pull every dine-in order to any
+ // visitor's browser, and the backend now rejects anonymous list calls
+ // without a narrowing filter, so just skip the poll when logged out.
+ if (!token) return;
+ const response = await authFetch('/api/orders?type=DINE_IN');
  const data = await response.json();
  if (Array.isArray(data)) setAllOrders(data);
  } catch (_) {

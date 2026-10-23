@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { getAPI_URL, getSocketUrl, authFetch } from '../utils/api';
 import useCurrency from '../hooks/useCurrency';
-import { Bell, CheckCircle2, Clock, Utensils, Banknote } from 'lucide-react';
+import { Bell, CheckCircle2, Clock, Utensils, Banknote, Truck, MapPin, Phone, User } from 'lucide-react';
 
 const WaiterDeliveryPanel = ({ locationSettings }) => {
  const { format: fmt } = useCurrency(locationSettings);
@@ -175,22 +175,25 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
  {readyOrders.map((order) => {
  const mins = minsAgo(order.updated_at || order.timestamp);
  const isDelivering = delivering[order.id];
+ const isDelivery = String(order.type || '').toUpperCase() === 'DELIVERY';
  return (
  <div
  key={order.id}
  className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-5 flex flex-col ring-1 ring-emerald-100"
  >
  {/* Header */}
- <div className="flex items-start justify-between mb-3">
- <div>
+ <div className="flex items-start justify-between mb-3"> <div>
  <p className="text-xs text-gray-400 font-semibold">Order #{order.id}</p>
- <p className="text-lg font-bold text-gray-900">
- Table {order.table_name || 'Counter'}
+ <p className="text-lg font-bold text-gray-900 flex items-center gap-1.5">
+ {isDelivery ? <Truck className="w-4 h-4 text-indigo-500" /> : <Utensils className="w-5 h-5 text-gray-300" />}
+ {isDelivery
+ ? (order.customer_name || 'Home delivery')
+ : `Table ${order.customer_name || order.table_name || 'Counter'}`}
  </p>
  </div>
  <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
- READY
+ {isDelivery ? 'READY TO DELIVER' : 'READY'}
  </span>
  </div>
 
@@ -199,6 +202,32 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
  <Clock className="w-3.5 h-3.5" />
  Ready {mins} min ago
  </p>
+
+ {/* ── Home-delivery customer block — the rider needs exactly this to find the door ── */}
+ {isDelivery && (
+ <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 space-y-1.5">
+ <p className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-500 flex items-center gap-1">
+ <Truck className="w-3.5 h-3.5" /> Home delivery
+ </p>
+ {order.customer_name && (
+ <p className="text-sm text-gray-800 font-bold flex items-center gap-2">
+ <User className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> {order.customer_name}
+ </p>
+ )}
+ {order.customer_phone && (
+ <a href={`tel:${String(order.customer_phone).replace(/\s+/g, '')}`}
+ className="text-sm text-indigo-600 font-semibold flex items-center gap-2 hover:underline">
+ <Phone className="w-3.5 h-3.5 shrink-0" /> {order.customer_phone}
+ </a>
+ )}
+ {order.delivery_address && (
+ <p className="text-sm text-gray-700 flex items-start gap-2 leading-snug">
+ <MapPin className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+ <span className="break-words">{order.delivery_address}</span>
+ </p>
+ )}
+ </div>
+ )}
 
  {/* Items */}
  <div className="bg-gray-50 rounded-xl p-3 mb-4 flex-1">

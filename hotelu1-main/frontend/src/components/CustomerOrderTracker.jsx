@@ -96,8 +96,13 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
 
  const fetchOrderStatus = async () => {
  try {
- const response = await fetch(`${getAPI_URL()}/api/orders?table_name=${tableId}`);
- const orders = await response.json();
+ const response = await fetch(
+ `${getAPI_URL()}/api/orders?table_name=${encodeURIComponent(tableId || '')}`
+ );
+ const data = await response.json();
+ // Guard: a non-2xx reply (e.g. 403) returns an error object, not an array —
+ // calling .find() on it used to throw and silently stop tracking.
+ const orders = Array.isArray(data) ? data : [];
  const currentOrder = orders.find(o => o.id === orderId);
  if (currentOrder) {
  // Detect pending/preparing → ready transition via polling too.
