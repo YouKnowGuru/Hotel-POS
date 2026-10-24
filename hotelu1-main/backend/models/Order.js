@@ -75,6 +75,17 @@ const Order = sequelize.define(
     external_order_id: { type: DataTypes.STRING, allowNull: true },
     customer_name: { type: DataTypes.STRING, allowNull: true },
     customer_phone: { type: DataTypes.STRING, allowNull: true },
+    // BUGFIX: customer_email was missing from this model. Because Sequelize
+    // only persists and SELECTs attributes mapped here, the email submitted
+    // with every home-delivery order was silently dropped on create
+    // (Order.create ignored the unmapped field) and came back `undefined`
+    // on every list/detail fetch. Two consequences: staff never saw the
+    // customer's email, and the transactional mailer (which reads
+    // order.customer_email) got an invalid address and skipped every
+    // order/payment/delivery email. The DB column already existed — it just
+    // was never mapped. customer_name/phone/address above were mapped; this
+    // one was forgotten.
+    customer_email: { type: DataTypes.STRING(254), allowNull: true },
     delivery_address: { type: DataTypes.TEXT, allowNull: true },
   },
   {

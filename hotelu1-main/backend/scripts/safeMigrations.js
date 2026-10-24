@@ -86,6 +86,19 @@ async function runSafeMigrations(sequelize, models = {}) {
         });
         console.log("Migration: added orders.customer_phone");
       }
+      if (!ordersDesc.customer_email) {
+        // BUGFIX: customer_email was saved by the order-create handler and
+        // read by the mailer, but was never added to the Order model or this
+        // migration. In DBs created before the column existed it was missing
+        // outright; in others it existed but was unmapped in the model (so it
+        // was silently dropped on write and never SELECTed on read). This
+        // guarantees the column exists and the model maps it.
+        await qi.addColumn("orders", "customer_email", {
+          type: DataTypes.STRING(254),
+          allowNull: true,
+        });
+        console.log("Migration: added orders.customer_email");
+      }
       if (!ordersDesc.delivery_address) {
         await qi.addColumn("orders", "delivery_address", {
           type: DataTypes.TEXT,
