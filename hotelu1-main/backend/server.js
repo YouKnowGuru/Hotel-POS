@@ -2294,6 +2294,14 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
 // paid (confirm-delivery with collect_cash, or /collect-cash). Only QR orders
 // (verification_pending) become paid here, because admin approval IS the
 // payment verification for them.
+// FLOW GUARD: pay-first QR orders must never reach staff before the customer
+// has paid. Orders created with payment_first are parked in
+// payment_status "awaiting_payment" (and "rejected" after a proof was
+// denied) — neither state has a reviewed screenshot. Approving in those
+// states would dispatch the order unpaid, so it is refused here. Only once
+// the customer uploads the proof (payment-proof → verification_pending)
+// can a staff member approve — either via /payment-verification (full
+// review) or here as a shorter second step.
 app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
   try {
     const allowedRoles = ["admin", "manager", "franchise", "subfranchise"];
@@ -2303,6 +2311,11 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === Number(req.params.id));
       if (!order || !(await assertOrderInScope(req, order, res))) return;
+      if (["awaiting_payment", "rejected"].includes(order.payment_status)) {
+        return res.status(409).json({
+          message: "The customer has not submitted their QR payment proof yet. Approve the order only after the screenshot is uploaded and verified.",
+        });
+      }
       order.status = "ready";
       order.ready_at = new Date().toISOString();
       // Cash orders stay unpaid on approval — staff marks paid on collection.
@@ -2326,6 +2339,11 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
+    if (["awaiting_payment", "rejected"].includes(order.payment_status)) {
+      return res.status(409).json({
+        message: "The customer has not submitted their QR payment proof yet. Approve the order only after the screenshot is uploaded and verified.",
+      });
+    }
     order.status = "ready";
     order.ready_at = new Date();
     // Cash orders stay unpaid on approval — staff marks paid on collection.

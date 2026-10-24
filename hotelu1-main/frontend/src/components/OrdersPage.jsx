@@ -947,12 +947,34 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
  )}
 
+ {/* Pay-first QR orders before payment. The customer hasn't uploaded a
+ screenshot yet (awaiting_payment) or a proof was rejected — the server
+ refuses /approve in these states, so only show an explanatory notice
+ instead of an approval button. */}
+ {status === 'pending'
+  && ['awaiting_payment', 'rejected'].includes(order.payment_status)
+  && order.payment_method !== 'cash' && (
+ <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+ <p className="font-bold text-amber-900">
+ {order.payment_status === 'awaiting_payment'
+ ? 'Waiting for customer payment'
+ : 'Payment proof rejected — waiting for new screenshot'}
+ </p>
+ <p className="mt-1 text-sm text-amber-800">
+ This order was placed with pay-first QR. You can approve and dispatch it
+ only after the customer uploads their payment screenshot and it is
+ verified.
+ </p>
+ </div>
+ )}
+
  {/* Pending Order Approval for Admin.
  - Cash orders (cash_pending) use the panel above: approve dispatches to
  the waiter, but the order stays unpaid until staff collect the cash. */}
  {status === 'pending'
  && order.payment_status !== 'verification_pending'
  && order.payment_status !== 'cash_pending'
+ && !['awaiting_payment', 'rejected'].includes(order.payment_status)
  && order.payment_method !== 'cash' && (
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
  <p className="font-bold text-emerald-900">Order Awaiting Approval</p>
