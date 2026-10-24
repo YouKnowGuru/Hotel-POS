@@ -11,7 +11,7 @@
  *  - Responsive footer: 1 → 2 → 4 columns, contact, hours, socials
  *  - Hash-link scrolling (React Router pushState doesn't trigger native anchors)
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, Utensils, Phone, MapPin,
@@ -108,6 +108,16 @@ const PublicShell = ({ active = '', children }) => {
     window.addEventListener('keydown', onKey);
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [mobileOpen]);
+
+  /* ── Route-change scroll reset ───────────────────────────────────
+     Client-side navigation keeps the window's scroll offset, so tapping
+     a footer link used to drop users halfway down — often straight at
+     the footer — of the next page. Reset before paint (useLayoutEffect)
+     so every page swap starts at the top; the hash effect below then
+     glides to any anchor target from there. */
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   /* Hash-link scrolling — React Router pushState doesn't fire native anchors */
   const scrollToHash = useCallback((hash) => {
@@ -297,7 +307,7 @@ const PublicShell = ({ active = '', children }) => {
       )}
 
       {/* ── Page content ── */}
-      <main id="pw-main" className="flex-1 outline-none" tabIndex={-1}>
+      <main id="pw-main" className="pw-page flex-1 outline-none" tabIndex={-1}>
         {children}
       </main>
 
@@ -665,6 +675,15 @@ const PublicShell = ({ active = '', children }) => {
         }
         .pw-footer-legal:hover{color:#C2410C;}
 
+        /* Page-enter transition — the shell remounts on every route change,
+           so this plays once per navigation: content fades up from the top
+           right after the scroll reset, instead of a hard cut. */
+        .pw-page{animation:pwPageIn .5s var(--pw-ease) both;}
+        @keyframes pwPageIn{
+          from{opacity:0;transform:translateY(16px);}
+          to{opacity:1;transform:none;}
+        }
+
         /* Scroll reveal */
         .pw-reveal{opacity:0;transform:translateY(20px);
           transition:opacity .65s var(--pw-ease),transform .65s var(--pw-ease);}
@@ -716,6 +735,7 @@ const PublicShell = ({ active = '', children }) => {
         @keyframes pwGlowPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
 
         @media (prefers-reduced-motion: reduce){
+          .pw-page{animation:none !important;}
           .pw-reveal{opacity:1 !important;transform:none !important;transition:none !important;}
           .pw-announce-dot{animation:none;}
           .pw-drawer-panel,.pw-drawer-link,.pw-drawer-backdrop{animation:none !important;}
