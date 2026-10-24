@@ -200,6 +200,10 @@ const App = () => {
         if (role === 'subfranchise' || role === 'franchise') {
           return <FranchiseDashboard currentUser={currentUser} locationSettings={locationSettings} setActiveTab={setActiveTab} />;
         }
+        // Waiters land on the delivery panel, not the financial dashboard.
+        if (role === 'waiter') {
+          return <WaiterDeliveryPanel locationSettings={locationSettings} />;
+        }
         return allow('dashboard') ? (
           <Dashboard locationSettings={locationSettings} />
         ) : (
@@ -539,17 +543,21 @@ const App = () => {
 
             <Route path="/attendance" element={
               <ProtectedRoute>
-                <MenuLayout>
-                  <AttendanceSystem currentUser={currentUser} />
-                </MenuLayout>
+                <PermissionBasedRoute requiredModule="attendance" requiredRoles={['admin', 'manager', 'waiter', 'cashier']}>
+                  <MenuLayout>
+                    <AttendanceSystem currentUser={currentUser} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
               </ProtectedRoute>
             } />
 
             <Route path="/payroll" element={
               <ProtectedRoute>
-                <MenuLayout>
-                  <PayrollSystem currentUser={currentUser} />
-                </MenuLayout>
+                <PermissionBasedRoute requiredModule="payroll" requiredRoles={['admin', 'manager', 'waiter', 'cashier']}>
+                  <MenuLayout>
+                    <PayrollSystem currentUser={currentUser} />
+                  </MenuLayout>
+                </PermissionBasedRoute>
               </ProtectedRoute>
             } />
 

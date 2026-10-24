@@ -62,7 +62,7 @@ export const DEFAULT_ROLE_MATRIX = {
     payroll: true,
   },
   waiter: {
-    dashboard: true,
+    dashboard: false,
     reports: false,
     qr_management: false,
     dine_in: true,

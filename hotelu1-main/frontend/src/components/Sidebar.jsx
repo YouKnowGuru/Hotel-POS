@@ -454,14 +454,16 @@ const Sidebar = ({
             </li>
           )}
 
-          <li>
-            <NavItem
-              icon={CalendarClock}
-              label="Attendance"
-              active={activeTab === 'attendance'}
-              onClick={() => handleTabClick('attendance')}
-            />
-          </li>
+          {canSee('attendance', 'view_attendance') && (
+            <li>
+              <NavItem
+                icon={CalendarClock}
+                label="Attendance"
+                active={activeTab === 'attendance'}
+                onClick={() => handleTabClick('attendance')}
+              />
+            </li>
+          )}
 
           {canSee('payroll') && (
             <li>

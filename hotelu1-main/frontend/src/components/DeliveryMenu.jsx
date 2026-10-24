@@ -99,6 +99,12 @@ const DeliveryMenu = () => {
   const [cart,      setCart]      = useState([]);
   const [cartOpen,  setCartOpen]  = useState(false);
   const errRef = useRef(null);
+  /* Animation state */
+  const [addedId,    setAddedId]    = useState(null);   // card that just got added
+  const [cartPulse,  setCartPulse]  = useState(false);  // ring glow on cart bar
+  const [flyParticles, setFlyParticles] = useState([]); // [{id,x,y}] flying dots
+  const cardRefs  = useRef({});   // itemId → DOM element refs
+  const cartBarRef = useRef(null);
 
   /* Tax / discount / service-charge settings, matched to the server */
   const [settings,  setSettings]  = useState({ taxPercent: 5, discountPercent: 0 });
@@ -163,13 +169,37 @@ const DeliveryMenu = () => {
   const subtotal = cart.reduce((s, i) => s + Number(i.price || 0) * i.qty, 0);
   const totals = calculateOrderTotals(subtotal, settings);
 
-  const addToCart = (dish) => {
+  const addToCart = (dish, e) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === dish.id);
       return existing
         ? prev.map(i => i.id === dish.id ? { ...i, qty: i.qty + 1 } : i)
         : [...prev, { ...dish, qty: 1 }];
     });
+    /* ── micro-animations ── */
+    // 1. card bounce
+    setAddedId(dish.id);
+    setTimeout(() => setAddedId(null), 520);
+    // 2. cart bar glow pulse
+    setCartPulse(false);
+    requestAnimationFrame(() => requestAnimationFrame(() => setCartPulse(true)));
+    setTimeout(() => setCartPulse(false), 700);
+    // 3. fly particle from card → cart bar
+    if (e) {
+      const card = cardRefs.current[dish.id];
+      const bar  = cartBarRef.current;
+      if (card && bar) {
+        const cr = card.getBoundingClientRect();
+        const br = bar.getBoundingClientRect();
+        const startX = cr.left + cr.width / 2;
+        const startY = cr.top  + cr.height / 2;
+        const endX   = br.left + br.width / 2;
+        const endY   = br.top  + br.height / 2;
+        const pid = Date.now() + Math.random();
+        setFlyParticles(p => [...p, { id: pid, startX, startY, endX, endY }]);
+        setTimeout(() => setFlyParticles(p => p.filter(x => x.id !== pid)), 700);
+      }
+    }
   };
 
   const removeFromCart = (id) => {
@@ -939,7 +969,7 @@ const DeliveryMenu = () => {
       </div>
 
       {/* Grid */}
-      <div className="pw-container px-4 sm:px-6 lg:px-8 pt-6 pb-28 sm:pb-32">
+      <div className="pw-container px-4 sm:px-6 lg:px-8 pt-6 pb-36 sm:pb-40">
 
         {/* Loading */}
         {loading && (
@@ -964,7 +994,9 @@ const DeliveryMenu = () => {
             {visible.map((item, i) => {
               const qty = cartQty(item.id);
               return (
-                <article key={item.id} className="pw-card pw-fx-tilt pw-fx-sheen overflow-hidden flex flex-col dm-in"
+                <article key={item.id}
+                         ref={el => { cardRefs.current[item.id] = el; }}
+                         className={`pw-card pw-fx-tilt pw-fx-sheen overflow-hidden flex flex-col dm-in${addedId === item.id ? ' dm-card-pop' : ''}`}
                          style={{ animationDelay: `${Math.min(i, 11) * 40}ms` }}>
                   {/* Image */}
                   <div className="relative overflow-hidden" style={{ height: 'clamp(112px,16vw,170px)' }}>
@@ -998,7 +1030,7 @@ const DeliveryMenu = () => {
                       </p>
                       <div className="mt-2.5 flex items-center gap-2">
                         {qty === 0 ? (
-                          <button type="button" onClick={() => addToCart(item)} className="dm-add">
+                          <button type="button" onClick={(e) => addToCart(item, e)} className={`dm-add${addedId === item.id ? ' dm-add-pop' : ''}`}>
                             <Plus size={15} aria-hidden="true" /> Add
                           </button>
                         ) : (
@@ -1007,8 +1039,8 @@ const DeliveryMenu = () => {
                                     aria-label={`Remove one ${item.name}`}>
                               <Minus size={15} />
                             </button>
-                            <span className="tabular-nums">{qty}</span>
-                            <button type="button" onClick={() => addToCart(item)}
+                            <span className={`tabular-nums${addedId === item.id ? ' dm-qty-bounce' : ''}`}>{qty}</span>
+                            <button type="button" onClick={(e) => addToCart(item, e)}
                                     aria-label={`Add one ${item.name}`}>
                               <Plus size={15} />
                             </button>
@@ -1036,14 +1068,26 @@ const DeliveryMenu = () => {
         )}
       </div>
 
+      {/* ── Flying particles ── */}
+      {flyParticles.map(p => (
+        <span key={p.id} className="dm-fly-dot" aria-hidden="true"
+              style={{
+                '--fx': `${p.endX - p.startX}px`,
+                '--fy': `${p.endY - p.startY}px`,
+                left: p.startX,
+                top:  p.startY,
+              }} />
+      ))}
+
       {/* ── Floating cart bar ── */}
       {cartCount > 0 && !cartOpen && (
-        <div className="dm-cartbar">                <button type="button" onClick={() => setCartOpen(true)} className="dm-cartbar-btn pw-fx-sheen">
+        <div className={`dm-cartbar${cartPulse ? ' dm-cartbar-pulse' : ''}`} ref={cartBarRef}>
+          <button type="button" onClick={() => setCartOpen(true)} className="dm-cartbar-btn pw-fx-sheen">
             <span className="flex items-center gap-3 min-w-0">
               <span className="relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
                     style={{ background: 'rgba(27,15,2,0.16)' }}>
                 <ShoppingCart size={17} aria-hidden="true" />
-                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10.5px] font-black"
+                <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10.5px] font-black${cartPulse ? ' dm-badge-bounce' : ''}`}
                       style={{ background: '#120A02', color: '#FBBF24' }}>{cartCount}</span>
               </span>
               <span className="text-left min-w-0">
@@ -1340,22 +1384,105 @@ const DeliveryMenu = () => {
 
         /* Floating cart bar */
         .dm-cartbar{
-          position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
-          z-index:45;max-width:34rem;margin-inline:auto;
-          animation:dmBarIn .35s cubic-bezier(0.22,1,0.36,1) both;
+          position:fixed;
+          left:12px;right:12px;
+          bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+          z-index:200;
+          max-width:34rem;margin-inline:auto;
+          animation:dmBarIn .4s cubic-bezier(0.22,1,0.36,1) both;
+          pointer-events:auto;
         }
-        @media (min-width:640px){ .dm-cartbar{ left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 32px); } }
-        @keyframes dmBarIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-        @media (min-width:640px){ @keyframes dmBarIn{from{opacity:0;transform:translate(-50%,24px)}to{opacity:1;transform:translateX(-50%)}} }
+        @media (min-width:640px){
+          .dm-cartbar{ left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 40px); }
+        }
+        @keyframes dmBarIn{
+          from{opacity:0;transform:translateY(36px) scale(0.94)}
+          to{opacity:1;transform:translateY(0) scale(1)}
+        }
+        @media (min-width:640px){
+          @keyframes dmBarIn{
+            from{opacity:0;transform:translate(-50%,36px) scale(0.94)}
+            to{opacity:1;transform:translate(-50%,0) scale(1)}
+          }
+        }
+        /* Glow ring pulse when item added */
+        .dm-cartbar-pulse::before{
+          content:'';position:absolute;inset:-4px;border-radius:24px;
+          border:2px solid rgba(245,158,11,0.9);
+          animation:dmRingPulse .6s cubic-bezier(0.22,1,0.36,1) both;
+          pointer-events:none;
+        }
+        @keyframes dmRingPulse{
+          0%{opacity:1;transform:scale(1)}
+          100%{opacity:0;transform:scale(1.08)}
+        }
         .dm-cartbar-btn{
           width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
           min-height:64px;padding:10px 18px;border:0;cursor:pointer;border-radius:20px;
           background:var(--pw-grad);color:var(--pw-ink-on-accent);
           box-shadow:0 22px 46px -18px rgba(245,158,11,0.95);
           transition:transform .2s var(--pw-ease),filter .2s var(--pw-ease);
+          position:relative;
         }
         .dm-cartbar-btn:hover{ transform:translateY(-2px);filter:brightness(1.05); }
         .dm-cartbar-btn:active{ transform:translateY(0) scale(0.99); }
+
+        /* Badge bounce when count changes */
+        .dm-badge-bounce{
+          animation:dmBadgePop .45s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes dmBadgePop{
+          0%{transform:scale(1)}
+          40%{transform:scale(1.55)}
+          70%{transform:scale(0.9)}
+          100%{transform:scale(1)}
+        }
+
+        /* Card pop when item added */
+        .dm-card-pop{
+          animation:dmCardPop .42s cubic-bezier(0.34,1.56,0.64,1) both !important;
+        }
+        @keyframes dmCardPop{
+          0%{transform:scale(1)}
+          45%{transform:scale(1.04)}
+          100%{transform:scale(1)}
+        }
+
+        /* Add button pop */
+        .dm-add-pop{
+          animation:dmAddPop .38s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes dmAddPop{
+          0%{transform:scale(1)}
+          45%{transform:scale(1.18)}
+          100%{transform:scale(1)}
+        }
+
+        /* Qty bounce in stepper */
+        .dm-qty-bounce{
+          display:inline-block;
+          animation:dmQtyBounce .45s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        @keyframes dmQtyBounce{
+          0%{transform:scale(1)translateY(0)}
+          40%{transform:scale(1.6)translateY(-4px)}
+          100%{transform:scale(1)translateY(0)}
+        }
+
+        /* Flying dot particle */
+        .dm-fly-dot{
+          position:fixed;z-index:9999;pointer-events:none;
+          width:10px;height:10px;border-radius:50%;
+          background:var(--pw-grad);
+          transform:translate(-50%,-50%);
+          box-shadow:0 0 8px 2px rgba(245,158,11,0.7);
+          animation:dmFlyToCart .65s cubic-bezier(0.5,0,0.8,1) both;
+        }
+        @keyframes dmFlyToCart{
+          0%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+          60%{opacity:1}
+          100%{opacity:0;transform:translate(calc(-50% + var(--fx)),calc(-50% + var(--fy))) scale(0.3)}
+        }
 
         /* Cart drawer */
         .dm-backdrop{ background:rgba(38,21,7,0.5);backdrop-filter:blur(6px);animation:dmFade .25s var(--pw-ease) both; }
@@ -1371,6 +1498,7 @@ const DeliveryMenu = () => {
         @media (prefers-reduced-motion:reduce){
           .dm-in,.dm-cartbar,.dm-panel,.dm-backdrop{animation:none !important;opacity:1 !important;transform:none !important;}
           .dm-skel{animation:none !important;}
+          .dm-card-pop,.dm-add-pop,.dm-badge-bounce,.dm-qty-bounce,.dm-fly-dot,.dm-cartbar-pulse::before{animation:none !important;}
         }
       `}</style>
     </PublicShell>

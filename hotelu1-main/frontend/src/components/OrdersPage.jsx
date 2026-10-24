@@ -401,12 +401,16 @@ const OrdersPage = ({ locationSettings }) => {
  onAllDates={setAllDates}
  showAllDatesOption
  />
- <button
- onClick={exportCSV}
- className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md"
- >
- <Download className="w-4 h-4" /> Export
- </button>
+ {(() => {
+  try { const u = JSON.parse(localStorage.getItem('user') || 'null'); return ['admin','manager'].includes(u?.role); } catch { return false; }
+ })() && (
+  <button
+  onClick={exportCSV}
+  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md"
+  >
+  <Download className="w-4 h-4" /> Export
+  </button>
+ )}
  </div>
  </div>
 
@@ -612,6 +616,14 @@ const buildTimeline = (order) => {
 };
 
 const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
+ // Role guard: only admin / manager can approve, reject or verify payments.
+ // Waiters can view order details but must not see financial controls.
+ const isAdmin = useMemo(() => {
+  try {
+  const u = JSON.parse(localStorage.getItem('user') || 'null');
+  return ['admin', 'manager'].includes(u?.role);
+  } catch { return false; }
+ }, []);
  const created = orderTime(order);
  const status = (order.status || 'pending').toLowerCase();
  const paid =
@@ -849,7 +861,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
  )}
 
- {order.payment_status === 'verification_pending' && (
+ {isAdmin && order.payment_status === 'verification_pending' && (
  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
  <p className="font-bold text-amber-900">Payment verification required</p>
  <p className="mt-1 text-sm text-amber-800">Review the screenshot and confirm the payment amount matches this order.</p>
@@ -883,7 +895,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  stays "cash_pending" until the delivery staff physically receive the
  cash. "Customer already paid" below is only for money collected at the
  counter (e.g. pickup at reception). */}
- {order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
+ {isAdmin && order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">💵</span>
@@ -916,7 +928,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
 
  {/* Legacy: cash marked by staff, waiting for an admin sign-off. */}
- {order.payment_status === 'cash_pending_admin' && (
+ {isAdmin && order.payment_status === 'cash_pending_admin' && (
  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">🧾</span>
@@ -971,7 +983,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  {/* Pending Order Approval for Admin.
  - Cash orders (cash_pending) use the panel above: approve dispatches to
  the waiter, but the order stays unpaid until staff collect the cash. */}
- {status === 'pending'
+ {isAdmin && status === 'pending'
  && order.payment_status !== 'verification_pending'
  && order.payment_status !== 'cash_pending'
  && !['awaiting_payment', 'rejected'].includes(order.payment_status)
