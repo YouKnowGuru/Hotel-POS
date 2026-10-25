@@ -116,8 +116,21 @@ const PublicShell = ({ active = '', children }) => {
      so every page swap starts at the top; the hash effect below then
      glides to any anchor target from there. */
   useLayoutEffect(() => {
+    /* BUGFIX (link clicks land at the footer): the old code scrolled to
+       the top ONCE. Late-loading banners/images then grew the page behind
+       the browser and it fell back to its remembered viewport offset —
+       which was deep inside the previous page, usually the footer. We now:
+       1. disable the browser's automatic scroll restoration,
+       2. pin the top position across the first paint + next frame +
+          a safety tick so late layout shifts can't drag it back down. */
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+    const raf = requestAnimationFrame(() => window.scrollTo(0, 0));
+    const t = setTimeout(() => window.scrollTo(0, 0), 220);
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+  }, [location.pathname, location.hash]);
 
   /* Hash-link scrolling — React Router pushState doesn't fire native anchors */
   const scrollToHash = useCallback((hash) => {
@@ -129,11 +142,20 @@ const PublicShell = ({ active = '', children }) => {
     return true;
   }, []);
 
-  /* Handle direct load with hash (e.g. /#menu) and cross-page links */
+  /* Handle direct load with hash (e.g. /#menu) and cross-page links.
+     The target section can mount AFTER the page shell (lazy routes,
+     fetch-driven sections), so retry for up to ~1.5s instead of the old
+     single 120ms attempt that silently missed and left users at the
+     bottom of the page. */
   useEffect(() => {
     if (!location.hash) return undefined;
-    const t = setTimeout(() => scrollToHash(location.hash), 120);
-    return () => clearTimeout(t);
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      const ok = scrollToHash(location.hash);
+      if (ok || tries >= 9) clearInterval(timer);
+    }, 170);
+    return () => clearInterval(timer);
   }, [location, scrollToHash]);
 
   /* Scroll-reveal engine — observes .pw-reveal added by page content.

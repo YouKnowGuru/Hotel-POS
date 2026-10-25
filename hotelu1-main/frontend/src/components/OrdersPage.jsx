@@ -240,9 +240,22 @@ const OrdersPage = ({ locationSettings }) => {
  return list;
  }, [orders, typeFilter, allDates, selectedDate]);
 
+ /* ---------------- filtering ---------------- */
+ /* BUGFIX (admin receiving orders too early): pay-first DELIVERY orders
+ whose payment proof hasn't been uploaded yet (or was rejected) must not
+ sit in the admin's "Pending" queue while the customer is still filling
+ in the delivery address / payment screen. They live only in the
+ "Payment review" tab until the screenshot arrives. Cash deliveries are
+ NOT filtered — admin approval is what dispatches them. */
+ const PENDING_PAYMENT_STATES = ['awaiting_payment', 'rejected'];
+ const paymentIncomplete = (o) =>
+ String(o.type || '').toUpperCase() === 'DELIVERY' &&
+ String(o.payment_method || '') !== 'cash' &&
+ PENDING_PAYMENT_STATES.includes(String(o.payment_status || ''));
+
  const counts = useMemo(() => {
  const c = {
- all: visibleOrders.length,
+ all: 0,
  payment_review: 0,
  pending: 0,
  preparing: 0,
@@ -252,6 +265,8 @@ const OrdersPage = ({ locationSettings }) => {
  };
  visibleOrders.forEach((o) => {
  if (['awaiting_payment', 'verification_pending', 'rejected'].includes(o.payment_status)) c.payment_review += 1;
+ if (paymentIncomplete(o)) return; // not actionable until proof arrives
+ c.all += 1;
  const s = (o.status || '').toLowerCase();
  const key = s === 'delivered' ? 'completed' : s;
  if (c[key] !== undefined) c[key] += 1;
@@ -259,10 +274,15 @@ const OrdersPage = ({ locationSettings }) => {
  return c;
  }, [visibleOrders]);
 
+ const blockedOrders = useMemo(() => visibleOrders.filter(paymentIncomplete), [visibleOrders]);
+ const waitingPayments = blockedOrders.filter((o) => (o.payment_status || '') === 'awaiting_payment').length;
+ const rejectedPayments = blockedOrders.length - waitingPayments;
+
  const filteredOrders = useMemo(() => {
- if (activeStatus === 'all') return visibleOrders;
+ if (activeStatus === 'all') return visibleOrders.filter((o) => !paymentIncomplete(o));
  if (activeStatus === 'payment_review') return visibleOrders.filter((o) => ['awaiting_payment', 'verification_pending', 'rejected'].includes(o.payment_status));
  return visibleOrders.filter((o) => {
+ if (paymentIncomplete(o)) return false;
  const s = (o.status || '').toLowerCase();
  if (activeStatus === 'completed') return s === 'completed' || s === 'delivered';
  return s === activeStatus;
@@ -454,10 +474,22 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
 
  {/* Main grid */}
- <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
- {/* Orders list */}
- <div className="lg:col-span-7 space-y-3">
- {filteredOrders.map((o) => {
+ <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">      {/* Orders list */}
+      <div className="lg:col-span-7 space-y-3">
+        {blockedOrders.length > 0 && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+            <p className="text-sm font-bold text-amber-900">
+              ⏳ {blockedOrders.length} home delivery order{blockedOrders.length > 1 ? 's' : ''} waiting for the customer
+            </p>
+            <p className="mt-0.5 text-xs text-amber-800">
+              {waitingPayments > 0 && `${waitingPayments} not yet paid`} {rejectedPayments > 0 && `${rejectedPayments} payment rejected`} — hidden from the queue until a payment proof is uploaded.{' '}
+              <button type="button" onClick={() => setActiveStatus('payment_review')} className="underline font-bold text-amber-900">
+                Open payment review
+              </button>
+            </p>
+          </div>
+        )}
+        {filteredOrders.map((o) => {
  const typeKey = (o.type || 'DINE_IN').toUpperCase();
  const TypeIcon = TYPE_ICON[typeKey] || Utensils;
  const items = Array.isArray(o.items) ? o.items : [];

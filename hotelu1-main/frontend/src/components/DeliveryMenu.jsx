@@ -1102,88 +1102,102 @@ const DeliveryMenu = () => {
         </div>
       )}
 
-      {/* ── Cart drawer ── */}
+      {/* ── Cart drawer (redesigned: rich bottom sheet on phones, side panel on desktop) ── */}
       {cartOpen && (
-        <div className="fixed inset-0 z-[80] flex" role="dialog" aria-modal="true" aria-label="Your cart">
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-stretch justify-end sm:justify-end" role="dialog" aria-modal="true" aria-label="Your cart">
           <div className="flex-1 dm-backdrop" onClick={() => setCartOpen(false)} />
           <div className="dm-panel">
+            <div className="dm-sheet-handle sm:hidden" aria-hidden="true"><span /></div>
+
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 p-5 pw-rule-b">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-9 h-9 rounded-xl flex items-center justify-center"
-                      style={{ background: 'rgba(234,88,12,0.11)', color: '#C2410C' }} aria-hidden="true">
-                  <ShoppingCart size={17} />
-                </span>
-                <div className="min-w-0">
-                  <h2 className="pw-ink font-bold text-[16px] leading-tight">Your cart</h2>
-                  <p className="pw-muted text-[12.5px]">{cartCount} {cartCount === 1 ? 'item' : 'items'}</p>
-                </div>
+            <div className="dm-cart-head">
+              <span className="dm-cart-head-icon" aria-hidden="true"><ShoppingCart size={18} /></span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[16.5px] font-extrabold text-white leading-tight">Your cart</h2>
+                <p className="text-[12px] font-bold text-amber-200 mt-0.5 tabular-nums">
+                  {cartCount} {cartCount === 1 ? 'item' : 'items'} · {CURRENCY}{totals.total.toFixed(2)}
+                </p>
               </div>
-              <button type="button" onClick={() => setCartOpen(false)} className="pw-icon-btn" aria-label="Close cart">
-                <X size={20} />
+              {cart.length > 0 && (
+                <button type="button" onClick={() => setCart([])} className="dm-head-ghost">
+                  Clear
+                </button>
+              )}
+              <button type="button" onClick={() => setCartOpen(false)} className="dm-head-close" aria-label="Close cart">
+                <X size={18} />
               </button>
             </div>
 
             {/* Items */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
               {cart.length === 0 && (
-                <div className="text-center py-16">
-                  <ShoppingCart size={36} className="mx-auto mb-3 pw-muted" aria-hidden="true" />
-                  <p className="pw-muted">Your cart is empty</p>
+                <div className="dm-cart-empty">
+                  <div className="dm-cart-empty-icon" aria-hidden="true"><ShoppingCart size={26} /></div>
+                  <p className="pw-ink font-extrabold text-[15.5px] mb-1">Your cart is empty</p>
+                  <p className="pw-muted text-[13px] leading-relaxed">
+                    Nothing here yet. Add some delicious items from the menu.
+                  </p>
+                  <button type="button" onClick={() => setCartOpen(false)} className="pw-btn-ghost-lg mt-4 mx-auto">
+                    Browse menu
+                  </button>
                 </div>
               )}
               {cart.map(item => (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl"
-                     style={{ background: 'rgba(63,32,4,0.05)', border: '1px solid var(--pw-line)' }}>
+                <div key={item.id} className="dm-cart-item">
+                  <span className="dm-cart-accent" aria-hidden="true"
+                        style={{ background: `linear-gradient(180deg, ${grad(item.category)[0]}, ${grad(item.category)[1]})` }} />
                   {item.image
-                    ? <img src={item.image} alt="" className="w-12 h-12 rounded-lg object-cover shrink-0" />
-                    : <div className="w-12 h-12 rounded-lg shrink-0 flex items-center justify-center"
-                           style={{ background: `linear-gradient(135deg,${grad(item.category)[0]}22,${grad(item.category)[1]}11)` }}>
-                        <Flame size={18} style={{ color: grad(item.category)[0], opacity: 0.6 }} />
+                    ? <img src={item.image} alt="" className="dm-cart-thumb" />
+                    : <div className="dm-cart-thumb dm-cart-thumb-empty"
+                           style={{ background: `linear-gradient(135deg,${grad(item.category)[0]}20,${grad(item.category)[1]}12)` }}>
+                        <Flame size={17} style={{ color: grad(item.category)[0], opacity: 0.6 }} />
                       </div>
                   }
                   <div className="flex-1 min-w-0">
-                    <p className="pw-ink text-[14px] font-semibold line-clamp-1">{item.name}</p>
-                    <p className="text-[12.5px] font-bold tabular-nums" style={{ color: '#C2410C' }}>
+                    <p className="pw-ink text-[14px] font-bold line-clamp-1 leading-tight">{item.name}</p>
+                    <p className="text-[12.5px] font-extrabold tabular-nums mt-0.5" style={{ color: '#C2410C' }}>
                       {CURRENCY}{Number(item.price).toFixed(2)}
+                      {item.qty > 1 && <span className="pw-muted font-semibold"> · {CURRENCY}{(Number(item.price) * item.qty).toFixed(2)}</span>}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     <button type="button" onClick={() => removeFromCart(item.id)}
                             className="dm-mini" aria-label={`Remove one ${item.name}`}>
                       <Minus size={13} />
                     </button>
-                    <span className="pw-ink text-sm font-bold w-5 text-center tabular-nums">{item.qty}</span>
+                    <span className={`pw-ink text-sm font-extrabold w-5 text-center tabular-nums${addedId === item.id ? ' dm-qty-bounce' : ''}`}>{item.qty}</span>
                     <button type="button" onClick={() => addToCart(item)}
                             className="dm-mini is-plus" aria-label={`Add one ${item.name}`}>
                       <Plus size={13} />
                     </button>
+                    <button type="button" onClick={() => clearItem(item.id)}
+                            className="dm-mini is-x" aria-label={`Remove ${item.name} from cart`}>
+                      <X size={13} />
+                    </button>
                   </div>
-                  <button type="button" onClick={() => clearItem(item.id)}
-                          className="pw-muted hover:opacity-70 transition-colors p-2 shrink-0"
-                          aria-label={`Remove ${item.name} from cart`}>
-                    <X size={15} />
-                  </button>
                 </div>
               ))}
             </div>
 
             {/* Summary + Checkout */}
             {cart.length > 0 && (
-              <div className="p-5 pw-rule-t" style={{ background: 'rgba(63,32,4,0.02)' }}>
-                <dl className="space-y-2 text-sm mb-4">
-                  <div className="flex justify-between pw-muted"><dt>Subtotal</dt><dd className="tabular-nums">{CURRENCY}{totals.subtotal.toFixed(2)}</dd></div>
+              <div className="dm-cart-foot">
+                <dl className="space-y-1.5 text-[13.5px] mb-3">
+                  <div className="flex justify-between pw-muted"><dt>Subtotal</dt><dd className="tabular-nums font-semibold">{CURRENCY}{totals.subtotal.toFixed(2)}</dd></div>
                   <div className="flex justify-between" style={{ color: '#047857' }}>
-                    <dt>Service charge ({SERVICE_CHARGE_PERCENT}%)</dt><dd className="tabular-nums">+{CURRENCY}{totals.serviceCharge.toFixed(2)}</dd>
+                    <dt>Service charge ({SERVICE_CHARGE_PERCENT}%)</dt><dd className="tabular-nums font-semibold">+{CURRENCY}{totals.serviceCharge.toFixed(2)}</dd>
                   </div>
-                  <div className="flex justify-between pw-muted"><dt>GST ({totals.taxPercent}%)</dt><dd className="tabular-nums">{CURRENCY}{totals.taxAmount.toFixed(2)}</dd></div>
-                  <div className="flex justify-between pw-ink font-extrabold text-base pt-2.5 mt-1 pw-rule-t">
-                    <dt>Total</dt><dd style={{ color: '#C2410C' }} className="tabular-nums">{CURRENCY}{totals.total.toFixed(2)}</dd>
+                  <div className="flex justify-between pw-muted"><dt>GST ({totals.taxPercent}%)</dt><dd className="tabular-nums font-semibold">{CURRENCY}{totals.taxAmount.toFixed(2)}</dd></div>
+                  <div className="dm-cart-total">
+                    <dt>Total</dt><dd className="tabular-nums">{CURRENCY}{totals.total.toFixed(2)}</dd>
                   </div>
                 </dl>
                 <button type="button" onClick={() => { setCartOpen(false); setStep('checkout'); }} className="pw-btn-primary w-full">
                   <Truck size={18} aria-hidden="true" /> Proceed to checkout
                 </button>
+                <p className="pw-muted text-center text-[11.5px] mt-2.5 leading-relaxed">
+                  Delivery details, payment method &amp; order tracking at the next step.
+                </p>
               </div>
             )}
           </div>
@@ -1484,16 +1498,97 @@ const DeliveryMenu = () => {
           100%{opacity:0;transform:translate(calc(-50% + var(--fx)),calc(-50% + var(--fy))) scale(0.3)}
         }
 
-        /* Cart drawer */
-        .dm-backdrop{ background:rgba(38,21,7,0.5);backdrop-filter:blur(6px);animation:dmFade .25s var(--pw-ease) both; }
+        /* Cart drawer — rich bottom sheet on phones, side panel on desktop */
+        .dm-backdrop{ background:rgba(38,21,7,0.55);backdrop-filter:blur(8px);animation:dmFade .25s var(--pw-ease) both; }
         .dm-panel{
           width:100%;max-width:26rem;height:100%;display:flex;flex-direction:column;
           background:#FFF8F1;border-left:1px solid var(--pw-line);
           box-shadow:-30px 0 60px -30px rgba(63,32,4,0.35);
           animation:dmSlide .35s cubic-bezier(0.22,1,0.36,1) both;
         }
+        @media (max-width:639px){
+          .dm-panel{
+            max-width:100%;height:auto;max-height:92dvh;
+            border-radius:28px 28px 0 0;border-left:0;border-top:1px solid var(--pw-line);
+            animation:dmSheetUp .38s cubic-bezier(0.22,1,0.36,1) both;
+          }
+          @keyframes dmSheetUp{from{transform:translateY(100%)}to{transform:none}}
+        }
         @keyframes dmFade{from{opacity:0}to{opacity:1}}
         @keyframes dmSlide{from{transform:translateX(100%)}to{transform:none}}
+        .dm-sheet-handle{
+          display:flex;justify-content:center;padding:10px 0 2px;
+        }
+        .dm-sheet-handle span{ width:44px;height:5px;border-radius:999px;background:rgba(63,32,4,0.18); }
+        .dm-cart-head{
+          display:flex;align-items:center;gap:11px;
+          margin:4px 14px 12px;padding:13px 15px;border-radius:18px;
+          background:linear-gradient(135deg,#1F1308 0%,#3F230C 100%);
+          box-shadow:0 14px 30px -16px rgba(63,32,4,0.55);
+        }
+        .dm-cart-head-icon{
+          width:40px;height:40px;border-radius:13px;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center;
+          background:var(--pw-grad);color:#1F1308;
+          box-shadow:0 8px 18px -8px rgba(245,158,11,0.9);
+        }
+        .dm-head-ghost{
+          flex-shrink:0;padding:7px 12px;border-radius:10px;cursor:pointer;
+          border:1px solid rgba(252,211,77,0.28);background:rgba(252,211,77,0.1);
+          color:#FDE68A;font-size:12px;font-weight:800;
+          transition:background .2s var(--pw-ease,color .2s var(--pw-ease));
+        }
+        .dm-head-ghost:hover{ background:rgba(239,68,68,0.25);color:#FCA5A5; }
+        .dm-head-close{
+          flex-shrink:0;width:34px;height:34px;border-radius:10px;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;border:0;
+          background:rgba(255,255,255,0.09);color:#FDE68A;
+          transition:background .2s var(--pw-ease);
+        }
+        .dm-head-close:hover{ background:rgba(255,255,255,0.2); }
+        .dm-cart-empty{
+          text-align:center;padding:40px 20px 48px;
+        }
+        .dm-cart-empty-icon{
+          width:64px;height:64px;border-radius:20px;margin:0 auto 14px;
+          display:flex;align-items:center;justify-content:center;
+          background:rgba(234,88,12,0.1);color:#C2410C;
+          border:1px dashed rgba(234,88,12,0.35);
+        }
+        /* Cart item rows */
+        .dm-cart-item{
+          position:relative;display:flex;align-items:center;gap:11px;
+          padding:12px 12px 12px 0;border-radius:16px;
+          background:rgba(63,32,4,0.05);border:1px solid var(--pw-line);
+        }
+        .dm-cart-item:hover{ border-color:rgba(245,158,11,0.4); }
+        .dm-cart-item:hover{ border-color:rgba(245,158,11,0.45); }
+        .dm-cart-accent{
+          width:5px;align-self:stretch;border-radius:999px;flex-shrink:0;margin-left:12px;
+        }
+        .dm-cart-thumb{
+          width:46px;height:46px;border-radius:12px;object-fit:cover;flex-shrink:0;
+        }
+        .dm-cart-thumb-empty{
+          display:flex;align-items:center;justify-content:center;
+        }
+        .dm-mini.is-x{
+          width:30px;height:30px;background:transparent;border-color:transparent;color:#A3846A;
+        }
+        .dm-mini.is-x:hover{ color:#DC2626;background:rgba(239,68,68,0.08); }
+        .dm-cart-foot{
+          padding:15px 18px calc(15px + env(safe-area-inset-bottom,0px));
+          background:rgba(255,251,246,0.96);
+          border-top:1px solid var(--pw-line);
+          box-shadow:0 -14px 30px -20px rgba(63,32,4,0.3);
+        }
+        .dm-cart-total{
+          display:flex;justify-content:space-between;align-items:baseline;
+          font-weight:900;font-size:16.5px;color:var(--pw-ink);
+          padding-top:9px;margin-top:5px;
+          border-top:1px dashed rgba(63,32,4,0.22);
+        }
+        .dm-cart-total dd{ color:#C2410C; }
 
         @media (prefers-reduced-motion:reduce){
           .dm-in,.dm-cartbar,.dm-panel,.dm-backdrop{animation:none !important;opacity:1 !important;transform:none !important;}

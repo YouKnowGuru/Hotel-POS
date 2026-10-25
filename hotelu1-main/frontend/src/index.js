@@ -10,6 +10,15 @@ import './index.css';
 // to avoid a flash of the wrong theme on cold loads.
 applyThemeEarly();
 
+// BUGFIX: the browser's automatic scroll restoration memory made SPA
+// route changes "land" at the previous page's viewport offset — for
+// users who had scrolled to the footer that meant clicking any nav link
+// opened the next page already at its footer. Manual restoration lets
+// PublicShell control scroll position on every navigation.
+if ('scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
+
 // NOTE: an earlier version of this file wiped localStorage, sessionStorage
 // and caches on EVERY page load. That destroyed the QR customer session
 // (placed-order tracking, payment tokens), staff notification state and the

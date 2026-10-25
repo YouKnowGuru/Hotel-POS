@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch, getAPI_URL } from '../utils/api';
-import { enrichOrderWithTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
+import { enrichOrderWithTotals, fetchAndCacheGlobalSettings, calculateOrderTotals } from '../utils/orderTotals';
 import Notification from './Notification';
 import useCurrency from '../hooks/useCurrency';
 import { Users } from 'lucide-react';
@@ -26,6 +26,14 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  const [showMobileCart, setShowMobileCart] = useState(false);
  const [paymentMethod, setPaymentMethod] = useState('cash');
  const [isSubmitting, setIsSubmitting] = useState(false);
+ // Shared tax/discount settings (fetched once) so totals always match
+ // what the backend charges — Service charge + GST.
+ const [taxSettings, setTaxSettings] = useState(null);
+
+ // Load the admin's Billing & Taxation settings once on open.
+ useEffect(() => {
+ fetchAndCacheGlobalSettings().then(setTaxSettings).catch(() => {});
+ }, []);
  // Dine-in only: how many guests are seated at this table. Stored on the
  // order and displayed on the Table Management card.
  const [guests, setGuests] = useState(2);
@@ -263,16 +271,19 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  }
  
  // Get global tax and discount settings
- const globalSettings = JSON.parse(localStorage.getItem('globalTaxDiscount') || '{"taxPercent": 5, "discountPercent": 0}');
+ const globalSettings = taxSettings || JSON.parse(localStorage.getItem('globalTaxDiscount') || '{"taxPercent": 5, "discountPercent": 0}');
  const taxPercent = globalSettings.taxPercent || 5;
  const discountPercent = globalSettings.discountPercent || 0;
  
- // Calculate subtotal, discount, tax, and total
+ // Calculate subtotal, discount, service charge, tax, and total —
+ // with the SAME calculator as every other ordering flow.
  const subtotal = Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0);
- const discountAmount = subtotal * (discountPercent / 100);
- const afterDiscount = subtotal - discountAmount;
- const taxAmount = afterDiscount * (taxPercent / 100);
- const finalTotal = afterDiscount + taxAmount;
+ const totals = calculateOrderTotals(subtotal, taxSettings);
+ const discountAmount = totals.discountAmount;
+ const serviceCharge = totals.serviceCharge;
+ const serviceChargePercent = totals.serviceChargePercent;
+ const taxAmount = totals.taxAmount;
+ const finalTotal = totals.total;
  
  // For existing orders, identify new items vs existing items
  let newOrder = {
@@ -281,6 +292,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  subtotal: subtotal,
  discount: discountPercent,
  discountAmount: discountAmount,
+ serviceCharge: serviceCharge,
+ serviceChargePercent: serviceChargePercent,
  taxPercent: taxPercent,
  taxAmount: taxAmount,
  total: finalTotal,
@@ -300,27 +313,22 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  try {
  // Combine all items (existing + new)
  const allItems = Object.values(cart);
- // Calculate totals with global tax and discount for takeaway updates
- const globalSettings = JSON.parse(localStorage.getItem('globalTaxDiscount') || '{"taxPercent": 5, "discountPercent": 0}');
- const taxPercent = globalSettings.taxPercent || 5;
- const discountPercent = globalSettings.discountPercent || 0;
- 
+ // Calculate totals with the shared calculator for takeaway updates
  const newSubtotal = allItems.reduce((sum, item) => sum + (item.price * (item.quantity || item.qty || 1)), 0);
- const newDiscountAmount = newSubtotal * (discountPercent / 100);
- const newAfterDiscount = newSubtotal - newDiscountAmount;
- const newTaxAmount = newAfterDiscount * (taxPercent / 100);
- const newFinalTotal = newAfterDiscount + newTaxAmount;
+ const updTotals = calculateOrderTotals(newSubtotal, taxSettings);
 
  const updateResponse = await authFetch(`/api/orders/${initialOrder.id}`, {
  method: 'PUT',
  body: JSON.stringify({
  items: allItems,
  subtotal: newSubtotal,
- discount: discountPercent,
- discountAmount: newDiscountAmount,
- taxPercent: taxPercent,
- taxAmount: newTaxAmount,
- total: newFinalTotal,
+ discount: updTotals.discountPercent,
+ discountAmount: updTotals.discountAmount,
+ serviceCharge: updTotals.serviceCharge,
+ serviceChargePercent: updTotals.serviceChargePercent,
+ taxPercent: updTotals.taxPercent,
+ taxAmount: updTotals.taxAmount,
+ total: updTotals.total,
  status: 'pending'
  })
  });
@@ -463,7 +471,15 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  );
  };
 
- const totalAmount = Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0).toFixed(2);
+ /* BUGFIX (takeaway missing service charge & GST): the modal used to add
+ only a discount + GST on the raw subtotal, so the displayed total never
+ matched the rest of the system. All totals now flow through the same
+ shared calculator used by the QR menu and the printed receipts. */
+ const takeTotals = calculateOrderTotals(
+ Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0),
+ taxSettings
+ );
+ const totalAmount = takeTotals.total;
 
  return (
  <>
@@ -686,9 +702,25 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  ))}
  </div>
  <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t-2 border-gray-300 flex-shrink-0">
- <div className="flex justify-between items-center mb-2 sm:mb-3">
- <span className="text-sm sm:text-lg font-bold text-gray-800">Total Amount:</span>
+ <div className="space-y-1 text-xs sm:text-sm mb-2 sm:mb-3">
+ <div className="flex justify-between text-gray-500">
+ <span>Subtotal</span><span className="font-semibold tabular-nums">{fmt(takeTotals.subtotal)}</span>
+ </div>
+ <div className="flex justify-between text-gray-500">
+ <span>Service charge ({takeTotals.serviceChargePercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.serviceCharge)}</span>
+ </div>
+ <div className="flex justify-between text-gray-500">
+ <span>GST ({takeTotals.taxPercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.taxAmount)}</span>
+ </div>
+ {takeTotals.discountPercent > 0 && (
+ <div className="flex justify-between text-green-600">
+ <span>Discount ({takeTotals.discountPercent}%)</span><span className="font-semibold tabular-nums">-{fmt(takeTotals.discountAmount)}</span>
+ </div>
+ )}
+ <div className="flex justify-between items-center pt-1">
+ <span className="text-sm sm:text-base font-bold text-gray-800">Total:</span>
  <span className="text-lg sm:text-xl font-bold text-green-600">{fmt(totalAmount)}</span>
+ </div>
  </div>
  <div className="bg-gradient-to-r from-indigo-600 to-red-100 p-1.5 sm:p-2 rounded-lg">
  <p className="text-xs text-gray-600 text-center">
@@ -1013,7 +1045,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
  </svg>
- Place Order • {fmt(Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0))}
+ Place Order • {fmt(totalAmount)}
  </>
  )}
  </button>
@@ -1070,7 +1102,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  )}
  <div className="flex justify-between">
- <span className="text-gray-600">Tax ({t.taxPercent}%)</span>
+ <span className="text-gray-600">Service charge ({t.serviceChargePercent}%)</span>
+ <span className="font-medium">+{fmt(t.serviceCharge)}</span>
+ </div>
+ <div className="flex justify-between">
+ <span className="text-gray-600">GST ({t.taxPercent}%)</span>
  <span className="font-medium text-gray-800">+{fmt(t.taxAmount)}</span>
  </div>
  </div>
@@ -1114,17 +1150,30 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  Card
  </button>
  <button
- onClick={() => setPaymentMethod('wallet')}
+ onClick={() => setPaymentMethod('mbob')}
  className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
- paymentMethod === 'wallet' 
+ paymentMethod === 'mbob'
  ? 'border-green-500 bg-green-50 text-green-700' 
  : 'border-gray-200 hover:border-gray-300'
  }`}
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
  </svg>
- Wallet
+ Bank (mBOB)
+ </button>
+ <button
+ onClick={() => setPaymentMethod('mpay')}
+ className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+ paymentMethod === 'mpay'
+ ? 'border-green-500 bg-green-50 text-green-700' 
+ : 'border-gray-200 hover:border-gray-300'
+ }`}
+ >
+ <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+ </svg>
+ MPay
  </button>
  </div>
  </div>

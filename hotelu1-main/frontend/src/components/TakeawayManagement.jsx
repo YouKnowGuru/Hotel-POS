@@ -844,7 +844,11 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  </div>
  )}
  <div className="flex justify-between">
- <span className="text-gray-500">Tax ({t.taxPercent}%)</span>
+ <span className="text-gray-500">Service charge ({t.serviceChargePercent}%)</span>
+ <span className="font-semibold text-gray-800">+{fmt(t.serviceCharge)}</span>
+ </div>
+ <div className="flex justify-between">
+ <span className="text-gray-500">GST ({t.taxPercent}%)</span>
  <span className="font-semibold text-gray-800">+{fmt(t.taxAmount)}</span>
  </div>
  <div className="flex justify-between items-center border-t-2 border-gray-100 pt-2 mt-1.5">
@@ -867,31 +871,20 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  <button
  onClick={() => {
  const printWindow = window.open('', '_blank', 'width=300,height=400');
- const subtotal =
- order.subtotal ||
- order.items?.reduce(
- (sum, item) =>
- sum + (item.price || 0) * (item.qty || item.quantity || 1),
- 0
- ) ||
- 0;
- const discountPercent = order.discount || 0;
- const discountAmount =
- order.discountAmount || (subtotal * discountPercent) / 100;
- const afterDiscount = subtotal - discountAmount;
- const taxPercent = order.taxPercent || 5;
- const taxAmount =
- order.taxAmount || (afterDiscount * taxPercent) / 100;
+ const pTotals = enrichOrderWithTotals(order);
  let breakdown = `<div class="item"><span>Subtotal</span><span>${fmt(
- subtotal
+ pTotals.subtotal
  )}</span></div>`;
- if (discountPercent > 0) {
- breakdown += `<div class="item"><span>Discount (${discountPercent}%)</span><span>-${fmt(
- discountAmount
+ if (pTotals.discountPercent > 0) {
+ breakdown += `<div class="item"><span>Discount (${pTotals.discountPercent}%)</span><span>-${fmt(
+ pTotals.discountAmount
  )}</span></div>`;
  }
- breakdown += `<div class="item"><span>Tax (${taxPercent}%)</span><span>+${fmt(
- taxAmount
+ breakdown += `<div class="item"><span>Service charge (${pTotals.serviceChargePercent}%)</span><span>+${fmt(
+ pTotals.serviceCharge
+ )}</span></div>`;
+ breakdown += `<div class="item"><span>GST (${pTotals.taxPercent}%)</span><span>+${fmt(
+ pTotals.taxAmount
  )}</span></div>`;
  const receiptContent = `
  <html>
