@@ -44,23 +44,15 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  const [paymentAmount, setPaymentAmount] = useState(0);
 
  useEffect(() => {
- console.log('OrderEntryModal: Fetching menu items...');
  fetch(`${getAPI_URL()}/api/menu`)
  .then(res => {
- console.log('OrderEntryModal: API response status:', res.status);
+ if (!res.ok) throw new Error(`Menu API ${res.status}`);
  return res.json();
  })
  .then(data => {
- console.log('OrderEntryModal: Raw menu data from API:', data);
- console.log('OrderEntryModal: Number of items received:', data.length);
- 
  // Show all items first, then filter available ones
  const allItems = data;
  const availableMenu = data.filter(item => item.isAvailable === true);
- 
- console.log('OrderEntryModal: All menu items:', allItems);
- console.log('OrderEntryModal: Available menu items after filtering:', availableMenu);
- console.log('OrderEntryModal: Available items count:', availableMenu.length);
  
  // Extract categories from menu items with smart categorization
  const uniqueCategories = ['All', ...new Set(availableMenu.map(item => {
@@ -246,9 +238,6 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  };
 
  const placeOrder = async () => {
- console.log('Current cart:', cart);
- console.log('Current menu:', menu);
- 
  const orderItems = Object.values(cart).map(item => ({
  productId: item.productId || item.id,
  name: item.name,
@@ -256,7 +245,6 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  price: item.price
  }));
  
- console.log('Order items:', orderItems);
  if (orderItems.length === 0) {
  setNotification({ message: "Cart is empty. Please add items.", type: "error" });
  setTimeout(() => setNotification(null), 3000);
@@ -363,22 +351,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  }
  
  // For new orders (not additional items), proceed with normal flow
- console.log('Sending order data:', newOrder);
  try {
- const url = '/api/orders';
- const method = 'POST';
-
- console.log('Request URL:', url);
- console.log('Request method:', method);
- console.log('Request body:', newOrder);
-
- const res = await authFetch(url, {
- method,
+ const res = await authFetch('/api/orders', {
+ method: 'POST',
  body: JSON.stringify(newOrder)
  });
-
- console.log('Response status:', res.status);
- console.log('Response ok:', res.ok);
 
  if (!res.ok) {
  const errData = await res.json().catch(() => ({}));
@@ -548,8 +525,6 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  
  <div className="flex-grow overflow-hidden min-h-0">
- {console.log('OrderEntryModal: Rendering menu items, menu array:', menu)}
- {console.log('OrderEntryModal: Menu length:', menu.length)}
  {filteredMenu.length === 0 ? (
  <div className="text-center py-4 sm:py-8 h-full flex items-center justify-center">
  <div>

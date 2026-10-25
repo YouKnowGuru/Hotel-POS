@@ -1854,6 +1854,17 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       parentOrderId,
       subfranchise_id,
     } = req.body;
+
+    // Order type must be one we actually model downstream (receipts,
+    // reports, delivery emails, takeaway tokens all switch on it).
+    if (type !== undefined && type !== null && !ALLOWED_ORDER_TYPES.includes(String(type).toUpperCase())) {
+      return res.status(400).json({
+        message: `Order type must be one of: ${ALLOWED_ORDER_TYPES.join(", ")}`,
+      });
+    }
+    const normalizedType = ALLOWED_ORDER_TYPES.includes(String(type || "").toUpperCase())
+      ? String(type).toUpperCase()
+      : "DINE_IN";
     let linkedSubFranchiseId = await resolveOrderSubFranchiseId(
       req,
       subfranchise_id
@@ -1905,13 +1916,11 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       }
     } else {
       guests = null;
-    }
-
-    // ── Home-delivery (public web ordering) customer details ──────────
-    // A public-website DELIVERY order must carry the customer's contact
-    // details so kitchen/waiter/admin staff know who to serve, where to
-    // deliver, and where to email the automatic order/payment updates.
-    const isDeliveryOrder = String(type || "").toUpperCase() === "DELIVERY";
+    }      // ── Home-delivery (public web ordering) customer details ──────────
+      // A public-website DELIVERY order must carry the customer's contact
+      // details so kitchen/waiter/admin staff know who to serve, where to
+      // deliver, and where to email the automatic order/payment updates.
+      const isDeliveryOrder = normalizedType === "DELIVERY";
     let customerName = typeof req.body.customer_name === "string" ? req.body.customer_name.trim() : "";
     let customerPhone = typeof req.body.customer_phone === "string" ? req.body.customer_phone.trim() : "";
     let customerEmail = typeof req.body.customer_email === "string" ? req.body.customer_email.trim() : "";
@@ -1970,7 +1979,7 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     // the seated guests through the staff panels, which are authenticated
     // and exempt from this guard.
     const isQrTableOrder =
-      String(type || "").toUpperCase() === "DINE_IN" && !req.user;
+      normalizedType === "DINE_IN" && !req.user;
     if (isQrTableOrder) {
       let openSessions = [];
       if (!dbConnected) {
@@ -2035,11 +2044,11 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
         payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
         payment_access_token: paymentAccessToken,
-        type: type || "DINE_IN",
+        type: normalizedType,
         parentOrderId,
         subfranchise_id: linkedSubFranchiseId,
         timestamp: new Date(),
-        token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
+        token: normalizedType === "TAKEAWAY" ? generateTakeawayToken() : null,
         customer_name: customerName,
         customer_phone: customerPhone,
         customer_email: customerEmail,
@@ -2071,13 +2080,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
               tax_amount: totals.taxAmount,
               service_charge: totals.serviceCharge,
               status: "pending",
-            type: type || "DINE_IN",
+            type: normalizedType,
             guests: guests || null,
             client_session: clientSession,
             parentOrderId,
             subfranchise_id: linkedSubFranchiseId,
             timestamp: new Date(),
-            token: type === "TAKEAWAY" ? generateTakeawayToken() : null,
+            token: normalizedType === "TAKEAWAY" ? generateTakeawayToken() : null,
             payment_method: isCashPayment ? 'cash' : (paymentFirst ? 'qr' : null),
             payment_status: isCashPayment ? "cash_pending" : (paymentFirst ? "awaiting_payment" : null),
             payment_access_token: paymentAccessToken,
@@ -2450,6 +2459,12 @@ const ALLOWED_ORDER_STATUSES = [
   "NOT_AVAILABLE", "not_available",
 ];
 
+// The three supported order types. Floating unvalidated client strings into
+// the `type` column silently wrecked type-based filters/LEDGER grouping:
+// reports bucket anything unknown as "dine-in-like" (every check is a
+// .toUpperCase() comparison). Reject everything else at the door.
+const ALLOWED_ORDER_TYPES = ["DINE_IN", "DELIVERY", "TAKEAWAY"];
+
 // AUDIT: best-effort audit-trail writer for privileged/administrative
 // actions. Action names are fixed strings chosen by the server (never from
 // request bodies). Detail payloads must never contain passwords, tokens,
@@ -2508,10 +2523,21 @@ app.put("/api/orders/:id", verifyToken, async (req, res) => {
         }
         if (items && Array.isArray(items)) {
           order.items = items;
-          order.total = items.reduce(
+          // Demo totals must mirror the DB path exactly — through the shared
+          // calculator (discount → +10% service charge → GST), not the raw
+          // item subtotal. The old code stored a total without SC/GST, so
+          // demo orders disagreed with the "total > 0" delete guard, the
+          // ledgers and every screen rendering an order's math.
+          const mockSubtotal = items.reduce(
             (s, it) => s + (Number(it.price) || 0) * (it.quantity || it.qty || 1),
             0
           );
+          const mockTotals = calculateOrderTotals(mockSubtotal, await getTaxDiscountSettings());
+          order.total = mockTotals.total;
+          order.subtotal = mockTotals.subtotal;
+          order.tax_percent = mockTotals.taxPercent;
+          order.tax_amount = mockTotals.taxAmount;
+          order.service_charge = mockTotals.serviceCharge;
         }
 
         if (status && prevStatus !== status) {
@@ -3192,15 +3218,12 @@ app.delete("/api/orders/:id", verifyToken, async (req, res) => {
       }
       // Allow deletion of empty orders (total = 0) or NOT_AVAILABLE orders
       const order = mockOrders[orderIndex];
-      console.log('Mock order to delete:', order);
       if (order.total > 0 && !isNotAvailableStatus(order.status)) {
-        console.log('Cannot delete order - total > 0 and not NOT_AVAILABLE:', order.total, order.status);
         return res.status(400).json({
           message: "Only empty orders or NOT_AVAILABLE orders can be deleted",
         });
       }
       mockOrders.splice(orderIndex, 1);
-      console.log('Order deleted from mock data');
       return res.json({ success: true });
     }
 
@@ -3208,11 +3231,10 @@ app.delete("/api/orders/:id", verifyToken, async (req, res) => {
     if (!order) return res.status(404).json({ message: "Not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
 
-    console.log('Order to delete:', order.dataValues);
-
-    // Allow deletion of empty orders (total = 0) or NOT_AVAILABLE orders
+    // Allow deletion of empty orders (total = 0) or NOT_AVAILABLE orders.
+    // PII: never log the full order row — live customer name/phone/address
+    // must not end up in server stdout.
     if (order.total > 0 && !isNotAvailableStatus(order.status)) {
-      console.log('Cannot delete order - total > 0 and not NOT_AVAILABLE:', order.total, order.status);
       return res.status(400).json({
         message: "Only empty orders or NOT_AVAILABLE orders can be deleted",
       });
@@ -3220,8 +3242,6 @@ app.delete("/api/orders/:id", verifyToken, async (req, res) => {
 
     await OrderItem.destroy({ where: { orderId: order.id } });
     await order.destroy();
-
-    console.log('Order deleted from database');
 
     // Emit socket event to update dashboard
     io.emit('order_deleted', { orderId: id });
@@ -5860,16 +5880,24 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
       },
     });
 
-    // Sum up the service charge portion from each order's total
-    // We need the GST rate from settings to back-calculate SC from total
+    // Sum up the service charge portion from each order.
+    // PREFERRED SOURCE: the per-order `service_charge` snapshot written at
+    // order time (and kept in sync when items are repriced) — it is exact
+    // even when a discount was configured, because discounts shrink the
+    // discount base BEFORE the 10% is applied. The old divisor
+    // back-calculation (total ÷ 1.10 × gst) silently charged the ledger on
+    // the undiscounted subtotal and disagreed with the GST ledger.
+    // FALLBACK: legacy rows created before the snapshot column existed have
+    // service_charge = null — for those only, recover it from the order
+    // snapshot (tax_amount/tax_percent) and finally the legacy divisor.
     let taxPercent = 5;
     try {
       const taxSetting = await Settings.findOne({ where: { key: 'taxPercent' } });
       if (taxSetting) taxPercent = parseFloat(taxSetting.value) || 5;
     } catch (_) {}
 
-    const scFactor  = 1 + SC_PERCENT / 100;   // 1.10
-    const gstFactor = 1 + taxPercent / 100;   // 1.05
+    const scFactor  = 1 + SC_PERCENT / 100;   // 1.10 — legacy fallback only
+    const gstFactor = 1 + taxPercent / 100;   // 1.05 — legacy fallback only
     const divisor   = scFactor * gstFactor;    // e.g. 1.155
 
     let totalServiceCharge = 0;
@@ -5877,8 +5905,22 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
     paidOrders.forEach(o => {
       const paidTotal = parseFloat(o.total) || 0;
       if (paidTotal > 0) {
-        const subtotal = paidTotal / divisor;
-        totalServiceCharge += subtotal * (SC_PERCENT / 100);
+        const snapshot = parseFloat(o.service_charge);
+        if (Number.isFinite(snapshot) && snapshot >= 0) {
+          totalServiceCharge += snapshot;
+        } else {
+          // Legacy fallback: recover SC from the stored tax snapshot when
+          // available (exact discount base), else the historical divisor.
+          const taxAmount = parseFloat(o.tax_amount);
+          const taxPct = parseFloat(o.tax_percent);
+          if (Number.isFinite(taxAmount) && taxAmount > 0 && Number.isFinite(taxPct) && taxPct > 0) {
+            const afterServiceCharge = taxAmount / (taxPct / 100);
+            totalServiceCharge += afterServiceCharge - afterServiceCharge / (1 + SC_PERCENT / 100);
+          } else {
+            const subtotal = paidTotal / divisor;
+            totalServiceCharge += subtotal * (SC_PERCENT / 100);
+          }
+        }
         totalOrders++;
       }
     });
