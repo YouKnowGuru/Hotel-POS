@@ -4,6 +4,7 @@ if (dns.setDefaultResultOrder) {
 }
 
 const path = require('path');
+const fs = require('fs');
 const { Sequelize } = require('sequelize');
 
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
@@ -20,7 +21,26 @@ require('dotenv').config();
  */
 
 const isProd = process.env.NODE_ENV === 'production';
-const useSSL = process.env.DB_SSL === 'true' || isProd;
+
+/* ── TLS decision ───────────────────────────────────────────────────
+   DB_SSL wins when set explicitly (true or false). Otherwise TLS is
+   enabled automatically for REMOTE hosts in production (Render
+   Postgres, Aiven MySQL…), but never forced on localhost / VPS-local
+   servers: many shared hosts ship MySQL with TLS disabled, and forcing
+   it made the handshake fail on every boot — "database connection
+   fails" with no obvious cause. */
+function hostFromUrl(url) {
+  try { return new URL(url).hostname; } catch (_) { return null; }
+}
+const configUrl = process.env.DATABASE_URL || null;
+const dbHost = configUrl
+  ? (hostFromUrl(configUrl) || 'localhost')
+  : (process.env.DB_HOST || 'localhost');
+const isLocalDb = ['localhost', '127.0.0.1', '::1'].includes(String(dbHost).toLowerCase());
+const useSSL =
+  process.env.DB_SSL === 'true' ? true
+  : process.env.DB_SSL === 'false' ? false
+  : isProd && !isLocalDb;
 
 const sslOptions = useSSL
   ? { require: true, rejectUnauthorized: false }
@@ -89,5 +109,25 @@ if (process.env.DATABASE_URL) {
     }
   );
 }
+
+/* Password-free description of where we're actually pointing. Printed
+   on boot and on connection failure so a wrong/missing .env entry
+   (wrong host, default db name, missing user…) is immediately visible
+   in the hosting provider's runtime logs. */
+sequelize.connectionSummary = () => {
+  const envFiles = [
+    path.join(__dirname, '../.env'),
+    path.join(process.cwd(), '.env'),
+  ].map((p) => `${p}=${fs.existsSync(p) ? 'present' : 'missing'}`).join(' | ');
+  const cfg = sequelize.config || {};
+  const source = configUrl
+    ? 'DATABASE_URL env var'
+    : 'DB_* env vars (defaults apply for any that are unset)';
+  return (
+    `dialect=${sequelize.getDialect()} host=${cfg.host || dbHost} ` +
+    `port=${cfg.port || '?'} db=${cfg.database || '?'} user=${cfg.username || '?'} ` +
+    `ssl=${useSSL ? 'on' : 'off'} source=${source} | env files: ${envFiles}`
+  );
+};
 
 module.exports = sequelize;

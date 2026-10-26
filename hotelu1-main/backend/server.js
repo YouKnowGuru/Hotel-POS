@@ -580,7 +580,10 @@ let dbConnected = false;
 // Test database connection and start server
 async function startServer() {
   try {
-    // Test database connection
+    // Test database connection. Print the (password-free) target first so
+    // a failed boot in a hosting provider's log immediately shows which
+    // host/db/SSL settings the process actually loaded.
+    console.log("DB config:", sequelize.connectionSummary ? sequelize.connectionSummary() : "(unavailable)");
     await sequelize.authenticate();
     console.log("Database connected successfully");
     
@@ -636,12 +639,16 @@ async function startServer() {
     }
   } catch (error) {
     console.error("Database connection failed:", error.message);
+    if (sequelize.connectionSummary) {
+      console.error("DB config:", sequelize.connectionSummary());
+    }
     if (process.env.NODE_ENV === "production") {
       // SECURITY + reliability: in production a DB outage must not silently
       // downgrade the whole platform to in-memory demo data that vanishes on
       // restart and accepts admin/admin logins. Fail hard so the platform
       // health check goes red and Render restarts us once the DB is back.
       console.error("FATAL: database unreachable in production. Exiting. (Set FAIL_OPEN_WITHOUT_DB=true to keep serving degraded demo mode.)");
+      console.error("HINT: check the DB config line above — the host/port/db/user must match your database server, DB_SSL must match it too (true for Render/Aiven, false or unset for localhost MySQL), and the database must already exist.");
       if (process.env.FAIL_OPEN_WITHOUT_DB !== "true") {
         process.exit(1);
       }
