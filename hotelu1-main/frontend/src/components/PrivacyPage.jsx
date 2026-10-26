@@ -24,9 +24,9 @@ const SECTIONS = [
         <p>When you place an order, we collect:</p>
         <ul>
           <li>Your name and delivery address</li>
-          <li>Phone number (to confirm delivery)</li>
+          <li>Phone number (to confirm delivery) and, if provided, your email for order updates</li>
           <li>Order details and payment method</li>
-          <li>Device and browser information for analytics</li>
+          <li>For online payments: a screenshot of your payment transfer, uploaded by you so our staff can verify it</li>
         </ul>
       </>
     ),
@@ -38,9 +38,9 @@ const SECTIONS = [
         <p>We use your information to:</p>
         <ul>
           <li>Process and deliver your orders</li>
-          <li>Contact you with order updates via SMS or phone</li>
-          <li>Improve our service and detect fraud</li>
-          <li>Send occasional promotional messages (you may opt out at any time)</li>
+          <li>Verify your payments when you pay by bank QR transfer</li>
+          <li>Contact you with order updates by phone or email</li>
+          <li>Keep accurate business records for tax and accounting</li>
         </ul>
       </>
     ),
@@ -62,15 +62,18 @@ const SECTIONS = [
   {
     id: 'retention', title: 'Data retention',
     body: (
-      <p>Order data is retained for up to 2 years for accounting and legal compliance. You may request
-         deletion of your personal data at any time by contacting us.</p>
+      <p>Order data is retained for up to 2 years for accounting and legal compliance. Payment
+         screenshots are stored only for as long as your payment needs to be verified and reconciled,
+         then deleted. You may request deletion of your personal data at any time by contacting us.</p>
     ),
   },
   {
-    id: 'cookies', title: 'Cookies',
+    id: 'cookies', title: 'Cookies & device storage',
     body: (
-      <p>We use minimal cookies for session management and analytics. You can disable cookies in your
-         browser, though some parts of the Service may not function correctly.</p>
+      <p>We don't use advertising or third-party analytics cookies. Instead, the app stores a few
+         small entries in your browser's local storage — only so it can keep track of the orders YOU
+         placed and pending payments on this device. Deleting your browser data removes them; nothing
+         of yours is shared with other people who open the site.</p>
     ),
   },
   {

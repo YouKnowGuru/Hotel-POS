@@ -1095,13 +1095,13 @@ const DeliveryMenu = () => {
       {/* ── Floating cart bar ── */}
       {cartCount > 0 && !cartOpen && (
         <div className={`dm-cartbar${cartPulse ? ' dm-cartbar-pulse' : ''}`} ref={cartBarRef}>
-          <button type="button" onClick={() => setCartOpen(true)} className="dm-cartbar-btn pw-fx-sheen">
+          <button type="button" onClick={() => setCartOpen(true)} className="dm-cartbar-btn">
             <span className="flex items-center gap-3 min-w-0">
               <span className="relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(27,15,2,0.16)' }}>
+                    style={{ background: 'rgba(255,255,255,0.18)' }}>
                 <ShoppingCart size={17} aria-hidden="true" />
                 <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10.5px] font-black${cartPulse ? ' dm-badge-bounce' : ''}`}
-                      style={{ background: '#120A02', color: '#FBBF24' }}>{cartCount}</span>
+                      style={{ background: '#064E3B', color: '#ECFDF5' }}>{cartCount}</span>
               </span>
               <span className="text-left min-w-0">
                 <span className="block text-[11.5px] font-bold uppercase tracking-wider opacity-75 leading-none">View cart</span>
@@ -1410,7 +1410,7 @@ const DeliveryMenu = () => {
         .dm-mini.is-plus{ background:var(--pw-grad);color:var(--pw-ink-on-accent);border-color:transparent; }
         .dm-mini.is-plus:hover{ filter:brightness(1.08); }
 
-        /* Floating cart bar */
+        /* Floating cart bar — emerald green so it pops against the warm page */
         .dm-cartbar{
           position:fixed;
           left:12px;right:12px;
@@ -1436,7 +1436,7 @@ const DeliveryMenu = () => {
         /* Glow ring pulse when item added */
         .dm-cartbar-pulse::before{
           content:'';position:absolute;inset:-4px;border-radius:24px;
-          border:2px solid rgba(245,158,11,0.9);
+          border:2px solid rgba(16,185,129,0.9);
           animation:dmRingPulse .6s cubic-bezier(0.22,1,0.36,1) both;
           pointer-events:none;
         }
@@ -1447,8 +1447,8 @@ const DeliveryMenu = () => {
         .dm-cartbar-btn{
           width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
           min-height:64px;padding:10px 18px;border:0;cursor:pointer;border-radius:20px;
-          background:var(--pw-grad);color:var(--pw-ink-on-accent);
-          box-shadow:0 22px 46px -18px rgba(245,158,11,0.95);
+          background:linear-gradient(135deg,#10B981 0%,#059669 100%);color:#FFFFFF;
+          box-shadow:0 22px 46px -18px rgba(16,185,129,0.95);
           transition:transform .2s var(--pw-ease),filter .2s var(--pw-ease);
           position:relative;
         }

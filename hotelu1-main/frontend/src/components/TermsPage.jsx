@@ -43,18 +43,25 @@ const SECTIONS = [
   {
     id: 'payment', title: 'Payment',
     body: (
-      <p>We accept cash on delivery and online payment methods as offered at checkout. Prices are final
-         at the time of order placement.</p>
+      <>
+        <p>We accept cash on delivery/pickup and bank-QR transfer as offered at checkout. Prices are
+           final at the time of order placement.</p>
+        <p>For QR payments you upload a screenshot of your transfer. Our staff verify it manually —
+           online payment orders are prepared/collected only after your payment is approved. If a
+           screenshot can't be verified, we'll reject it with a reason and you can retry or pay cash.</p>
+      </>
     ),
   },
   {
     id: 'cancellations', title: 'Cancellations & refunds',
     body: (
       <>
-        <p>Orders may be cancelled within 5 minutes of placement — call us immediately. After preparation
-           has started, cancellations are not accepted.</p>
-        <p>Refunds are issued if: (a) we cannot fulfil your order, (b) the food is incorrect, or (c) the
-           food is unacceptable quality. Refund requests must be made within 1 hour of delivery.</p>
+        <p>Takeaway orders that are already paid are considered confirmed. Other orders may be
+           cancelled within 5 minutes of placement — call us immediately. After preparation has
+           started, cancellations are not accepted.</p>
+        <p>Refunds are issued if: (a) we cannot fulfil your paid order, (b) the food is incorrect, or
+           (c) the food is of unacceptable quality. Refund requests must be made within 1 hour of
+           delivery/pickup.</p>
       </>
     ),
   },
