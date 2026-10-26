@@ -15,6 +15,7 @@
  * recomputed server-side, so what the customer sees always matches the bill.
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
   ShoppingCart, X, Plus, Minus, Flame, Search, Truck, ChevronLeft, User,
@@ -1068,6 +1069,13 @@ const DeliveryMenu = () => {
         )}
       </div>
 
+      {/* Floating overlays — portalled to <body>. BUGFIX: the shell's
+          page-in animation and reveal transitions temporarily transform
+          <main>, which turned `position:fixed` into "position: absolute
+          against <main>" — the cart bar rendered deep down near the
+          footer instead of pinned to the viewport. A portal sidesteps
+          every ancestor transform. */}
+      {createPortal(<>
       {/* ── Flying particles ── */}
       {flyParticles.map(p => (
         <span key={p.id} className="dm-fly-dot" aria-hidden="true"
@@ -1203,6 +1211,7 @@ const DeliveryMenu = () => {
           </div>
         </div>
       )}
+      </>, document.body)}
       {/* (QR payment dialog is rendered on the placed screen when needed) */}
 
       {/* ── Page styles ── */}

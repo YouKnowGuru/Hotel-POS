@@ -309,7 +309,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  }).catch(() => setLoading(false));
  }, []);
 
- const fetchOrders = useCallback(async () => {
+ /* Self-service takeaway: the QR "table" label carries the word takeaway (e.g. ?table=takeaway). These orders are TAKEAWAY typed server-side too — see the backend takeaway-label rule — so the tracker polls/filters them with the same type. */ const isTakeaway = /takeaway/i.test(String(tableId || ''));
+ const fetchOrders = useCallback(async () => {
  // PERF: phones see a full re-render here every 4s even with zero new
  // orders, and continued polling with the tab in the background wasted
  // battery and data on remote-DB round trips. Skip while the tab is
@@ -334,7 +335,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  setTableMine(!!st?.mine);
  })
  .catch(() => {});
- const r = await fetch(`${getAPI_URL()}/api/orders?type=DINE_IN&tableId=${encodeURIComponent(formatTableName(t))}${locQs}`);
+ const r = await fetch(`${getAPI_URL()}/api/orders?type=${isTakeaway ? 'TAKEAWAY' : 'DINE_IN'}&tableId=${encodeURIComponent(formatTableName(t))}${locQs}`);
  const d = await r.json();
  if (Array.isArray(d)) {
  // Filter to only orders placed by THIS device so customers on the same
@@ -449,7 +450,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  table_name: formatTableName(tableId),
  items: cart.map(i => ({ menuItemId: i.id, name: i.name, quantity: i.qty, price: i.price })),
  subtotal: t.subtotal, discount: t.discountPercent, discountAmount: t.discountAmount,
- taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total, type: 'DINE_IN',
+ taxPercent: t.taxPercent, taxAmount: t.taxAmount, total: t.total,
+ type: /takeaway/i.test(String(tableId || '')) ? 'TAKEAWAY' : 'DINE_IN',
  guests: Math.max(1, Math.min(50, Math.round(Number(guestCount) || 1))),
  client_session: ensureSession(tableId),
  subfranchise_id: locId ? Number(locId) : undefined,
@@ -748,21 +750,40 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  : isDelivered && billRequested
  ? { label: 'Bill Requested', Icon: Receipt, c: '#f59e0b', bg: 'rgba(245,158,11,0.08)', pct: 90 }
  : isDelivered
- ? { label: 'Bill Pending', Icon: Clock, c: '#f97316', bg: 'rgba(249,115,22,0.08)', pct: 85 }
- : STATUS[o.status] || STATUS.pending;
- const Icon = cfg.Icon;
- const progressPct = isPaid || (isDelivered && paymentApproved) ? 100 : isDelivered && billRequested ? 90 : isDelivered ? 85 : cfg.pct;
+ ? { label: 'Bill Pending', Icon: Clock, c: '#f97316', bg: 'rgba(249,115,22,0.08)', pct: 85 } : STATUS[o.status] || STATUS.pending;
+ const Icon = tcfg.Icon;
+
+ /* Takeaway tracker override — a self-service takeaway has no kitchen
+ or waiter stage. Before this, a paid takeaway sat on the dine-in
+ labels ("Cash Order — Cooking" / "Ready to Serve") forever because
+ nothing ever cooked or served it. Cash takeaway means "pay at the
+ counter when you collect" — never "cooking". */
+ const isTk = String(o.type || '').toUpperCase() === 'TAKEAWAY' || /takeaway/i.test(String(o.table_name || ''));
+ const tcfg = !isTk ? cfg
+ : o.payment_status === 'cash_pending'
+ ? { label: 'Pay at pickup — collect your order', Icon: Banknote, c: '#10b981', bg: 'rgba(16,185,129,0.08)', pct: 45 }
+ : o.payment_status === 'paid' && (o.status === 'completed' || o.bill_status === 'paid')
+ ? { label: 'Order Complete — thank you!', Icon: CheckCircle2, c: '#22c55e', bg: 'rgba(34,197,94,0.08)', pct: 100 }
+ : o.payment_status === 'paid' && o.status === 'ready'
+ ? { label: 'Ready for pickup', Icon: Sparkles, c: '#22c55e', bg: 'rgba(34,197,94,0.08)', pct: 80 }
+ : cfg;
+
+ const progressPct = tcfg !== cfg ? tcfg.pct : (isPaid || (isDelivered && paymentApproved) ? 100
+ : isDelivered && billRequested ? 90
+ : isDelivered ? 85
+ : cfg.pct);
+
  return (
- <div key={o.id} className="sm-tracker-card" style={{ ...s.trackerCard, borderColor: `${cfg.c}22`, animationDelay: `${oi * 80}ms` }}>
- <div style={{ ...s.trackerIcon, background: cfg.bg, color: cfg.c }}><Icon size={16} /></div>
+ <div key={o.id} className="sm-tracker-card" style={{ ...s.trackerCard, borderColor: `${tcfg.c}22`, animationDelay: `${oi * 80}ms` }}>
+ <div style={{ ...s.trackerIcon, background: tcfg.bg, color: tcfg.c }}><Icon size={16} /></div>
  <div style={{ flex: 1, minWidth: 0 }}>
  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
  <p style={s.trackerOrder}>Order #{o.id}</p>
- <span style={{ ...s.trackerBadge, background: cfg.bg, color: cfg.c }}>{(o.items || []).length} items</span>
+ <span style={{ ...s.trackerBadge, background: tcfg.bg, color: tcfg.c }}>{(o.items || []).length} items</span>
  </div>
- <p style={{ ...s.trackerStatus, color: cfg.c }}>{cfg.label}</p>
+ <p style={{ ...s.trackerStatus, color: tcfg.c }}>{tcfg.label}</p>
  <div style={s.progressBar}>
- <div style={{ ...s.progressFill, width: `${progressPct}%`, background: cfg.c }} />
+ <div style={{ ...s.progressFill, width: `${progressPct}%`, background: tcfg.c }} />
  </div>
  {isDelivered && !isPaid && !paymentApproved && (
  <div style={s.billActions}>

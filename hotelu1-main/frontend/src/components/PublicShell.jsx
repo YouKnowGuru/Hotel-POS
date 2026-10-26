@@ -127,9 +127,25 @@ const PublicShell = ({ active = '', children }) => {
       window.history.scrollRestoration = 'manual';
     }
     window.scrollTo(0, 0);
-    const raf = requestAnimationFrame(() => window.scrollTo(0, 0));
-    const t = setTimeout(() => window.scrollTo(0, 0), 220);
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+    /* Re-pin on a timeline so late-arriving layout (lazy route chunks,
+       images, ad banners) can't resurface the remembered viewport position.
+       The tick stops as soon as the user scrolls by themselves — wheel, a
+       touch or a key press are all evidence they want to be where they are. */
+    let userMoved = false;
+    const markUser = () => { userMoved = true; };
+    const evts = ['wheel', 'touchstart', 'keydown'];
+    evts.forEach((ev) => window.addEventListener(ev, markUser, { passive: true, once: true }));
+    requestAnimationFrame(() => window.scrollTo(0, 0));
+    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+    const ticks = [
+      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 250),
+      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 900),
+      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 1800),
+    ];
+    return () => {
+      ticks.forEach((t) => clearTimeout(t));
+      evts.forEach((ev) => window.removeEventListener(ev, markUser));
+    };
   }, [location.pathname, location.hash]);
 
   /* Hash-link scrolling — React Router pushState doesn't fire native anchors */

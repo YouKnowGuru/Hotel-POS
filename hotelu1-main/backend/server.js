@@ -1862,7 +1862,7 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         message: `Order type must be one of: ${ALLOWED_ORDER_TYPES.join(", ")}`,
       });
     }
-    const normalizedType = ALLOWED_ORDER_TYPES.includes(String(type || "").toUpperCase())
+    let normalizedType = ALLOWED_ORDER_TYPES.includes(String(type || "").toUpperCase())
       ? String(type).toUpperCase()
       : "DINE_IN";
     let linkedSubFranchiseId = await resolveOrderSubFranchiseId(
@@ -1905,6 +1905,14 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     }
     if (!table_name || typeof table_name !== "string" || table_name.trim().length === 0 || table_name.length > 80) {
       return res.status(400).json({ message: "A valid table or customer identifier is required" });
+    }
+    // BUGFIX (takeaway): the public takeaway QR menu used to hard-code
+    // type "DINE_IN" for its "table", so customer takeaway orders were
+    // stored as dine-in — they never appeared on the Takeaway board and
+    // never auto-completed after payment. A dine-in order whose table
+    // label names a takeaway is stored as TAKEAWAY.
+    if (/takeaway/i.test(String(table_name)) && normalizedType === "DINE_IN") {
+      normalizedType = "TAKEAWAY";
     }
     // Dine-in guest count, captured by staff when seating the table. Clamped
     // to a sane range; QR/takeaway callers simply omit it.
@@ -2241,9 +2249,18 @@ app.put("/api/orders/:id/payment-verification", verifyToken, async (req, res) =>
       if (decision === "approve") {
         order.payment_status = "paid";
         order.payment_method = "qr_payment";
-        // Chef removed: Approved order goes directly to waiter
-        order.status = "ready";
-        order.ready_at = new Date();
+        if (String(order.type || "").toUpperCase() === "TAKEAWAY") {
+          // BUGFIX (takeaway): there is no kitchen stage for takeaway —
+          // once the payment is verified the order is done. It used to
+          // sit on "pending"/"ready" forever with nobody to hand it over.
+          order.status = "completed";
+          order.ready_at = new Date();
+          order.completed_at = new Date();
+        } else {
+          // Chef removed: Approved order goes directly to waiter
+          order.status = "ready";
+          order.ready_at = new Date();
+        }
         order.payment_rejection_reason = null;
       } else {
         order.payment_status = "rejected";
@@ -2325,8 +2342,6 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
           message: "The customer has not submitted their QR payment proof yet. Approve the order only after the screenshot is uploaded and verified.",
         });
       }
-      order.status = "ready";
-      order.ready_at = new Date().toISOString();
       // Cash orders stay unpaid on approval — staff marks paid on collection.
       const isCashOrder = String(order.payment_method || "").toLowerCase() === "cash" ||
         order.payment_status === "cash_pending";
@@ -2337,8 +2352,17 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
         // Customer email #2: payment approved while approving the order.
         mailer.sendPaymentApprovedEmail(order);
       }
+      if (String(order.type || "").toUpperCase() === "TAKEAWAY" &&
+          String(order.payment_status || "") === "paid") {
+        // Takeaway has no kitchen stage: a paid + approved order is done.
+        order.status = "completed";
+        order.completed_at = new Date().toISOString();
+      } else {
+        order.status = "ready";
+        order.ready_at = new Date().toISOString();
+      }
       const strippedOrder = stripProofImages(order)[0];
-      io.emit("order_status_updated", { orderId: order.id, status: "ready" });
+      io.emit("order_status_updated", { orderId: order.id, status: order.status });
       emitStaffEvent("new_order", strippedOrder);
       io.emit("order_created");
       return res.json({ message: "Order approved and sent to waiter", order: strippedOrder });
@@ -2353,8 +2377,6 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
         message: "The customer has not submitted their QR payment proof yet. Approve the order only after the screenshot is uploaded and verified.",
       });
     }
-    order.status = "ready";
-    order.ready_at = new Date();
     // Cash orders stay unpaid on approval — staff marks paid on collection.
     const isCashOrder =
       String(order.payment_method || "").toLowerCase() === "cash" ||
@@ -2364,12 +2386,21 @@ app.put("/api/orders/:id/approve", verifyToken, async (req, res) => {
       order.payment_verified_by = req.user.id;
       order.payment_verified_at = new Date();
     }
+    if (String(order.type || "").toUpperCase() === "TAKEAWAY" &&
+        String(order.payment_status || "") === "paid") {
+      // Takeaway has no kitchen stage: a paid + approved order is done.
+      order.status = "completed";
+      order.completed_at = new Date();
+    } else {
+      order.status = "ready";
+      order.ready_at = new Date();
+    }
     await order.save();
     // Customer email #2: payment approved (QR flow) when the admin
     // directly approves the order.
     if (String(order.payment_status) === "paid") mailer.sendPaymentApprovedEmail(order);
     const strippedOrder = stripProofImages(order)[0];
-    io.emit("order_status_updated", { orderId: order.id, status: "ready" });
+    io.emit("order_status_updated", { orderId: order.id, status: order.status });
     emitStaffEvent("new_order", strippedOrder);
     io.emit("order_created");
     res.json({ message: "Order approved and sent to waiter", order: strippedOrder });
@@ -2395,9 +2426,17 @@ app.put("/api/orders/:id/collect-cash", verifyToken, async (req, res) => {
       // straight to the kitchen as "pending"), so confirming the cash also
       // dispatches the order to the waiter. Without this the order stayed
       // in "pending" forever and never appeared on the Waiter Panel.
+      // Takeaway variant: cash is collected at pickup, so a takeaway order
+      // is completed the moment the money is in hand — it never goes back
+      // to a kitchen/serve stage.
       if (String(order.status || "").toLowerCase() === "pending") {
-        order.status = "ready";
-        order.ready_at = new Date();
+        if (String(order.type || "").toUpperCase() === "TAKEAWAY") {
+          order.status = "completed";
+          order.completed_at = new Date();
+        } else {
+          order.status = "ready";
+          order.ready_at = new Date();
+        }
       }
     };
 

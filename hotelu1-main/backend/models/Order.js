@@ -63,6 +63,11 @@ const Order = sequelize.define(
     // page uses these to compute per-chef prep-time analytics.
     preparing_at: { type: DataTypes.DATE, allowNull: true },
     ready_at: { type: DataTypes.DATE, allowNull: true },
+    // Self-service takeaway orders have no kitchen stage: the order is
+    // "completed" the moment its payment is verified / cash collected.
+    // A dedicated completion timestamp keeps these out of the live boards
+    // while remaining reportable. Nullable; set only on auto-completion.
+    completed_at: { type: DataTypes.DATE, allowNull: true },
     chef_id: { type: DataTypes.INTEGER, allowNull: true },
     chef_name: { type: DataTypes.STRING, allowNull: true },
 
