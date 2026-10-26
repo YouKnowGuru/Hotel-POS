@@ -116,6 +116,25 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
 );
 
 /* ── Main Component ──────────────────────────────────────────── */
+/* Home delivery orders are their own type — DELIVERY rows used to be
+   shown with just the customer name (table_name), indistinguishable from
+   a dine-in table. */
+const orderTypeLabel = (o) => {
+ const t = String(o.type || '').toUpperCase();
+ if (t === 'DELIVERY') return 'Delivery';
+ if (t === 'TAKEAWAY') return 'Takeaway';
+ return 'Dine-In';
+};
+
+/* "Table / Type" cell for exports: takeaway and delivery rows carry their
+   type (delivery also keeps the customer label); dine-in shows the table. */
+const exportTypeCell = (o) => {
+ const t = String(o.type || '').toUpperCase();
+ if (t === 'TAKEAWAY') return 'Takeaway';
+ if (t === 'DELIVERY') return o.table_name ? `Delivery · ${o.table_name}` : 'Delivery';
+ return o.table_name || '-';
+};
+
 const ServiceChargeLedger = ({ locationSettings }) => {
  const { format: fmt, symbol: currSymbol } = useCurrency(locationSettings);
  const [orders, setOrders] = useState([]);
@@ -223,8 +242,9 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  if (selectedMonth !== 'all' && String(d.getMonth()+1).padStart(2,'0') !== selectedMonth) return false;
  if (orderType !== 'all') {
  const t = String(o.type || '').toUpperCase();
- if (orderType === 'dine-in' && t !== 'DINE_IN') return false;
+ if (orderType === 'dine-in' && (t === 'TAKEAWAY' || t === 'DELIVERY')) return false;
  if (orderType === 'takeaway' && t !== 'TAKEAWAY') return false;
+ if (orderType === 'delivery' && t !== 'DELIVERY') return false;
  }
  if (searchQuery.trim()) {
  const q = searchQuery.toLowerCase();
@@ -275,7 +295,7 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  const d = getOrderDate(o);
  return [
  d.toLocaleDateString('en-GB'), o.id,
- o.table_name || (String(o.type||'').toUpperCase()==='TAKEAWAY' ? 'Takeaway' : '-'),
+ exportTypeCell(o),
  o._sc.subtotal.toFixed(2), o._sc.serviceCharge.toFixed(2),
  o._sc.gst.toFixed(2), o._sc.total.toFixed(2),
  ];
@@ -303,7 +323,7 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  return `<tr>
  <td>${d.toLocaleDateString('en-GB')}</td>
  <td>#${o.id}</td>
- <td>${o.table_name || (String(o.type||'').toUpperCase()==='TAKEAWAY'?'Takeaway':'-')}</td>
+ <td>${exportTypeCell(o)}</td>
  <td style="text-align:right">${currSymbol} ${o._sc.subtotal.toFixed(2)}</td>
  <td style="text-align:right;color:${TEAL};font-weight:bold">${currSymbol} ${o._sc.serviceCharge.toFixed(2)}</td>
  <td style="text-align:right">${currSymbol} ${o._sc.gst.toFixed(2)}</td>
@@ -433,6 +453,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  <option value="all">All Types</option>
  <option value="dine-in">Dine-In</option>
  <option value="takeaway">Takeaway</option>
+ <option value="delivery">Delivery</option>
  </select>
  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
  </div>
@@ -534,16 +555,22 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  {filtered.map((o) => {
  const d = getOrderDate(o);
  const isTW = String(o.type || '').toUpperCase() === 'TAKEAWAY';
+ const isDL = String(o.type || '').toUpperCase() === 'DELIVERY';
  return (
  <tr key={o.id} className="hover:bg-gray-50 transition">
  <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{d.toLocaleDateString('en-GB')}</td>
  <td className="px-4 py-3 font-semibold text-gray-800">#{o.id}</td>
  <td className="px-4 py-3 text-gray-600">
- {isTW ? (
- <span className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
- Takeaway
+ {isTW || isDL ? (
+ <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+ isDL ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-600'
+ }`}>
+ {orderTypeLabel(o)}
  </span>
  ) : (o.table_name || '-')}
+ {isDL && o.table_name && (
+ <span className="block text-xs text-gray-500 mt-0.5 truncate">{o.table_name}</span>
+ )}
  </td>
  <td className="px-4 py-3 text-right text-gray-700">{fmt(o._sc.subtotal)}</td>
  <td className="px-4 py-3 text-right font-bold" style={{ color: TEAL }}>{fmt(o._sc.serviceCharge)}</td>

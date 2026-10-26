@@ -573,7 +573,7 @@ const Sidebar = ({
         }}
       >
         <div className="pt-3">
-          <p style={{ color: 'var(--text-secondary)' }}>© 2026 {loadBranding().siteName}</p>
+          <p style={{ color: 'var(--text-secondary)' }}>© {new Date().getFullYear()} {loadBranding().siteName}</p>
           <p style={{ color: 'var(--text-secondary)' }}>All rights reserved.</p>
         </div>
         <button

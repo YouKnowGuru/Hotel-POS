@@ -177,6 +177,16 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
 
 /* ─── main component ─────────────────────────────────────────────────── */
 
+/* Home delivery orders are their own type — the old binary
+   "Takeaway ? : Dine-In" label silently stamped every DELIVERY order as
+   Dine-In in the table and in every export. */
+const orderTypeLabel = (o) => {
+ const t = String(o.type || '').toUpperCase();
+ if (t === 'DELIVERY') return 'Delivery';
+ if (t === 'TAKEAWAY') return 'Takeaway';
+ return 'Dine-In';
+};
+
 const GSTLedger = ({ locationSettings }) => {
  const { format: fmt, symbol: currSymbol } = useCurrency(locationSettings);
 
@@ -291,8 +301,9 @@ const GSTLedger = ({ locationSettings }) => {
  if (selectedMonth !== 'all' && o._monthKey !== selectedMonth) return false;
  if (orderType !== 'all') {
  const t = String(o.type || '').toUpperCase();
- if (orderType === 'dine-in' && t === 'TAKEAWAY') return false;
+ if (orderType === 'dine-in' && (t === 'TAKEAWAY' || t === 'DELIVERY')) return false;
  if (orderType === 'takeaway' && t !== 'TAKEAWAY') return false;
+ if (orderType === 'delivery' && t !== 'DELIVERY') return false;
  }
  return true;
  }),
@@ -546,12 +557,11 @@ const GSTLedger = ({ locationSettings }) => {
  filteredOrders.forEach((o, idx) => {
  const row = wsOrders.getRow(oRowIdx);
  const isEven = idx % 2 === 0;
- const isTakeaway = String(o.type || '').toUpperCase() === 'TAKEAWAY';
  row.values = [
  `#${o.id}`,
  o._date.toLocaleDateString('en-IN'),
  o._date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
- isTakeaway ? 'Takeaway' : 'Dine-In',
+ orderTypeLabel(o),
  o.table_name || o.token || '-',
  o.payment_method || '-',
  o._items,
@@ -654,12 +664,11 @@ const GSTLedger = ({ locationSettings }) => {
  ];
 
  const rows = filteredOrders.map((o) => {
- const isTakeaway = String(o.type || '').toUpperCase() === 'TAKEAWAY';
  return [
  clean(o.id),
  clean(o._date.toLocaleDateString('en-IN')),
  clean(o._date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })),
- clean(isTakeaway ? 'Takeaway' : 'Dine-In'),
+ clean(orderTypeLabel(o)),
  clean(o.table_name || o.token || '-'),
  clean(o.payment_method || '-'),
  clean(o._items),
@@ -767,7 +776,7 @@ const GSTLedger = ({ locationSettings }) => {
  <tr style="background:${i%2===0?'#fff':'#F8FAFC'}">
  <td>#${o.id}</td>
  <td>${o._date.toLocaleDateString('en-IN')}<br><small>${o._date.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</small></td>
- <td>${String(o.type||'').toUpperCase()==='TAKEAWAY'?'Takeaway':'Dine-In'}</td>
+ <td>${orderTypeLabel(o)}</td>
  <td>${o.table_name||o.token||'-'}</td>
  <td>${o.payment_method||'-'}</td>
  <td style="font-size:11px;color:#475569">${o._items}</td>
@@ -1350,6 +1359,7 @@ const GSTLedger = ({ locationSettings }) => {
  <option value="all">All Types</option>
  <option value="dine-in">Dine-In</option>
  <option value="takeaway">Takeaway</option>
+ <option value="delivery">Delivery</option>
  </select>
  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
  </div>
@@ -1441,6 +1451,7 @@ const GSTLedger = ({ locationSettings }) => {
  <tbody className="divide-y divide-gray-100 dark:divide-slate-700/60">
  {filteredOrders.map((o) => {
  const isTakeaway = String(o.type || '').toUpperCase() === 'TAKEAWAY';
+ const isDelivery = String(o.type || '').toUpperCase() === 'DELIVERY';
  return (
  <tr
  key={o.id}
@@ -1456,12 +1467,14 @@ const GSTLedger = ({ locationSettings }) => {
  <td className="px-4 py-3 whitespace-nowrap">
  <span
  className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
- isTakeaway
+ isDelivery
+ ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+ : isTakeaway
  ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
  : 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
  }`}
  >
- {isTakeaway ? 'Takeaway' : 'Dine-In'}
+ {orderTypeLabel(o)}
  </span>
  </td>
  <td className="px-4 py-3 text-gray-700 dark:text-slate-200 font-medium whitespace-nowrap">

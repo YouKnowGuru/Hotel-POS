@@ -389,7 +389,7 @@ const Login = ({ onLogin }) => {
           {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              &copy; 2026 Hotel POS &middot; All rights reserved
+              &copy; {new Date().getFullYear()} Hotel POS &middot; All rights reserved
             </p>
           </div>
         </div>
