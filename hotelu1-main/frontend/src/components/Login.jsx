@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Flame,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
 import BrandMark from './BrandMark';
-import { loadBranding } from '../utils/branding';
+import { loadBranding, BRANDING_UPDATED_EVENT } from '../utils/branding';
 import PwaInstallButton from './PwaInstallButton';
 
 const FEATURE_PILLS = [
@@ -62,6 +62,19 @@ const Login = ({ onLogin }) => {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Footer brand name — follows the restaurant's configured branding instead
+  // of a hardcoded product name, and updates when the branding fetch lands.
+  const [siteName, setSiteName] = useState(() => loadBranding().siteName);
+
+  useEffect(() => {
+    const onBranding = () => setSiteName(loadBranding().siteName);
+    window.addEventListener(BRANDING_UPDATED_EVENT, onBranding);
+    window.addEventListener('storage', onBranding);
+    return () => {
+      window.removeEventListener(BRANDING_UPDATED_EVENT, onBranding);
+      window.removeEventListener('storage', onBranding);
+    };
+  }, []);
 
   const submitLogin = async (uname, pwd) => {
     setError('');
@@ -389,7 +402,7 @@ const Login = ({ onLogin }) => {
           {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              &copy; {new Date().getFullYear()} Hotel POS &middot; All rights reserved
+              &copy; {new Date().getFullYear()} {siteName} &middot; All rights reserved
             </p>
           </div>
         </div>
