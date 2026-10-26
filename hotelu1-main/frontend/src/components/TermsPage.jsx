@@ -113,6 +113,24 @@ const SECTIONS = [
 const TermsPage = () => {
   const [activeId, setActiveId] = useState(SECTIONS[0].id);
 
+  /* TOC link click — glide to the section ourselves. Browsers leave plain
+     '#' anchors to the default hash navigation, which races with the shell's
+     scroll behaviour; intercepting it here guarantees the jump works. */
+  const handleTocClick = (e, id) => {
+    e.preventDefault();
+    setActiveId(id);
+    const el = document.getElementById(id);
+    if (el) {
+      const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    }
+    try {
+      window.history.replaceState(null, '', `#${id}`);
+    } catch (_) { /* history not available */ }
+    const details = e.currentTarget.closest && e.currentTarget.closest('details');
+    if (details) details.open = false; // close the mobile "On this page" list
+  };
+
   /* Scroll-spy for the table of contents */
   useEffect(() => {
     const els = SECTIONS.map(s => document.getElementById(s.id)).filter(Boolean);
@@ -177,7 +195,7 @@ const TermsPage = () => {
               <ol className="space-y-1">
                 {SECTIONS.map((s, i) => (
                   <li key={s.id}>
-                    <a href={`#${s.id}`} className={`lg-toc-link ${activeId === s.id ? 'is-active' : ''}`}>
+                    <a href={`#${s.id}`} onClick={(e) => handleTocClick(e, s.id)} className={`lg-toc-link ${activeId === s.id ? 'is-active' : ''}`}>
                       <span className="tabular-nums opacity-60">{String(i + 1).padStart(2, '0')}</span>
                       <span className="truncate">{s.title}</span>
                     </a>
@@ -203,7 +221,7 @@ const TermsPage = () => {
               <ol className="mt-3 space-y-1">
                 {SECTIONS.map((s, i) => (
                   <li key={s.id}>
-                    <a href={`#${s.id}`} className={`lg-toc-link ${activeId === s.id ? 'is-active' : ''}`}>
+                    <a href={`#${s.id}`} onClick={(e) => handleTocClick(e, s.id)} className={`lg-toc-link ${activeId === s.id ? 'is-active' : ''}`}>
                       <span className="tabular-nums opacity-60">{String(i + 1).padStart(2, '0')}</span>
                       <span className="truncate">{s.title}</span>
                     </a>

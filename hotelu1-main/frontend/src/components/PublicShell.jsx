@@ -11,7 +11,7 @@
  *  - Responsive footer: 1 → 2 → 4 columns, contact, hours, socials
  *  - Hash-link scrolling (React Router pushState doesn't trigger native anchors)
  */
-import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, Utensils, Phone, MapPin,
@@ -115,25 +115,28 @@ const PublicShell = ({ active = '', children }) => {
      the footer — of the next page. Reset before paint (useLayoutEffect)
      so every page swap starts at the top; the hash effect below then
      glides to any anchor target from there. */
+  const prevPathRef = useRef(null);
   useLayoutEffect(() => {
-    /* BUGFIX (link clicks land at the footer): the old code scrolled to
-       the top ONCE. Late-loading banners/images then grew the page behind
-       the browser and it fell back to its remembered viewport offset —
-       which was deep inside the previous page, usually the footer. We now:
-       1. disable the browser's automatic scroll restoration,
-       2. pin the top position across the first paint + next frame +
-          a safety tick so late layout shifts can't drag it back down. */
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
     }
+    /* BUGFIX (TOC/#anchor links snapped back to the top): this effect used to
+       re-run — and re-pin the page to the top — whenever location.hash
+       changed too. Clicking an in-page anchor ("On this page" lists on the
+       privacy/terms pages, footer section links) changed only the hash, so
+       the pin killed the smooth scroll that the hash effect below had just
+       started. A hash-only jump on the SAME page is not a page change: skip
+       the reset entirely and let the hash glow below glide to the target. */
+    if (prevPathRef.current === location.pathname) return undefined;
+    prevPathRef.current = location.pathname;
     window.scrollTo(0, 0);
     /* Re-pin on a timeline so late-arriving layout (lazy route chunks,
        images, ad banners) can't resurface the remembered viewport position.
-       The tick stops as soon as the user scrolls by themselves — wheel, a
-       touch or a key press are all evidence they want to be where they are. */
+       The tick stops as soon as the user acts by themselves — wheel, touch,
+       key press, mouse press or click are all evidence they are navigating. */
     let userMoved = false;
     const markUser = () => { userMoved = true; };
-    const evts = ['wheel', 'touchstart', 'keydown'];
+    const evts = ['wheel', 'touchstart', 'keydown', 'mousedown', 'click'];
     evts.forEach((ev) => window.addEventListener(ev, markUser, { passive: true, once: true }));
     requestAnimationFrame(() => window.scrollTo(0, 0));
     requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
