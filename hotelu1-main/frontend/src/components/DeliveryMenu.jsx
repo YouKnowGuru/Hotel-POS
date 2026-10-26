@@ -1074,8 +1074,13 @@ const DeliveryMenu = () => {
           <main>, which turned `position:fixed` into "position: absolute
           against <main>" — the cart bar rendered deep down near the
           footer instead of pinned to the viewport. A portal sidesteps
-          every ancestor transform. */}
-      {createPortal(<>
+          every ancestor transform.
+
+          The children are wrapped in a `pw-root` div because the Ember
+          design tokens (--pw-grad, --pw-ink, …) are defined on .pw-root in
+          the shell — without that wrapper the portalled cart bar inherited
+          NOTHING and rendered fully transparent (FIX: ghost cart). */}
+      {createPortal(<div className="pw-root">
       {/* ── Flying particles ── */}
       {flyParticles.map(p => (
         <span key={p.id} className="dm-fly-dot" aria-hidden="true"
@@ -1211,7 +1216,7 @@ const DeliveryMenu = () => {
           </div>
         </div>
       )}
-      </>, document.body)}
+      </div>, document.body)}
       {/* (QR payment dialog is rendered on the placed screen when needed) */}
 
       {/* ── Page styles ── */}
