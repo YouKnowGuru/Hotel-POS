@@ -435,7 +435,7 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
 
  {/* Status tabs */}
- <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-5">
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
  {STATUS_TABS.map((t) => {
  const active = activeStatus === t.id;
  const count = counts[t.id] ?? 0;
@@ -451,18 +451,18 @@ const OrdersPage = ({ locationSettings }) => {
  <button
  key={t.id}
  onClick={() => setActiveStatus(t.id)}
- className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border transition ${
+ className={`flex items-center justify-between gap-2 sm:gap-3 px-3 py-3 rounded-2xl border transition min-w-0 ${
  active
  ? `${colorMap[t.color]} shadow-sm`
  : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
  }`}
  >
- <div className="flex items-center gap-2">
- <Icon className={`w-4 h-4 ${active ? '' : 'text-gray-400'}`} />
- <span className="text-sm font-semibold">{t.label}</span>
+ <div className="flex items-center gap-2 min-w-0">
+ <Icon className={`w-4 h-4 shrink-0 ${active ? '' : 'text-gray-400'}`} />
+ <span className="text-sm font-semibold truncate">{t.label}</span>
  </div>
  <span
- className={`text-xs font-bold min-w-[22px] h-5 px-1.5 rounded-full flex items-center justify-center ${
+ className={`text-xs font-bold min-w-[22px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
  active ? 'bg-white text-current' : 'bg-gray-100 text-gray-500'
  }`}
  >

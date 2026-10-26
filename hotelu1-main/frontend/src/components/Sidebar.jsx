@@ -610,9 +610,13 @@ const Sidebar = ({
       <div
         className="lg:hidden fixed top-0 left-0 right-0 z-50 px-4 py-3"
         style={{
-          background: 'rgba(15, 23, 42, 0.85)',
+          background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
+          // PWA/standalone + viewport-fit=cover: without the safe-area inset
+          // the hamburger sits under the iPhone notch — the whole admin UI
+          // then appears dead because nothing can open the menu.
+          paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
         }}
       >
         <div className="flex items-center justify-between">
@@ -665,7 +669,7 @@ const Sidebar = ({
         }}
       >
         {/* Close button (mobile) */}
-        <div className="lg:hidden flex justify-between items-center px-4 pt-4 pb-1">
+        <div className="lg:hidden flex justify-between items-center px-4 pb-1" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
           <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748B' }}>MENU</span>
           <button
             onClick={() => setIsMobileMenuOpen(false)}

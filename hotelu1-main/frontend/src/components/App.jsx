@@ -70,7 +70,20 @@ const App = () => {
     getLocationSettingsForCountry('Bhutan')
   );
   const [nextOrderId, setNextOrderId] = useState(6);
-  const [currentUser, setCurrentUser] = useState(null);
+  // BUGFIX: hydrate the user synchronously from localStorage. It used to be
+  // `null` until a useEffect ran, so on a deep link (bookmark / PWA shortcut)
+  // to /users, /settings, /staff … MenuLayout rendered <Navigate to="/login">
+  // before the effect fired, and Login's already-logged-in fast-path then
+  // bounced the app to /dashboard. Every direct admin URL landed on the
+  // dashboard instead of the requested page.
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('user') || 'null');
+      return stored && localStorage.getItem('token') ? stored : null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -293,7 +306,10 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
+        {/* pt tracks the fixed mobile hamburger bar, which grows by the
+            iOS safe-area inset (notch) — otherwise its “first” row hides
+            beneath the system status bar in standalone/PWA mode. */}
+        <div className="flex-1 flex flex-col min-w-0 pt-[calc(3.875rem_+_env(safe-area-inset-top))] lg:pt-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{children}</main>
         </div>
@@ -324,7 +340,10 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
+        {/* pt tracks the fixed mobile hamburger bar, which grows by the
+            iOS safe-area inset (notch) — otherwise its “first” row hides
+            beneath the system status bar in standalone/PWA mode. */}
+        <div className="flex-1 flex flex-col min-w-0 pt-[calc(3.875rem_+_env(safe-area-inset-top))] lg:pt-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{renderContent()}</main>
         </div>
