@@ -1,41 +1,63 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { getAPI_URL, getSocketUrl, authFetch } from '../utils/api';
+import { getSocketUrl, authFetch } from '../utils/api';
 import useCurrency from '../hooks/useCurrency';
+import Notification from './Notification';
 import {
   Bell, CheckCircle2, Clock, Utensils, Banknote,
-  Truck, MapPin, Phone, User, Flame, Sparkles,
-  ChevronDown, Package, Gift,
+  Truck, MapPin, Phone, User,
+  ChevronDown, Package, RotateCw, Sparkles,
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────
-   Kitchen-display (KDS) waiter board.
-   Redesigned: dark "kitchen pass" theme, ember/accent palette,
-   ticket-style order cards with live urgency timers, type filter
-   tabs and a "served today" log. All data logic (ready-order
-   polling, sockets, confirm-delivery / cash collection) is
-   unchanged.
+   Waiter delivery panel — visual language matches the rest of
+   the admin/waiter pages (TakeawayManagement, DineIn, Orders):
+   light background, white rounded-2xl cards, indigo accents,
+   emerald action buttons and the shared Notification toast.
+   All data logic (ready-order polling, sockets, confirm-delivery
+   / cash collection) is unchanged.
 ───────────────────────────────────────────────────────────── */
 
 const minsAgo = (ts) =>
   Math.max(0, Math.round((Date.now() - new Date(ts || Date.now()).getTime()) / 60000));
 
-const urgency = (mins) => {
-  if (mins >= 15) return { key: 'hot',    label: 'OVERDUE', strip: '#F4502C', glow: 'rgba(244,80,44,0.35)' };
-  if (mins >= 8)  return { key: 'warm',   label: 'WAITING', strip: '#F5A524', glow: 'rgba(245,165,36,0.30)' };
-  return                 { key: 'fresh',  label: 'FRESH',   strip: '#33CBA7', glow: 'rgba(51,203,167,0.28)' };
+/* Urgency tiers — same thresholds as before, expressed in the light
+   design system's pill palette (emerald / amber / red). */
+const URGENCY = {
+  fresh: {
+    label: 'READY',
+    pill: 'bg-emerald-50 border-emerald-100 text-emerald-600',
+    dot: 'bg-emerald-500',
+    text: 'text-emerald-600',
+  },
+  warm: {
+    label: 'WAITING',
+    pill: 'bg-amber-50 border-amber-100 text-amber-600',
+    dot: 'bg-amber-500',
+    text: 'text-amber-600',
+  },
+  hot: {
+    label: 'OVERDUE',
+    pill: 'bg-red-50 border-red-100 text-red-600',
+    dot: 'bg-red-500',
+    text: 'text-red-600',
+  },
 };
+
+const urgencyOf = (mins) => (mins >= 15 ? URGENCY.hot : mins >= 8 ? URGENCY.warm : URGENCY.fresh);
 
 const dayLabel = (d) =>
   d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 /* ─────────────────────────────────────────────────────────────
-   Ticket card — a kitchen ticket with tape strip + timer chip
+   Ticket card — same card anatomy as TakeawayManagement's
+   OrderCard: header with status pill, items list, gray footer
+   with the action buttons.
 ───────────────────────────────────────────────────────────── */
-const Ticket = ({ order, fmt, onServed, isDelivering }) => {
+const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
   const [expanded, setExpanded] = useState(false);
   const mins = minsAgo(order.updated_at || order.timestamp);
-  const u = urgency(mins);
+  const u = urgencyOf(mins);
   const isDelivery = String(order.type || '').toUpperCase() === 'DELIVERY';
   const isCashPending =
     order.payment_method === 'cash' && order.payment_status === 'cash_pending';
@@ -43,227 +65,221 @@ const Ticket = ({ order, fmt, onServed, isDelivering }) => {
 
   return (
     <div
-      className="wp-ticket"
+      className={`bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col ${mins >= 15 ? 'ring-1 ring-red-100' : ''}`}
       style={{
-        background: '#161C2B',
-        borderRadius: 18,
-        border: `1px solid rgba(255,255,255,0.08)`,
-        boxShadow: `0 10px 30px -18px ${u.glow}, 0 2px 10px rgba(0,0,0,0.35)`,
-        overflow: 'hidden',
+        animation: isLoaded
+          ? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
+          : 'none',
       }}
     >
-      {/* urgency tape */}
+      {/* Urgency timing strip */}
       <div
-        className="wp-tape"
+        className="h-1 w-full"
         style={{
-          height: 4,
-          width: '100%',
-          background: `linear-gradient(90deg, ${u.strip} 0%, ${u.strip} 46%, rgba(255,255,255,0.06) calc(46% + 10px))`,
+          background:
+            mins >= 15
+              ? 'linear-gradient(90deg, #ef4444, #f87171)'
+              : mins >= 8
+                ? 'linear-gradient(90deg, #f59e0b, #fbbf24)'
+                : 'linear-gradient(90deg, #10b981, #34d399)',
         }}
       />
-      {/* head row — tappable */}
-      <div
-        onClick={() => setExpanded((e) => !e)}
-        role="button"
-        aria-expanded={expanded}
-        style={{
-          padding: '13px 15px 11px',
-          cursor: 'pointer',
-          userSelect: 'none',
-          WebkitTapHighlightColor: 'transparent',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <span
-            style={{
-              fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-              fontSize: 12.5, fontWeight: 700, letterSpacing: '0.08em',
-              color: u.strip === '#33CBA7' ? '#5EEAD4' : u.strip === '#F5A524' ? '#FCD34D' : '#FCA5A5',
-              display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            {isDelivery ? <Truck size={15} /> : <Utensils size={15} />}
-            {isDelivery ? 'DL-' : 'TB-'}{String(order.id).padStart(3, '0')}
-          </span>
-          <span
-            className={mins >= 8 ? 'wp-timer wp-timer-live' : 'wp-timer'}
-            style={{
-              fontSize: 11, fontWeight: 800, padding: '3px 9px', borderRadius: 999,
-              color: '#fff', background: u.strip,
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-          >
-            <Clock size={11} strokeWidth={3} />
-            {mins}m · {u.label}
-          </span>
-        </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginTop: 9 }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{
-              margin: 0, fontSize: 16.5, fontWeight: 800, color: '#F1F5F9',
-              lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {isDelivery
-                ? (order.customer_name || 'Home delivery')
-                : `Table ${order.table_name || order.customer_name || 'Counter'}`}
-            </p>
-            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#8A94A8', display: 'flex', gap: 5, alignItems: 'center' }}>
-              <Gift size={11} />
-              {items.length} item{items.length !== 1 ? 's' : ''}{isCashPending && ' · 💵 cash due'}
-            </p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
-            <span style={{ fontSize: 16.5, fontWeight: 800, color: '#F1F5F9' }}>{fmt(order.total)}</span>
+      {/* Card header — tappable to expand */}
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        aria-expanded={expanded}
+        className="w-full text-left px-4 py-3 flex items-center justify-between gap-3 border-b border-gray-50"
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
             <span
-              style={{
-                width: 28, height: 28, borderRadius: 9,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform .25s ease',
-              }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${u.pill}`}
             >
-              <ChevronDown size={15} color="#8A94A8" />
+              <span className={`w-1.5 h-1.5 rounded-full ${u.dot}`} />
+              {isDelivery ? (
+                <Truck className="w-3 h-3" />
+              ) : (
+                <Utensils className="w-3 h-3" />
+              )}
+              {isDelivery ? 'Delivery' : 'Dine-in'} #{order.id}
             </span>
           </div>
+          <p className="text-base font-bold text-gray-900 mt-1 truncate">
+            {isDelivery
+              ? (order.customer_name || 'Home delivery')
+              : `Table ${order.table_name || order.customer_name || 'Counter'}`}
+          </p>
+          <p className="text-xs text-gray-400 mt-0.5 flex items-center flex-wrap gap-x-1.5 gap-y-0.5">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <Clock className={`w-3 h-3 ${mins >= 8 ? u.text : 'text-gray-400'}`} />
+              <span className={mins >= 8 ? `font-semibold ${u.text}` : ''}>
+                Waiting {mins}m
+              </span>
+            </span>
+            <span className="text-gray-300">·</span>
+            <span className="whitespace-nowrap">
+              {items.length} item{items.length !== 1 ? 's' : ''}
+            </span>
+            {isCashPending && (
+              <>
+                <span className="text-gray-300">·</span>
+                <span className="whitespace-nowrap text-amber-600 font-semibold">💵 cash due</span>
+              </>
+            )}
+          </p>
         </div>
-      </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="text-right">
+            <p className="text-xs font-semibold text-gray-400">Total</p>
+            <p className="text-lg font-bold text-gray-900 leading-tight">
+              {fmt(order.total)}
+            </p>
+          </div>
+          <span
+            className="w-7 h-7 rounded-lg bg-gray-50 text-gray-400 flex items-center justify-center"
+            style={{
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform .25s ease',
+            }}
+          >
+            <ChevronDown className="w-4 h-4" />
+          </span>
+        </div>
+      </button>
 
-      {/* expandable body */}
+      {/* Collapsed-only item preview — keeps short cards from looking empty */}
+      {!expanded && (
+        <div className="px-4 pt-2 pb-1 flex-1">
+          <div className="flex items-center flex-wrap gap-1.5">
+            {items.slice(0, 3).map((item, idx) => (
+              <span
+                key={idx}
+                className="inline-flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-0.5 text-xs text-gray-600"
+              >
+                <b className="text-indigo-600">{item.quantity || item.qty || 1}×</b>
+                <span className="max-w-[140px] truncate">{item.name}</span>
+              </span>
+            ))}
+            {items.length > 3 && (
+              <span className="text-xs text-gray-400 font-medium">+{items.length - 3} more</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Expandable body */}
       <div
         style={{
-          maxHeight: expanded ? 650 : 0,
+          maxHeight: expanded ? 720 : 0,
           overflow: 'hidden',
           transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
         }}
       >
-        <div style={{ padding: '0 15px 4px' }}>
+        <div className="px-4 py-3">
           {isDelivery && (order.customer_phone || order.delivery_address) && (
-            <div className="wp-box">
-              <p className="wp-box-label"><MapPin size={11} /> Drop-off</p>
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400 mb-1.5 flex items-center gap-1.5">
+                <MapPin className="w-3 h-3" />
+                Delivery details
+              </p>
               {order.customer_phone && (
                 <a
                   href={`tel:${String(order.customer_phone).replace(/\s+/g, '')}`}
-                  className="wp-box-row"
-                  style={{ textDecoration: 'none', color: '#7DD3FC', fontWeight: 700 }}
+                  className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-500"
                 >
-                  <Phone size={13} /> {order.customer_phone}
+                  <Phone className="w-3.5 h-3.5" />
+                  {order.customer_phone}
                 </a>
               )}
               {order.customer_name && (
-                <p className="wp-box-row" style={{ margin: '4px 0' }}><User size={13} /> {order.customer_name}</p>
+                <p className="flex items-center gap-2 text-sm text-gray-700 mt-1">
+                  <User className="w-3.5 h-3.5 text-gray-400" />
+                  {order.customer_name}
+                </p>
               )}
-              <p className="wp-box-row" style={{ alignItems: 'flex-start', margin: '4px 0 0', lineHeight: 1.5 }}>
-                <MapPin size={13} style={{ marginTop: 2, flexShrink: 0 }} />
-                <span>{order.delivery_address}</span>
-              </p>
+              {order.delivery_address && (
+                <p className="flex items-start gap-2 text-sm text-gray-700 mt-1 leading-relaxed">
+                  <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
+                  <span>{order.delivery_address}</span>
+                </p>
+              )}
             </div>
           )}
 
-          <div className="wp-box wp-box-items">
-            <p className="wp-box-label" style={{ color: '#94A3B8' }}>Ticket</p>
+          <p className="text-xs font-semibold text-gray-400 mb-2">Items</p>
+          <ul className="space-y-2 max-h-56 overflow-y-auto pr-1 mb-2">
             {items.map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline',
-                  padding: '5px 0',
-                  borderBottom: idx < items.length - 1 ? '1px dashed rgba(255,255,255,0.08)' : 'none',
-                }}
-              >
-                <span style={{ fontSize: 13, color: '#E2E8F0' }}>
-                  <b style={{ color: u.strip, marginRight: 6 }}>{item.quantity || item.qty || 1}×</b>
-                  {item.name}
-                  {item.note && (
-                    <span style={{ display: 'block', fontSize: 11, color: '#94A3B8', paddingLeft: 24, marginTop: 1 }}>
-                      ↳ {item.note}
+              <li key={idx} className="flex items-start justify-between gap-2 text-sm">
+                <span className="flex items-start gap-2 min-w-0 flex-1">
+                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 text-[11px] font-bold shrink-0">
+                    {item.quantity || item.qty || 1}×
+                  </span>
+                  <span className="min-w-0">
+                    <span className="text-gray-800 font-medium truncate block">
+                      {item.name}
                     </span>
-                  )}
+                    {item.note && (
+                      <span className="block mt-0.5 text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-md px-2 py-0.5 w-fit">
+                        ↳ {item.note}
+                      </span>
+                    )}
+                  </span>
                 </span>
-                <span style={{ fontSize: 12, color: '#8A94A8', whiteSpace: 'nowrap' }}>{fmt(item.price)}</span>
-              </div>
+                <span className="text-xs font-semibold text-gray-700 shrink-0 mt-0.5">
+                  {fmt(item.price)}
+                </span>
+              </li>
             ))}
-            <div
-              style={{
-                borderTop: '1px solid rgba(255,255,255,0.10)', marginTop: 7, paddingTop: 8,
-                display: 'flex', justifyContent: 'space-between',
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 800, color: '#F1F5F9' }}>Total</span>
-              <span style={{ fontSize: 14, fontWeight: 800, color: '#F1F5F9' }}>{fmt(order.total)}</span>
-            </div>
+          </ul>
+          <div className="border-t border-gray-100 pt-2 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-500">Total</span>
+            <span className="text-base font-bold text-gray-900">{fmt(order.total)}</span>
           </div>
-
-          {isCashPending && (
-            <div
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'rgba(245,165,36,0.10)', border: '1px solid rgba(245,165,36,0.35)',
-                borderRadius: 12, padding: '10px 13px', marginBottom: 12,
-              }}
-            >
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#FCD34D', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <Banknote size={16} /> Collect cash at the door
-              </span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#FCD34D' }}>{fmt(order.total)}</span>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* actions */}
-      <div style={{ padding: '6px 15px 15px' }}>
+      {/* Footer actions — same gray footer + emerald CTA as TakeawayManagement */}
+      <div className="px-4 py-3 border-t border-gray-50 bg-gray-50 space-y-2 mt-auto">
+        {isCashPending && (
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-1">
+            <span className="flex items-center gap-2 text-sm font-semibold text-amber-700">
+              <Banknote className="w-4 h-4" />
+              Collect cash at the door
+            </span>
+            <span className="text-sm font-bold text-amber-700">
+              {fmt(order.total)}
+            </span>
+          </div>
+        )}
         {isCashPending ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <>
             <button
               onClick={() => onServed(order.id, true)}
               disabled={isDelivering}
-              className={isDelivering ? '' : 'wp-glow-btn'}
-              style={{
-                width: '100%', padding: '14px 16px', borderRadius: 13, border: 'none',
-                cursor: isDelivering ? 'wait' : 'pointer',
-                background: isDelivering
-                  ? 'rgba(51,203,167,0.35)'
-                  : 'linear-gradient(135deg, #0FA97F 0%, #2DD4A0 100%)',
-                color: '#06251C', fontSize: 14, fontWeight: 800,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white text-sm font-semibold shadow-sm transition"
             >
-              <Banknote size={18} />
+              <Banknote className="w-4 h-4" />
               {isDelivering ? 'Saving…' : `Collect ${fmt(order.total)} & Complete`}
             </button>
             <button
               onClick={() => onServed(order.id, false)}
               disabled={isDelivering}
-              style={{
-                width: '100%', padding: '11px 16px', borderRadius: 13,
-                border: '1px solid rgba(255,255,255,0.12)', background: 'transparent',
-                color: '#AEB8CC', fontSize: 13, fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                cursor: isDelivering ? 'wait' : 'pointer',
-              }}
+              className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-60 text-sm font-semibold transition"
             >
-              <CheckCircle2 size={15} /> Mark delivered · pay later
+              <CheckCircle2 className="w-4 h-4" />
+              Mark delivered · pay later
             </button>
-          </div>
+          </>
         ) : (
           <button
             onClick={() => onServed(order.id, false)}
             disabled={isDelivering}
-            className={isDelivering ? '' : 'wp-glow-btn'}
-            style={{
-              width: '100%', padding: '15px 16px', borderRadius: 13, border: 'none',
-              cursor: isDelivering ? 'wait' : 'pointer',
-              background: isDelivering
-                ? 'rgba(51,203,167,0.35)'
-                : 'linear-gradient(135deg, #0FA97F 0%, #2DD4A0 100%)',
-              color: '#06251C', fontSize: 15, fontWeight: 800,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-            }}
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white text-sm font-semibold shadow-sm transition"
           >
-            <CheckCircle2 size={19} strokeWidth={2.5} />
-            {isDelivering ? 'Marking…' : 'Mark Served'}
+            <CheckCircle2 className="w-4 h-4" />
+            {isDelivering ? 'Marking…' : 'Mark as Served'}
           </button>
         )}
       </div>
@@ -284,6 +300,8 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
   const [delivering, setDelivering]   = useState({});
   const [newAlert, setNewAlert]       = useState(null);
   const [online, setOnline]           = useState(navigator.onLine);
+  const [refreshing, setRefreshing]   = useState(false);
+  const [lastSync, setLastSync]       = useState(null);
   const [now, setNow]                 = useState(Date.now()); // re-render timers
   const prevIdsRef  = useRef(new Set());
   const socketRef   = useRef(null);
@@ -360,9 +378,11 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
     }
   }, []);
 
-  const refreshAll = useCallback(() => {
-    fetchReadyOrders();
-    fetchServedToday();
+  const refreshAll = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([fetchReadyOrders(), fetchServedToday()]);
+    setLastSync(Date.now());
+    setRefreshing(false);
   }, [fetchReadyOrders, fetchServedToday]);
 
   useEffect(() => {
@@ -415,8 +435,6 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
     try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
   })();
 
-  const initials = (user.name || 'W')
-    .split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
@@ -424,239 +442,167 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
   const deliveryCount = readyOrders.length - dineInCount;
   const cashDue = readyOrders.filter((o) => o.payment_method === 'cash' && o.payment_status === 'cash_pending');
   const cashDueTotal = cashDue.reduce((s, o) => s + (Number(o.total) || 0), 0);
-  const filtered = filter === 'delivery'
+
+  /* Most-urgent first: the ticket that has waited longest leads the list. */
+  const filtered = (filter === 'delivery'
     ? readyOrders.filter((o) => String(o.type || '').toUpperCase() === 'DELIVERY')
     : filter === 'dinein'
       ? readyOrders.filter((o) => String(o.type || '').toUpperCase() !== 'DELIVERY')
-      : readyOrders;
+      : readyOrders
+  ).slice().sort((a, b) =>
+    minsAgo(b.updated_at || b.timestamp) - minsAgo(a.updated_at || a.timestamp));
 
   return (
-    <div
-      className="wp-root"
-      style={{
-        minHeight: '100dvh',
-        fontFamily: "'Inter', system-ui, sans-serif",
-      }}
-    >
+    <div className="p-4 sm:p-6">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap');
-        .wp-root{
-          background:
-            radial-gradient(900px 420px at 85% -10%, rgba(245,165,36,0.10), transparent 60%),
-            radial-gradient(700px 480px at -10% 30%, rgba(14,116,144,0.16), transparent 60%),
-            linear-gradient(180deg, #0B1020 0%, #0E1526 55%, #0B1020 100%);
+        @keyframes slideUpFade {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
-        @keyframes wpSlideDown { from{ transform:translateY(-16px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
-        @keyframes wpIn { from{ transform:translateY(14px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
-        @keyframes wpBounce { 0%,100%{ transform:translateY(0);} 30%{ transform:translateY(-5px);} 60%{ transform:translateY(-2px);} }
-        .wp-in{ animation: wpIn .35s cubic-bezier(0.22,1,0.36,1) both; }
-        .wp-tab{
-          min-height:46px; padding:0 15px; border-radius:13px; cursor:pointer;
-          display:inline-flex; align-items:center; gap:7px;
-          font-size:13px; font-weight:800; letter-spacing:0.01em;
-          background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
-          color:#AEB8CC; transition:all .18s ease;
+        @keyframes alertBounce {
+          0%,100% { transform: translateY(0); }
+          30% { transform: translateY(-5px); }
+          60% { transform: translateY(-2px); }
         }
-        .wp-tab:hover{ background:rgba(255,255,255,0.10); color:#F1F5F9; }
-        .wp-tab.is-active{ background:linear-gradient(135deg,#F59E0B 0%,#F97316 100%); border-color:transparent; color:#1F1308; }
-        .wp-tab-count{
-          font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:999px;
-          background:rgba(0,0,0,0.14); min-width:18px; text-align:center;
-        }
-        .wp-tab:not(.is-active) .wp-tab-count{ background:rgba(255,255,255,0.09); color:#AEB8CC; }
-        .wp-box{ background:rgba(255,255,255,0.045); border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:11px 13px; margin:11px 0 12px; }
-        .wp-box-label{ display:flex; align-items:center; gap:5px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; color:#7DD3FC; margin:0 0 6px; }
-        .wp-box-items{ margin-bottom:12px; }
-        .wp-box-items .wp-box-label{ color:#94A3B8; }
-        .wp-box-row{ display:flex; align-items:center; gap:7px; font-size:13.5px; color:#E2E8F0; }
-        .wp-glow-btn{ box-shadow:0 8px 22px -8px rgba(45,212,160,0.65); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; }
-        .wp-glow-btn:hover{ filter:brightness(1.06); }
-        .wp-glow-btn:active{ transform:scale(0.985); }
-        .wp-timer-live{ animation:blink 1.1s ease-in-out infinite; }
-        .wp-ticket:hover .wp-tape{ background-size:100% 100% !important; }
-        @media (min-width:1024px){ .wp-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; } }
-        @media (prefers-reduced-motion: reduce){
-          .wp-in,.wp-timer-live{ animation:none !important; }
+        @keyframes spinOnce { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-alert-bounce { animation: alertBounce .55s ease; }
+        .animate-spin-once { animation: spinOnce .8s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-alert-bounce, .animate-spin-once { animation: none !important; }
         }
       `}</style>
 
-      {/* ── Header ── */}
-      <div
-        style={{
-          position: 'sticky', top: 0, zIndex: 50,
-          background: 'rgba(11,16,32,0.88)',
-          backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-          borderBottom: '1px solid rgba(255,255,255,0.07)',
-          padding: '14px 16px 12px',
-        }}
-      >
-        <div style={{ maxWidth: 980, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-            <div
-              style={{
-                width: 44, height: 44, borderRadius: 14, flexShrink: 0,
-                background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-                color: '#1F1308', fontWeight: 900, fontSize: 15,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 8px 21px -8px rgba(245,158,11,0.8)',
-              }}
-            >
-              {initials || <Flame size={18} />}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontSize: 17.5, fontWeight: 900, color: '#F1F5F9', lineHeight: 1.15 }}>
-                {greeting}, {user.name || 'Waiter'} 🍽️
-              </p>
-              <p style={{ margin: '2px 0 0', fontSize: 12, color: '#8A94A8', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span
-                  style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: online ? '#2DD4A0' : '#F4502C',
-                    animation: 'blink 1.4s ease-in-out infinite', display: 'inline-block',
-                  }}
-                />
-                {online ? 'Live · auto-refresh 10s' : 'Offline — showing last update'}
-                {readyOrders.length > 0
-                  ? ` · ${readyOrders.length} on the pass`
-                  : ''}
-              </p>
-            </div>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#F1F5F9', fontFamily: "'JetBrains Mono','Courier New',monospace" }}>
-              {dayLabel(new Date(now))}
-            </p>
-            <p style={{ margin: '2px 0 0', fontSize: 11, color: '#8A94A8' }}>
-              KDS · Service Line
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        {/* Header — same pattern as TakeawayManagement */}
+        <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <span className="w-9 h-9 rounded-xl bg-indigo-600/10 text-indigo-500 flex items-center justify-center">
+                <Truck className="w-5 h-5" />
+              </span>
+              Delivery Panel
+            </h1>
+            <p className="text-sm text-gray-500 mt-1 ml-11">
+              {greeting}, {user.name || 'Waiter'} — orders ready to serve, live from the kitchen
             </p>
           </div>
-        </div>
-      </div>
-
-      {/* ── Content ── */}
-      <div style={{ maxWidth: 980, margin: '0 auto', padding: '16px 12px 90px' }}>
-
-        {/* Toast */}
-        {toast && (
-          <div style={{ position: 'sticky', top: 74, zIndex: 60 }}>
-            <div
-              style={{
-                marginBottom: 12,
-                padding: '13px 16px',
-                borderRadius: 15,
-                background: toast.type === 'error'
-                  ? 'linear-gradient(135deg, #DC2626 0%, #F4502C 100%)'
-                  : 'linear-gradient(135deg, #0FA97F 0%, #2DD4A0 100%)',
-                color: toast.type === 'error' ? '#fff' : '#06251C',
-                fontSize: 14, fontWeight: 800,
-                display: 'flex', alignItems: 'center', gap: 10,
-                boxShadow: '0 14px 34px -14px rgba(0,0,0,0.6)',
-                animation: 'wpSlideDown .3s ease both',
-              }}
+          <div className="flex items-center gap-2">
+            <span
+              title={
+                lastSync
+                  ? `Last updated ${dayLabel(new Date(lastSync))}`
+                  : 'Waiting for first sync…'
+              }
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold ${
+                online ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+              }`}
             >
-              <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
-              {toast.msg}
-            </div>
-          </div>
-        )}
-
-        {/* Metric strip */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 9, marginBottom: 14 }}>
-          {[
-            { label: 'On pass', value: readyOrders.length, tint: '#FCD34D', icon: Bell },
-            { label: 'Dine-in', value: dineInCount, tint: '#7DD3FC', icon: Utensils },
-            { label: 'Delivery', value: deliveryCount, tint: '#A78BFA', icon: Truck },
-            { label: 'Cash due', value: fmt(cashDueTotal), tint: '#FCA5A5', icon: Banknote, plain: true },
-          ].map((m) => (
-            <div
-              key={m.label}
-              style={{
-                background: 'rgba(255,255,255,0.045)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 15,
-                padding: '11px 8px 9px',
-                textAlign: 'center',
-              }}
-            >
-              <p style={{
-                margin: 0, fontWeight: 900, lineHeight: 1.05,
-                fontSize: m.plain ? 12.5 : 21,
-                color: m.tint,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
-                {m.value}
-              </p>
-              <p style={{
-                margin: '3px 0 0', fontSize: 10, fontWeight: 800, letterSpacing: '0.09em',
-                textTransform: 'uppercase', color: '#8A94A8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              }}>
-                <m.icon size={10} /> {m.label}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* New-order alert */}
-        {newAlert && (
-          <div style={{ marginBottom: 14, borderRadius: 18, animation: 'wpBounce .55s ease' }}>
-            <div
-              style={{
-                borderRadius: 18, padding: '13px 15px',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #F97316 100%)',
-                color: '#1F1308', display: 'flex', alignItems: 'center', gap: 12,
-                boxShadow: '0 18px 40px -16px rgba(245,158,11,0.75)',
-              }}
-            >
-              <div
-                style={{
-                  width: 42, height: 42, borderRadius: 13, flexShrink: 0,
-                  background: 'rgba(31,19,8,0.18)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <Bell size={21} strokeWidth={2.5} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 900 }}>
-                  New ready order #{newAlert.id}!
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 700, opacity: 0.8 }}>
-                  {newAlert.table_name
-                    ? `Table ${newAlert.table_name}`
-                    : (newAlert.customer_name || 'Home delivery')}
-                </p>
-              </div>
-              {(() => {
-                const isNewDelivery = String(newAlert.type || '').toUpperCase() === 'DELIVERY';
-                return isNewDelivery ? null : (
-                  <span style={{ fontSize: 11.5, fontWeight: 900, background: 'rgba(31,19,8,0.18)', borderRadius: 999, padding: '5px 11px', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                    See below
-                  </span>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: 9, overflowX: 'auto', paddingBottom: 4, marginBottom: 14, scrollbarWidth: 'none' }}>
-          {[
-            { id: 'all',      label: 'All',      icon: Package,   count: readyOrders.length },
-            { id: 'dinein',   label: 'Dine-In',  icon: Utensils,  count: dineInCount },
-            { id: 'delivery', label: 'Delivery', icon: Truck,     count: deliveryCount },
-          ].map((t) => (
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  online ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                }`}
+              />
+              {online ? 'Live · auto 10s' : 'Offline'}
+            </span>
             <button
-              key={t.id}
-              type="button"
-              onClick={() => setFilter(t.id)}
-              className={`wp-tab${filter === t.id ? ' is-active' : ''}`}
+              onClick={refreshAll}
+              title="Refresh now"
+              className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 flex items-center justify-center transition"
             >
-              <t.icon size={14} />
-              {t.label}
-              <span className="wp-tab-count">{t.count}</span>
+              <RotateCw
+                className={`w-4 h-4 ${refreshing ? 'animate-spin-once' : ''}`}
+              />
             </button>
-          ))}
+          </div>
+        </div>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+          <SummaryCard
+            label="ON THE PASS"
+            value={readyOrders.length}
+            Icon={Bell}
+            color="text-amber-500"
+            delay={0}
+          />
+          <SummaryCard
+            label="DINE-IN"
+            value={dineInCount}
+            Icon={Utensils}
+            color="text-blue-500"
+            delay={60}
+          />
+          <SummaryCard
+            label="DELIVERY"
+            value={deliveryCount}
+            Icon={Truck}
+            color="text-violet-500"
+            delay={120}
+          />
+          <SummaryCard
+            label="CASH DUE"
+            value={fmt(cashDueTotal)}
+            Icon={Banknote}
+            color={cashDueTotal > 0 ? 'text-red-500' : 'text-gray-400'}
+            delay={180}
+            small
+          />
+        </div>
+
+        {/* New-ready-order alert */}
+        {newAlert && (
+          <div
+            className="mb-5 bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-center gap-3 animate-alert-bounce"
+            style={{ animation: 'slideUpFade .3s ease both, alertBounce .55s ease .3s' }}
+          >
+            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+              <Bell className="w-5 h-5 animate-pulse" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900">
+                New order ready — #{newAlert.id}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                {String(newAlert.type || '').toUpperCase() === 'DELIVERY'
+                  ? (newAlert.customer_name || 'Home delivery')
+                  : `Table ${newAlert.table_name || 'Counter'}`}{' '}
+                · see it in the list below
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Status filter pills — same as TakeawayManagement */}
+        <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto">
+          {[
+            { id: 'all',      label: 'All',      Icon: Package,  count: readyOrders.length, accent: 'text-indigo-600' },
+            { id: 'dinein',   label: 'Dine-In',  Icon: Utensils, count: dineInCount,        accent: 'text-blue-600' },
+            { id: 'delivery', label: 'Delivery', Icon: Truck,    count: deliveryCount,      accent: 'text-violet-600' },
+          ].map((t) => {
+            const isActive = filter === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setFilter(t.id)}
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+                  isActive
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/60'
+                    : `${t.accent} hover:bg-gray-50`
+                }`}
+              >
+                <t.Icon className="w-3.5 h-3.5" />
+                {t.label}
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
+                  {t.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Served-today summary chip */}
@@ -664,117 +610,152 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
           <button
             type="button"
             onClick={() => setShowServed((v) => !v)}
-            style={{
-              width: '100%', marginBottom: 14,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '11px 15px', borderRadius: 14, cursor: 'pointer',
-              background: 'rgba(45,212,160,0.07)',
-              border: '1px solid rgba(45,212,160,0.22)',
-            }}
+            className="w-full mb-5 bg-white border border-gray-100 rounded-2xl shadow-sm px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition"
           >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, fontWeight: 800, color: '#2DD4A0' }}>
-              <CheckCircle2 size={16} />
+            <span className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+              <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </span>
               {servedToday.length} served today
             </span>
             <span
+              className="text-gray-400"
               style={{
-                fontSize: 11, color: '#8A94A8', fontWeight: 700,
-                transform: showServed ? 'rotate(180deg)' : 'none', transition: 'transform .25s',
+                transform: showServed ? 'rotate(180deg)' : 'none',
+                transition: 'transform .25s',
               }}
             >
-              {showServed ? 'hide ▲' : 'show ▼'}
+              <ChevronDown className="w-4 h-4" />
             </span>
           </button>
         )}
 
         {/* Served-today log */}
         {showServed && servedToday.length > 0 && (
-          <div style={{ marginBottom: 16, padding: '6px 10px', borderRadius: 15, background: 'rgba(255,255,255,0.035)', border: '1px solid rgba(255,255,255,0.07)', animation: 'wpIn .3s ease both' }}>
-            {servedToday.slice(0, 6).map((o) => {
+          <div
+            className="mb-6 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden"
+            style={{ animation: 'slideUpFade .25s ease-out both' }}
+          >
+            {servedToday.slice(0, 6).map((o, i) => {
               const isDelivery = String(o.type || '').toUpperCase() === 'DELIVERY';
               return (
                 <div
                   key={o.id}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    gap: 10, padding: '8px 6px',
-                    borderBottom: '1px dashed rgba(255,255,255,0.07)',
-                  }}
+                  className={`flex items-center justify-between gap-3 px-4 py-2.5 ${
+                    i < Math.min(6, servedToday.length) - 1 ? 'border-b border-gray-50' : ''
+                  }`}
                 >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    {isDelivery ? <Truck size={13} color="#A78BFA" /> : <Utensils size={13} color="#7DD3FC" />}
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: '#C7D0E0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      #{o.id} · {isDelivery ? (o.customer_name || 'Delivery') : `Table ${o.table_name || '?'}`}
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <span
+                      className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                        isDelivery
+                          ? 'bg-violet-50 text-violet-500'
+                          : 'bg-blue-50 text-blue-500'
+                      }`}
+                    >
+                      {isDelivery ? <Truck className="w-3 h-3" /> : <Utensils className="w-3 h-3" />}
+                    </span>
+                    <span className="text-sm font-medium text-gray-700 truncate">
+                      #{o.id} ·{' '}
+                      {isDelivery
+                        ? (o.customer_name || 'Delivery')
+                        : `Table ${o.table_name || '?'}`}
                     </span>
                   </span>
-                  <span style={{ fontSize: 11.5, color: '#8A94A8', whiteSpace: 'nowrap' }}>
+                  <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
                     {fmt(o.total)} · {dayLabel(new Date(o.updated_at || o.timestamp))}
                   </span>
                 </div>
               );
             })}
+            {servedToday.length > 6 && (
+              <p className="px-4 py-2 text-xs text-gray-400 border-t border-gray-50">
+                + {servedToday.length - 6} more today
+              </p>
+            )}
           </div>
         )}
 
         {/* Tickets */}
         {filtered.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center', padding: '58px 24px',
-              background: 'rgba(255,255,255,0.035)', borderRadius: 22,
-              border: '1px dashed rgba(255,255,255,0.12)', animation: 'wpIn .35s ease both',
-            }}
-          >
-            <div
-              style={{
-                width: 74, height: 74, borderRadius: 23, margin: '0 auto 16px',
-                background: 'linear-gradient(135deg, rgba(245,158,11,0.16), rgba(249,115,22,0.08))',
-                border: '1px solid rgba(245,158,11,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <Sparkles size={32} color="#FCD34D" />
+          <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-400 mx-auto mb-3 flex items-center justify-center">
+              <Sparkles className="w-7 h-7" />
             </div>
-            <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#F1F5F9' }}>
-              {readyOrders.length === 0 ? 'Pantry’s calm 🎉' : `No ${filter} orders on the pass`}
-            </p>
-            <p style={{ margin: '8px 0 0', fontSize: 13.5, color: '#8A94A8', lineHeight: 1.65, maxWidth: 340, marginLeft: 'auto', marginRight: 'auto' }}>
+            <p className="text-base font-semibold text-gray-900">
               {readyOrders.length === 0
-                ? 'Every order has been served. New tickets appear on the pass the moment admin pushes them to you — no refresh needed.'
+                ? 'All caught up 🎉'
+                : filter === 'dinein'
+                  ? 'No dine-in orders on the pass'
+                  : 'No delivery orders on the pass'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {readyOrders.length === 0
+                ? 'Every order has been served. New ready orders appear here in real time — no refresh needed.'
                 : 'Switch tabs above to see the other order types.'}
             </p>
-            <p style={{ margin: '18px 0 0', fontSize: 11, color: '#5E6A80', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <p
+              className={`mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
+                online ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'
+              }`}
+            >
               <span
-                style={{
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: online ? '#2DD4A0' : '#F4502C',
-                  animation: 'blink 1.4s infinite', display: 'inline-block',
-                }}
+                className={`w-2 h-2 rounded-full ${
+                  online ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                }`}
               />
-              {online ? 'Connected to kitchen pass' : 'Offline — last synced snapshot'}
+              {online ? 'Connected to the kitchen' : 'Offline — showing last synced orders'}
             </p>
           </div>
         ) : (
-          <div className="wp-grid" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {filtered.map((order) => (
-              <div key={order.id} className="wp-in">
-                <Ticket
-                  order={order}
-                  fmt={fmt}
-                  now={now}
-                  onServed={handleServed}
-                  isDelivering={!!delivering[order.id]}
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.map((order, index) => (
+              <Ticket
+                key={order.id}
+                order={order}
+                fmt={fmt}
+                index={index}
+                isLoaded
+                now={now}
+                onServed={handleServed}
+                isDelivering={!!delivering[order.id]}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {/* ── iOS home-bar safe area ── */}
-      <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
+      {/* Shared toast — same as all other pages */}
+      {toast && (
+        <Notification
+          message={toast.msg}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };
+
+const SummaryCard = ({ label, value, Icon, color, delay, small }) => (
+  <div
+    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5"
+    style={{
+      animation: `slideUpFade .35s ease-out ${delay}ms both`,
+    }}
+  >
+    <div className="flex items-center justify-between mb-2">
+      <p className="text-[10px] font-bold tracking-wider text-gray-400">{label}</p>
+      <div className={`w-7 h-7 rounded-lg bg-gray-50 ${color} flex items-center justify-center`}>
+        <Icon className="w-3.5 h-3.5" />
+      </div>
+    </div>
+    <p
+      className={`${small ? 'text-lg sm:text-2xl' : 'text-2xl sm:text-3xl'} font-bold ${color} leading-none truncate`}
+    >
+      {value}
+    </p>
+  </div>
+);
 
 export default WaiterDeliveryPanel;
