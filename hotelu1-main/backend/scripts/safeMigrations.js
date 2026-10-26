@@ -171,6 +171,11 @@ async function runSafeMigrations(sequelize, models = {}) {
         guests: { type: DataTypes.INTEGER, allowNull: true },
         // Anonymous QR device-session token (see Order.client_session).
         client_session: { type: DataTypes.STRING(100), allowNull: true },
+        // Self-service takeaway auto-completion timestamp (see
+        // Order.completed_at). Older databases upgraded in place never got
+        // this column from model.sync() and every /api/orders SELECT 500'd
+        // with "Unknown column 'Order.completed_at'" until now.
+        completed_at: { type: DataTypes.DATE, allowNull: true },
       };
       for (const [column, definition] of Object.entries(legacyOrderColumns)) {
         if (!ordersDesc[column]) {
