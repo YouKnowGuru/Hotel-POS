@@ -753,10 +753,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  : isDelivered && paymentApproved
  ? { label: 'Served', Icon: CheckCircle2, c: '#22c55e', bg: 'rgba(34,197,94,0.08)', pct: 100 }
  : isDelivered && billRequested
- ? { label: 'Bill Requested', Icon: Receipt, c: '#f59e0b', bg: 'rgba(245,158,11,0.08)', pct: 90 }
- : isDelivered
+ ? { label: 'Bill Requested', Icon: Receipt, c: '#f59e0b', bg: 'rgba(245,158,11,0.08)', pct: 90 }                       : isDelivered
  ? { label: 'Bill Pending', Icon: Clock, c: '#f97316', bg: 'rgba(249,115,22,0.08)', pct: 85 } : STATUS[o.status] || STATUS.pending;
- const Icon = tcfg.Icon;
 
  /* Takeaway tracker override — a self-service takeaway has no kitchen
  or waiter stage. Before this, a paid takeaway sat on the dine-in
@@ -772,6 +770,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  : o.payment_status === 'paid' && o.status === 'ready'
  ? { label: 'Ready for pickup', Icon: Sparkles, c: '#22c55e', bg: 'rgba(34,197,94,0.08)', pct: 80 }
  : cfg;
+ const Icon = tcfg.Icon;
 
  const progressPct = tcfg !== cfg ? tcfg.pct : (isPaid || (isDelivered && paymentApproved) ? 100
  : isDelivered && billRequested ? 90
