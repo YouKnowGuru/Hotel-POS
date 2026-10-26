@@ -33,6 +33,17 @@ function hostFromUrl(url) {
   try { return new URL(url).hostname; } catch (_) { return null; }
 }
 const configUrl = process.env.DATABASE_URL || null;
+/* Did the operator configure a database at all? If neither DATABASE_URL
+   nor any DB_* var is set, we're pointing at the built-in development
+   defaults (mysql@localhost, db mrbeast_db, user root) — almost never
+   correct on a hosting provider, and the classic cause of a silent
+   "database connection fails" after a fresh deploy. */
+const hasDbConfig = Boolean(
+  configUrl ||
+  process.env.DB_HOST ||
+  process.env.DB_NAME ||
+  process.env.DB_USER
+);
 const dbHost = configUrl
   ? (hostFromUrl(configUrl) || 'localhost')
   : (process.env.DB_HOST || 'localhost');
@@ -114,6 +125,7 @@ if (process.env.DATABASE_URL) {
    on boot and on connection failure so a wrong/missing .env entry
    (wrong host, default db name, missing user…) is immediately visible
    in the hosting provider's runtime logs. */
+sequelize.hasDbConfig = hasDbConfig;
 sequelize.connectionSummary = () => {
   const envFiles = [
     path.join(__dirname, '../.env'),
@@ -122,11 +134,16 @@ sequelize.connectionSummary = () => {
   const cfg = sequelize.config || {};
   const source = configUrl
     ? 'DATABASE_URL env var'
-    : 'DB_* env vars (defaults apply for any that are unset)';
+    : hasDbConfig
+      ? 'DB_* env vars (defaults apply for any that are unset)'
+      : 'NONE — no DATABASE_URL and no DB_* vars found, using built-in dev defaults!';
+  const warn = hasDbConfig
+    ? ''
+    : ' ** NO DB CONFIG FOUND in environment: set DATABASE_URL (or DB_DIALECT/DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD) in .env **';
   return (
     `dialect=${sequelize.getDialect()} host=${cfg.host || dbHost} ` +
     `port=${cfg.port || '?'} db=${cfg.database || '?'} user=${cfg.username || '?'} ` +
-    `ssl=${useSSL ? 'on' : 'off'} source=${source} | env files: ${envFiles}`
+    `ssl=${useSSL ? 'on' : 'off'} source=${source} | env files: ${envFiles}${warn}`
   );
 };
 

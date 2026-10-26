@@ -584,6 +584,9 @@ async function startServer() {
     // a failed boot in a hosting provider's log immediately shows which
     // host/db/SSL settings the process actually loaded.
     console.log("DB config:", sequelize.connectionSummary ? sequelize.connectionSummary() : "(unavailable)");
+    if (sequelize.hasDbConfig === false) {
+      console.error("WARNING: the environment has NO database settings. The server is pointing at the built-in dev defaults (mysql@localhost, db mrbeast_db, user root), which will not work on a hosting provider. Add DATABASE_URL — or DB_DIALECT/DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD — to the .env file this app loads (see the 'env files:' list in the DB config line above).");
+    }
     await sequelize.authenticate();
     console.log("Database connected successfully");
     
