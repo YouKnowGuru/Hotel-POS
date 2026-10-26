@@ -11,3 +11,6 @@ sw.js
 # Development cache
 .DS_Store
 Thumbs.db
+
+# Playwright/puppeteer visual-audit screenshots
+.pw-shots/
