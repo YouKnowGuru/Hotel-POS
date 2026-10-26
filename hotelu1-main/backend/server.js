@@ -589,21 +589,18 @@ async function startServer() {
     for (const model of allModels) {
       try { await model.sync(); } catch (e) { console.warn(`Sync warning for ${model.tableName}: ${e.message}`); }
     }
-    // Junction tables without DB-level FK constraints
-    try {
-      await sequelize.query(`CREATE TABLE IF NOT EXISTS role_permissions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        role_id INT NOT NULL,
-        permission_id INT NOT NULL
-      ) ENGINE=InnoDB`);
-    } catch (_) {}
-    try {
-      await sequelize.query(`CREATE TABLE IF NOT EXISTS user_permissions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        permission_id INT NOT NULL
-      ) ENGINE=InnoDB`);
-    } catch (_) {}
+    // Junction tables without DB-level FK constraints. BUGFIX: the old
+    // setup ran MySQL-only DDL (AUTO_INCREMENT … ENGINE=InnoDB) inside a
+    // silent try/catch, so on a Postgres deployment (render.yaml uses
+    // DB_DIALECT=postgres) the DDL failed quietly and these two tables
+    // were NEVER created — every permission endpoint 500'd. model.sync()
+    // generates dialect-correct DDL and is a no-op when the table already
+    // matches (legacy MySQL installs keep their existing tables).
+    for (const model of [RolePermission, UserPermission]) {
+      try { await model.sync(); } catch (e) {
+        console.warn(`Sync warning for ${model.tableName}: ${e.message}`);
+      }
+    }
     await runSafeMigrations(sequelize, { SubFranchise, DiningTable, DiningFloor });
     console.log("Database synchronized successfully");
 
@@ -3295,9 +3292,23 @@ app.delete("/api/orders/:id", verifyToken, async (req, res) => {
 // Request Bill Endpoint - Works for both authenticated and QR customers
 app.put("/api/orders/:id/request-bill", strictLimiter, optionalToken, async (req, res) => {
   try {
+    // SECURITY: this endpoint used to accept ANY sequential order id from an
+    // anonymous caller — anyone with an order number (they are 1,2,3…)
+    // could trigger billing on someone else's active order. Anonymous
+    // callers now must pass a tableId whose label matches the order's
+    // table (the QR menu sends its own table). Authenticated staff are
+    // exempt and keep their branch scoping below.
+    const anonTableId = req.query.tableId || req.body?.tableId;
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
       if (order) {
+        if (!req.user &&
+            (!anonTableId || !orderMatchesTableId(order, anonTableId))) {
+          return res.status(403).json({ message: "Bill request must come from the order's table" });
+        }
+        if (["delivered", "completed", "NOT_AVAILABLE"].includes(order.status)) {
+          return res.status(409).json({ message: "This order is already closed" });
+        }
         order.bill_requested = true;
         return res.json({ message: "Bill requested", order: stripProofImages(order)[0] });
       }
@@ -3307,6 +3318,11 @@ app.put("/api/orders/:id/request-bill", strictLimiter, optionalToken, async (req
     const order = await Order.findByPk(id, { include: [{ model: OrderItem, as: "items" }] });
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (req.user && !(await assertOrderInScope(req, order, res))) return;
+    // Anonymous callers: the order must belong to the scanned table.
+    if (!req.user &&
+        (!anonTableId || !orderMatchesTableId(order, anonTableId))) {
+      return res.status(403).json({ message: "Bill request must come from the order's table" });
+    }
     // This endpoint is reachable without a token (customers request the bill
     // from the QR menu), so only allow it for orders that are still active —
     // anything already delivered/completed must not be touched by callers

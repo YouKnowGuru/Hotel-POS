@@ -1,18 +1,24 @@
-const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";
-
-export const getAPI_URL = () => {
-  const override = typeof window !== "undefined" ? localStorage.getItem("apiUrl") : null;
-  if (override) return override.replace(/\/$/, "");
-  const envUrl = process.env.REACT_APP_API_URL;
-  if (envUrl) return envUrl.replace(/\/$/, "");
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1") {
-      return `${window.location.protocol}//${host}:${BACKEND_PORT}`;
-    }
-    return window.location.origin;
-  }
-  return "";
+const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";export const getAPI_URL = () => {
+ if (typeof window !== "undefined") {
+ const host = window.location.hostname;
+ const isDevHost = host === "localhost" || host === "127.0.0.1";
+ // SECURITY: the manual `apiUrl` override used to apply EVERYWHERE, so
+ // tampering with localStorage on a shared/kiosk computer silently
+ // redirected all staff logins and orders to an attacker's server.
+ // It stays a local-dev convenience only; production builds always
+ // talk to the configured env URL or same origin.
+ if (isDevHost) {
+ const override = localStorage.getItem("apiUrl");
+ if (override) return override.replace(/\/$/, "");
+ }
+ const envUrl = process.env.REACT_APP_API_URL;
+ if (envUrl) return envUrl.replace(/\/$/, "");
+ if (isDevHost) {
+ return `${window.location.protocol}//${host}:${BACKEND_PORT}`;
+ }
+ return window.location.origin;
+ }
+ return "";
 };
 
 export const getSocketUrl = () => getAPI_URL();

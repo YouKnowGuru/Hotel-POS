@@ -416,7 +416,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const requestBill = async (orderId) => {
  try {
  setBillRequestedId(orderId);
- const res = await fetch(`${getAPI_URL()}/api/orders/${orderId}/request-bill`, { method: 'PUT' });
+ // SECURITY: anonymous bill requests must prove they belong to this
+ // table — the server matches the order's table label before honoring
+ // the trigger (staff callers are exempt and authenticated).
+ const locId = new URLSearchParams(window.location.search).get('loc');
+ const locQs = locId ? `&loc=${encodeURIComponent(locId)}` : '';
+ const res = await fetch(`${getAPI_URL()}/api/orders/${orderId}/request-bill?tableId=${encodeURIComponent(formatTableName(tableId || '1'))}${locQs}`, { method: 'PUT' });
  const data = await res.json();
  setTimeout(() => { fetchOrders(); setBillRequestedId(null); setExpandedBills(p => ({ ...p, [orderId]: true })); }, 800);
  } catch (_) { setBillRequestedId(null); }
