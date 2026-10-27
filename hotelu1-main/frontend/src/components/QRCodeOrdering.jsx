@@ -8,7 +8,10 @@ import useCurrency from '../hooks/useCurrency';
 import { Flame } from 'lucide-react';
 
 /* ─── Timing ────────────────────────────────────────────────────── */
-const SPLASH_MS = 3200;
+/* Reduced from 3200ms to 1500ms — the full intro animation still plays
+   (all 5 phases fire within 1200ms), but the splash exits sooner so
+   repeat users aren't kept waiting. Tap-to-skip remains as a fallback. */
+const SPLASH_MS = 1500;
 
 /* ─── Food particles: emoji + orbit radius + speed + start angle ── */
 const FOOD_PARTICLES = [
@@ -96,7 +99,7 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
 
  /* ── Progress + phase timer ── */
  useEffect(() => {
- const phases = [200, 600, 950, 1200, 1500];
+ const phases = [120, 350, 550, 700, 850];
  let phaseIdx = 0;
  const phaseTimers = phases.map((ms, i) =>
  setTimeout(() => setPhase(i + 1), ms)
@@ -227,7 +230,7 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  <h1 style={{
  margin: '0 0 6px',
  fontFamily: 'Inter, system-ui, sans-serif',
- fontSize: 'clamp(28px, 8vw, 44px)',
+ fontSize: 'clamp(20px, 6vw, 44px)',
  fontWeight: 900,
  lineHeight: 1.05,
  letterSpacing: '0.04em',
@@ -351,7 +354,7 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  <div style={{
  position:'absolute', bottom:12, left:0, right:0,
  display:'flex', justifyContent:'center', zIndex:2,
- animation:'tapHint 2.5s ease-in-out 1.5s infinite',
+ animation:'tapHint 2.5s ease-in-out 0.5s infinite',
  }}>
  <span style={{ fontSize:10, color:'rgba(255,255,255,0.22)', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase' }}>
  tap anywhere to skip
@@ -468,7 +471,7 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  <p style={{
  margin:0, fontWeight:800, fontSize:14, color:'#fff', lineHeight:1.2,
  fontFamily:'Inter,system-ui,sans-serif',
- whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:170,
+ whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'calc(100vw - 180px)',
  }}>
  {branding.siteName}
  </p>

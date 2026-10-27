@@ -85,7 +85,7 @@ const MenuItemForm = ({ onSave, onCancel, initialData = {}, locationSettings }) 
  };
 
  return (
- <div className="bg-white p-6 rounded-2xl">
+ <div className="bg-white p-4 sm:p-6 rounded-2xl">
  <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
  {/* Image Upload Section */}
  <div className="md:col-span-2 flex flex-col items-center mb-4">
@@ -180,17 +180,17 @@ const MenuItemForm = ({ onSave, onCancel, initialData = {}, locationSettings }) 
  placeholder="Enter item description (optional)"
  ></textarea>
  </div>
- <div className="md:col-span-2 flex justify-end space-x-4 pt-4 border-t border-gray-100">
+ <div className="md:col-span-2 flex flex-col sm:flex-row justify-end gap-3 sm:space-x-4 pt-4 border-t border-gray-100">
  <button
  type="button"
  onClick={onCancel}
- className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-xl shadow-sm transition duration-200"
+ className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 sm:px-6 rounded-xl shadow-sm transition duration-200"
  >
  Cancel
  </button>
  <button
  type="submit"
- className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition duration-200"
+ className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 sm:px-6 rounded-xl shadow-lg transition duration-200"
  >
  {initialData.id ? 'Update Item' : 'Add Item'}
  </button>

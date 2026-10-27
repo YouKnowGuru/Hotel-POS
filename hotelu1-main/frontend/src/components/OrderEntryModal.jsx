@@ -621,8 +621,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  )}
  </div>
  </div>
- {/* Right Panel - Current Order - Hidden on mobile, visible on desktop */}
- <div className="hidden lg:flex flex-1 lg:max-w-[280px] bg-white flex-col rounded-xl border border-indigo-100 shadow-sm">
+ {/* Right Panel - Current Order - Hidden on mobile, visible on tablet+ */}
+ <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white flex-col rounded-xl border border-indigo-100 shadow-sm">
  <div className="p-3 sm:p-4 bg-indigo-50/50 border-b border-indigo-100 flex-shrink-0">
  <h4 className="text-base sm:text-lg font-bold text-gray-800 flex items-center">
  <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -776,7 +776,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Order Token - Main highlight */}
  <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 text-center">
  <p className="text-amber-700 text-xs font-semibold uppercase tracking-wide mb-1">Your Order Token</p>
- <p className="text-4xl font-bold text-amber-800 tracking-wider">{confirmedOrder.token}</p>
+ <p className="text-3xl sm:text-4xl font-bold text-amber-800 tracking-wider break-all">{confirmedOrder.token}</p>
  <p className="text-amber-600 text-xs mt-2">Show this token when collecting your order</p>
  </div>
 
@@ -926,10 +926,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <>
  <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
  {Object.values(cart).map(item => (
- <div key={item.id} className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl">
- <div className="flex-1">
- <p className="font-semibold text-gray-800">{item.name}</p>
- <p className="text-sm text-indigo-600 font-medium">{fmt(item.price)} each</p>
+ <div key={item.id} className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl gap-2">
+ <div className="flex-1 min-w-0">
+ <p className="font-semibold text-gray-800 truncate">{item.name}</p>
+ <p className="text-sm text-indigo-600 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
  </div>
  <div className="flex items-center gap-2">
  <button

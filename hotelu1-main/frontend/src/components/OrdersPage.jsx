@@ -335,12 +335,12 @@ const OrdersPage = ({ locationSettings }) => {
 
  /* ---------------- render ---------------- */
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6">
+ <div className="px-4 sm:px-6 lg:px-8 py-6 min-w-0">
  {/* Page header */}
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
- <div>
- <div className="flex items-center gap-3">
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
+ <div className="min-w-0">
+ <div className="flex items-center gap-3 flex-wrap">
+ <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
  <span
    role="status"
    aria-live="polite"
@@ -385,15 +385,15 @@ const OrdersPage = ({ locationSettings }) => {
  onClick={() => setShowTypeMenu((v) => !v)}
  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm transition ${
  typeFilter !== 'all'
- ? 'border-indigo-200 text-indigo-600 bg-indigo-50'
- : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50'
+ ? 'border-indigo-200 text-indigo-600 bg-indigo-50 dark:border-indigo-800/60 dark:text-indigo-400 dark:bg-indigo-950/40'
+ : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50 dark:border-slate-700/60 dark:text-gray-300 dark:bg-[#141C2E] dark:hover:bg-slate-800'
  }`}
  >
  <Filter className="w-4 h-4" />
  {activeTypeLabel}
  </button>
  {showTypeMenu && (
- <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30">
+ <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 dark:bg-[#141C2E] dark:border-slate-700/60">
  {TYPE_FILTER_OPTIONS.map((opt) => (
  <button
  key={opt.id}
@@ -437,7 +437,7 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
 
  {/* Status tabs */}
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 sm:gap-3 mb-5">
  {STATUS_TABS.map((t) => {
  const active = activeStatus === t.id;
  const count = counts[t.id] ?? 0;
@@ -453,7 +453,7 @@ const OrdersPage = ({ locationSettings }) => {
  <button
  key={t.id}
  onClick={() => setActiveStatus(t.id)}
- className={`flex items-center justify-between gap-2 sm:gap-3 px-3 py-3 rounded-2xl border transition min-w-0 ${
+ className={`flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl border transition min-w-0 ${
  active
  ? `${colorMap[t.color]} shadow-sm`
  : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
@@ -461,10 +461,10 @@ const OrdersPage = ({ locationSettings }) => {
  >
  <div className="flex items-center gap-1.5 min-w-0">
  <Icon className={`w-4 h-4 shrink-0 ${active ? '' : 'text-gray-400'}`} />
- <span className="text-[13px] leading-tight font-semibold text-left">{t.label}</span>
+ <span className="text-[11px] sm:text-[13px] leading-tight font-semibold text-left truncate">{t.label}</span>
  </div>
  <span
- className={`text-xs font-bold min-w-[22px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
+ className={`text-xs font-bold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
  active ? 'bg-white text-current' : 'bg-gray-100 text-gray-500'
  }`}
  >
@@ -476,16 +476,16 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
 
  {/* Main grid */}
- <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">      {/* Orders list */}
-      <div className="lg:col-span-7 space-y-3">
+ <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-w-0">      {/* Orders list */}
+      <div className="lg:col-span-7 space-y-3 min-w-0">
         {blockedOrders.length > 0 && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-sm font-bold text-amber-900">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800/60 dark:bg-amber-950/40">
+            <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
               ⏳ {blockedOrders.length} home delivery order{blockedOrders.length > 1 ? 's' : ''} waiting for the customer
             </p>
-            <p className="mt-0.5 text-xs text-amber-800">
+            <p className="mt-0.5 text-xs text-amber-800 dark:text-amber-300">
               {waitingPayments > 0 && `${waitingPayments} not yet paid`} {rejectedPayments > 0 && `${rejectedPayments} payment rejected`} — hidden from the queue until a payment proof is uploaded.{' '}
-              <button type="button" onClick={() => setActiveStatus('payment_review')} className="underline font-bold text-amber-900">
+              <button type="button" onClick={() => setActiveStatus('payment_review')} className="underline font-bold text-amber-900 dark:text-amber-200">
                 Open payment review
               </button>
             </p>
@@ -508,10 +508,10 @@ const OrdersPage = ({ locationSettings }) => {
  <button
  key={o.id}
  onClick={() => setSelectedId(o.id)}
- className={`w-full text-left bg-white rounded-2xl border p-4 transition ${
+ className={`w-full text-left bg-white rounded-2xl border p-4 transition dark:bg-[#141C2E] ${
  isSelected
- ? 'border-indigo-300 ring-2 ring-indigo-500'
- : 'border-gray-100 hover:border-gray-200'
+ ? 'border-indigo-300 ring-2 ring-indigo-500 dark:border-indigo-700'
+ : 'border-gray-100 hover:border-gray-200 dark:border-slate-700/60 dark:hover:border-slate-600'
  }`}
  >
  <div className="flex items-center justify-between mb-2">
@@ -588,14 +588,14 @@ const OrdersPage = ({ locationSettings }) => {
  })}
 
  {filteredOrders.length === 0 && (
- <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500">
+ <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-400">
  {loading ? 'Loading orders...' : 'No orders match your filters'}
  </div>
  )}
  </div>
 
  {/* Right detail panel */}
- <div className="lg:col-span-5">
+ <div className="lg:col-span-5 min-w-0">
  {selected ? (
  <OrderDetailPanel
  order={selected}
@@ -604,7 +604,7 @@ const OrdersPage = ({ locationSettings }) => {
  onPaymentReviewed={load}
  />
  ) : (
- <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500">
+ <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-500 dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-400">
  Select an order to view details
  </div>
  )}
@@ -803,7 +803,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  const handleView = () => setShowPreview(true);
 
  return (
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="flex items-center justify-between">
  <div>
  <div className="flex items-center gap-2 flex-wrap">
@@ -836,7 +836,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
  </div>
 
- <div className="grid grid-cols-2 gap-3 mt-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
  <div>
  <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
  Table / Customer
@@ -896,9 +896,9 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
 
  {isAdmin && order.payment_status === 'verification_pending' && (
- <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
- <p className="font-bold text-amber-900">Payment verification required</p>
- <p className="mt-1 text-sm text-amber-800">Review the screenshot and confirm the payment amount matches this order.</p>
+ <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/60 dark:bg-amber-950/40">
+ <p className="font-bold text-amber-900 dark:text-amber-200">Payment verification required</p>
+ <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">Review the screenshot and confirm the payment amount matches this order.</p>
  {needsProof && (
  proofImage ? (
  <button
@@ -917,9 +917,9 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)}
  placeholder="Reason if rejecting (required only for reject)" className="mt-3 min-h-20 w-full rounded-xl border border-amber-200 bg-white p-2.5 text-sm" />
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
- <div className="mt-3 grid grid-cols-2 gap-2">
+ <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
  <button disabled={reviewing} onClick={() => reviewPayment('reject')} className="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-bold text-rose-600 disabled:opacity-50">Deny payment</button>
- <button disabled={reviewing} onClick={() => reviewPayment('approve')} className="rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50">{reviewing ? 'Saving…' : 'Approve & send to waiter'}</button>
+ <button disabled={reviewing} onClick={() => reviewPayment('approve')} className="rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50">{reviewing ? 'Saving…' : 'Approve & send'}</button>
  </div>
  </div>
  )}
@@ -930,12 +930,12 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  cash. "Customer already paid" below is only for money collected at the
  counter (e.g. pickup at reception). */}
  {isAdmin && order.payment_method === 'cash' && order.payment_status === 'cash_pending' && (
- <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+ <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/60 dark:bg-emerald-950/40">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">💵</span>
- <p className="font-bold text-emerald-900">Cash on Delivery — not collected yet</p>
+ <p className="font-bold text-emerald-900 dark:text-emerald-200">Cash on Delivery — not collected yet</p>
  </div>
- <p className="text-sm text-emerald-800">
+ <p className="text-sm text-emerald-800 dark:text-emerald-300">
  Approving sends this order to the <b>Waiter Panel</b> for delivery but keeps it <b>UNPAID</b>. The delivery staff marks it paid only after they receive the cash and confirm collection.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
@@ -952,7 +952,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <button
  disabled={reviewing}
  onClick={handleCollectCash}
- className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 font-semibold py-2 px-4 text-xs transition disabled:opacity-50"
+ className="mt-2 w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 dark:text-emerald-200 dark:border-emerald-800/60 dark:hover:bg-emerald-950/40 font-semibold py-2 px-4 text-xs transition disabled:opacity-50"
  title="Only use when the money was already handed over at the counter"
  >
  <Banknote className="w-3.5 h-3.5" />
@@ -963,12 +963,12 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
 
  {/* Legacy: cash marked by staff, waiting for an admin sign-off. */}
  {isAdmin && order.payment_status === 'cash_pending_admin' && (
- <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+ <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/60 dark:bg-amber-950/40">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">🧾</span>
- <p className="font-bold text-amber-900">Cash collected by staff — awaiting your approval</p>
+ <p className="font-bold text-amber-900 dark:text-amber-200">Cash collected by staff — awaiting your approval</p>
  </div>
- <p className="text-sm text-amber-800">
+ <p className="text-sm text-amber-800 dark:text-amber-300">
  The delivery staff marked the cash ({fmt(order.total)}) as received. Approving records it as paid revenue (GST &amp; service charge). Legacy orders only — new deliveries are marked paid directly by the collecting staff member.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
@@ -984,11 +984,11 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
 
  {order.payment_method === 'cash' && order.payment_status === 'paid' && (
- <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3">
+ <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 dark:border-emerald-800/60 dark:bg-emerald-950/40">
  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
  <div>
- <p className="font-bold text-emerald-900 text-sm">Cash Payment Collected ({fmt(order.total)})</p>
- <p className="text-xs text-emerald-700">Cash payment has been received and verified.</p>
+ <p className="font-bold text-emerald-900 dark:text-emerald-200 text-sm">Cash Payment Collected ({fmt(order.total)})</p>
+ <p className="text-xs text-emerald-700 dark:text-emerald-400">Cash payment has been received and verified.</p>
  </div>
  </div>
  )}
@@ -1000,13 +1000,13 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  {status === 'pending'
   && ['awaiting_payment', 'rejected'].includes(order.payment_status)
   && order.payment_method !== 'cash' && (
- <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4">
- <p className="font-bold text-amber-900">
+ <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/60 dark:bg-amber-950/40">
+ <p className="font-bold text-amber-900 dark:text-amber-200">
  {order.payment_status === 'awaiting_payment'
  ? 'Waiting for customer payment'
  : 'Payment proof rejected — waiting for new screenshot'}
  </p>
- <p className="mt-1 text-sm text-amber-800">
+ <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
  This order was placed with pay-first QR. You can approve and dispatch it
  only after the customer uploads their payment screenshot and it is
  verified.
@@ -1022,9 +1022,9 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  && order.payment_status !== 'cash_pending'
  && !['awaiting_payment', 'rejected'].includes(order.payment_status)
  && order.payment_method !== 'cash' && (
- <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
- <p className="font-bold text-emerald-900">Order Awaiting Approval</p>
- <p className="mt-1 text-sm text-emerald-800">
+ <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/60 dark:bg-emerald-950/40">
+ <p className="font-bold text-emerald-900 dark:text-emerald-200">Order Awaiting Approval</p>
+ <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">
  Approve this order to dispatch it directly to the waiter for serving.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
@@ -1040,14 +1040,14 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
 
  {status === 'ready' && (
- <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 flex items-center gap-2">
+ <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center gap-2">
  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
  <span>✓ Order approved — currently with the waiter to serve.</span>
  </div>
  )}
 
  {order.payment_status === 'rejected' && (
- <div className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">Payment rejected: {order.payment_rejection_reason || 'Please submit payment proof again.'}</div>
+ <div className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">Payment rejected: {order.payment_rejection_reason || 'Please submit payment proof again.'}</div>
  )}
 
  {/* Timeline */}
@@ -1293,7 +1293,7 @@ const BillPreviewModal = ({ order, buildPrintableHtml, onClose, onPrint }) => {
  title={`Bill ${order.id}`}
  srcDoc={fullDoc}
  className="bg-white rounded-md shadow-md border border-gray-200"
- style={{ width: '320px', height: '70vh' }}
+ style={{ width: '100%', maxWidth: '320px', height: '70vh' }}
  />
  </div>
 

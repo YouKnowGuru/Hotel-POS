@@ -7,6 +7,19 @@
     <meta name="theme-color" content="#0f172a" />
     <meta name="description" content="Hotel & Restaurant POS System - Cloud Point of Sale and Kitchen Display System" />
 
+    <!-- ── Font loading: preconnect + preload to prevent FOIT ──
+         Fonts were loaded via CSS @import which blocks rendering.
+         Moving to <link> tags with preconnect allows the browser to
+         fetch stylesheets early and show fallback text immediately
+         (font-display: swap) while web fonts download in parallel. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap"
+          as="style" />
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" />
+
     <!-- PWA Web App Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 

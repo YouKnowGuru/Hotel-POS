@@ -55,10 +55,10 @@ const TermsPage = lazy(() => import('./TermsPage'));
 
 // Loading component for Suspense fallback - Reference Image Design
 const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-    <div className="text-center bg-white rounded-2xl shadow-md p-8">
-      <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4"></div>
-      <p className="text-gray-600 font-medium">Loading...</p>
+  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0B1220]">
+    <div className="text-center bg-white rounded-2xl shadow-md p-8 dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+      <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4 dark:border-slate-700 dark:border-t-indigo-500"></div>
+      <p className="text-gray-600 font-medium dark:text-gray-300">Loading...</p>
     </div>
   </div>
 );
@@ -311,7 +311,7 @@ const App = () => {
             removed because it stacked two nav rows on small screens. */}
         <div className="flex-1 flex flex-col min-w-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{children}</main>
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-auto bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
         </div>
       </div>
     );
@@ -345,7 +345,7 @@ const App = () => {
             removed because it stacked two nav rows on small screens. */}
         <div className="flex-1 flex flex-col min-w-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{renderContent()}</main>
+          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-auto bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>{renderContent()}</main>
         </div>
       </div>
     );

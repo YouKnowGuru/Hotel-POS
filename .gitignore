@@ -36,6 +36,8 @@ Thumbs.db
 .claude/
 .freebuff/
 .mcp.json
+.workbuddy-ai/
+.zcode/
 
 # Cache
 .cache/

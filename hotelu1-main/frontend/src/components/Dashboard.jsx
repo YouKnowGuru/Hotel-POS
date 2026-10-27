@@ -162,7 +162,7 @@ const KpiCard = ({
     <div
       style={{
         ...glassCard,
-        padding: 20,
+        padding: '14px 14px 8px 14px',
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
@@ -183,29 +183,31 @@ const KpiCard = ({
           borderRadius: '16px 16px 0 0',
         }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>      <div
-        style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
             background: accentFrom,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'transform 0.2s ease',
             transform: hovered ? 'scale(1.05)' : 'scale(1)',
+            flexShrink: 0,
           }}
-      >
-          <Icon style={{ width: 20, height: 20, color: '#fff' }} />
+        >
+          <Icon style={{ width: 18, height: 18, color: '#fff' }} />
         </div>
       </div>
-      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', margin: 0, fontFamily: "Inter, system-ui, sans-serif", textTransform: 'uppercase', letterSpacing: '0.02em' }}>
         {label}
       </p>
-      <p style={{ fontSize: 'clamp(19px, 5vw, 26px)', fontWeight: 800, color: 'var(--text-primary)', margin: 0, overflowWrap: 'break-word', lineHeight: 1.15, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <p style={{ fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: 'var(--text-primary)', margin: '2px 0 0 0', overflowWrap: 'break-word', lineHeight: 1.15, fontFamily: "Inter, system-ui, sans-serif" }}>
         {value}
       </p>
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 8, fontSize: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 3, marginTop: 6, fontSize: 11 }}>
         <span
           style={{
             display: 'inline-flex',
@@ -214,20 +216,20 @@ const KpiCard = ({
             fontWeight: 600,
             color: positive ? '#059669' : '#E11D48',
             background: positive ? 'rgba(5,150,105,0.08)' : 'rgba(225,29,72,0.08)',
-            padding: '2px 8px',
+            padding: '2px 6px',
             borderRadius: 9999,
-            fontSize: 11,
+            fontSize: 10,
           }}
         >
-          <TrendIcon style={{ width: 13, height: 13 }} />
+          <TrendIcon style={{ width: 11, height: 11 }} />
           {delta?.value || '0%'}
         </span>
-        <span style={{ color: 'var(--text-muted)', fontFamily: "Inter, system-ui, sans-serif" }}>
+        <span style={{ color: 'var(--text-muted)', fontFamily: "Inter, system-ui, sans-serif", fontSize: 10 }}>
           vs yesterday
         </span>
       </div>
-      <div style={{ marginLeft: -12, marginRight: -12, marginBottom: -8, marginTop: 8, height: 48, minWidth: 0 }}>
-        <ResponsiveContainer width="100%" height={48} minWidth={0}>
+      <div style={{ marginLeft: -10, marginRight: -10, marginBottom: -4, marginTop: 6, height: 40, minWidth: 0 }}>
+        <ResponsiveContainer width="100%" height={40} minWidth={0}>
           <AreaChart data={sparkData}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -250,29 +252,30 @@ const KpiCard = ({
 };
 
 const GlassSection = ({ icon: Icon, title, right, children, className = '' }) => (
-  <div className={className} style={{ ...glassCard, padding: 20, minWidth: 0 }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+  <div className={className} style={{ ...glassCard, padding: 16, minWidth: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
         {Icon && (
           <div
             style={{
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
               borderRadius: 8,
               background: NAVY,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            <Icon style={{ width: 16, height: 16, color: '#fff' }} />
+            <Icon style={{ width: 15, height: 15, color: '#fff' }} />
           </div>
         )}
-        <h3 style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+        <h3 style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 14, fontWeight: 700, margin: 0, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {title}
         </h3>
       </div>
-      {right}
+      {right && <div style={{ flexShrink: 0 }}>{right}</div>}
     </div>
     {children}
   </div>
@@ -626,78 +629,82 @@ const Dashboard = ({ locationSettings }) => {
 
   /* ----------------- render ----------------- */
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1600px] mx-auto">
+    <div className="px-3 sm:px-5 lg:px-8 py-4 sm:py-6 max-w-[1600px] mx-auto">
       {/* ===== Page header ===== */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1
-              style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: 24,
-                fontWeight: 800,
-                letterSpacing: '-0.02em',
-                color: 'var(--text-primary)',
-                margin: 0,
-              }}
-            >
-              Dashboard
-            </h1>
-            {currentUser && (
-              <span
+      <div className="flex flex-col gap-3 mb-5">
+        <div className="flex flex-col xs:flex-row xs:items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 12px',
-                  borderRadius: 9999,
-                  background: 'var(--card-bg)',
+                  fontFamily: 'Inter, system-ui, sans-serif',
+                  fontSize: 'clamp(18px, 5vw, 24px)',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
                   color: 'var(--text-primary)',
-                  border: '1px solid var(--border)',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  fontFamily: "Inter, system-ui, sans-serif"
+                  margin: 0,
                 }}
               >
-                <Building2 style={{ width: 14, height: 14 }} />
-                {getBranchLabel(currentUser)}
-              </span>
-            )}
+                Dashboard
+              </h1>
+              {currentUser && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '3px 10px',
+                    borderRadius: 9999,
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border)',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    fontFamily: "Inter, system-ui, sans-serif",
+                    maxWidth: '200px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <Building2 style={{ width: 12, height: 12, flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{getBranchLabel(currentUser)}</span>
+                </span>
+              )}
+            </div>
+            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0 0', lineHeight: 1.4 }}>
+              {isAdminUser(currentUser)
+                ? isViewingToday
+                  ? 'Full overview — all restaurants and branches.'
+                  : `All locations · ${viewDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}`
+                : isViewingToday
+                  ? `Monitoring ${getBranchLabel(currentUser)} only.`
+                  : `${getBranchLabel(currentUser)} · ${viewDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}`}
+            </p>
           </div>
-          <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
-            {isAdminUser(currentUser)
-              ? isViewingToday
-                ? 'Full overview — all restaurants and branches.'
-                : `All locations · ${viewDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}`
-              : isViewingToday
-                ? `Monitoring ${getBranchLabel(currentUser)} only.`
-                : `${getBranchLabel(currentUser)} · ${viewDate.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}`}
-          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <DatePickerButton value={selectedDate} onChange={setSelectedDate} />
           <button
             onClick={() => navigate('/dinein')}
             className="btn-primary flex items-center gap-2"
-            style={{ background: 'var(--accent)' }}
+            style={{ background: 'var(--accent)', fontSize: 13, padding: '8px 14px', whiteSpace: 'nowrap' }}
           >
-            <Plus style={{ width: 16, height: 16 }} /> New Order
+            <Plus style={{ width: 15, height: 15 }} /> New Order
           </button>
         </div>
       </div>
 
       {/* ===== KPI row ===== */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
         <KpiCard
           icon={ShoppingCart}
           accentFrom={NAVY}
@@ -749,15 +756,15 @@ const Dashboard = ({ locationSettings }) => {
       </div>
 
       {/* ===== Row 2 ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <GlassSection
-          className="lg:col-span-6"
+          className="md:col-span-2 lg:col-span-6"
           icon={Activity}
           title="Sales Overview"
           right={<GlassPill>This Week</GlassPill>}
         >
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+            <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 'clamp(16px, 4vw, 22px)', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               {fmt(thisWeekSales)}
             </p>
             <span
@@ -779,9 +786,9 @@ const Dashboard = ({ locationSettings }) => {
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>vs last week</span>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, marginTop: 2 }}>Total revenue</p>
-          <div style={{ height: 192, minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height={192} minWidth={0}>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, marginTop: 2 }}>Total revenue</p>
+          <div style={{ height: 160, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={160} minWidth={0}>
               <AreaChart data={last7}>
                 <defs>
                   <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
@@ -816,8 +823,8 @@ const Dashboard = ({ locationSettings }) => {
         </GlassSection>
 
         <GlassSection className="lg:col-span-3 min-w-0" icon={ShoppingCart} title="Orders by Type">
-          <div style={{ position: 'relative', height: 192, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ResponsiveContainer width="100%" height={192} minWidth={0}>
+          <div style={{ position: 'relative', height: 160, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ResponsiveContainer width="100%" height={160} minWidth={0}>
               <PieChart>
                 <Pie
                   data={
@@ -949,7 +956,7 @@ const Dashboard = ({ locationSettings }) => {
                       {typeLabel} • {itemCt} items
                     </p>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
                     <StatusPill status={status} />
                     <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, margin: '4px 0 0 0' }}>
                       <Clock style={{ width: 12, height: 12 }} /> {minutes} min
@@ -974,7 +981,7 @@ const Dashboard = ({ locationSettings }) => {
       </div>
 
       {/* ===== Row 3 ===== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4 mb-4 sm:mb-6">
         <GlassSection
           className="lg:col-span-4"
           icon={Flame}
@@ -1009,7 +1016,7 @@ const Dashboard = ({ locationSettings }) => {
                     <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {it.name}
                     </p>
-                    <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+                    <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, flexShrink: 0, marginLeft: 8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {fmt(it.revenue)}
                     </p>
                   </div>
@@ -1048,8 +1055,8 @@ const Dashboard = ({ locationSettings }) => {
             </GlassPill>
           }
         >
-          <div style={{ height: 192, minWidth: 0 }}>
-            <ResponsiveContainer width="100%" height={192} minWidth={0}>
+          <div style={{ height: 160, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height={160} minWidth={0}>
               <BarChart data={peakHours} barCategoryGap={6}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis
@@ -1078,7 +1085,7 @@ const Dashboard = ({ locationSettings }) => {
           </div>
         </GlassSection>
 
-        <GlassSection className="lg:col-span-4" icon={DollarSign} title="Recent Transactions">
+        <GlassSection className="md:col-span-2 lg:col-span-4" icon={DollarSign} title="Recent Transactions">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {recentTx.map((o) => {
               const mins = Math.round((Date.now() - orderTime(o).getTime()) / 60000);
@@ -1123,8 +1130,8 @@ const Dashboard = ({ locationSettings }) => {
                       </p>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+                  <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
+                    <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>
                       {fmt(o.total)}
                     </p>
                     <span
@@ -1154,7 +1161,7 @@ const Dashboard = ({ locationSettings }) => {
       </div>
 
       {/* ===== Bottom KPI strip ===== */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
         <BottomKpi
           icon={Wallet}
           accentFrom="#059669"
@@ -1185,9 +1192,10 @@ const Dashboard = ({ locationSettings }) => {
         />
         {/* Revenue card — navy gradient with gold glow */}
         <div
+          className="col-span-2 sm:col-span-3 lg:col-span-1"
           style={{
             borderRadius: 16,
-            padding: 16,
+            padding: '12px 14px',
             background: NAVY,
             color: '#fff',
             position: 'relative',
@@ -1200,32 +1208,33 @@ const Dashboard = ({ locationSettings }) => {
               position: 'absolute',
               top: -20,
               right: -20,
-              width: 80,
-              height: 80,
+              width: 70,
+              height: 70,
               borderRadius: '50%',
               background: `radial-gradient(circle, rgba(212,160,23,0.3), transparent 70%)`,
             }}
           />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, position: 'relative' }}>
             <div
               style={{
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 borderRadius: 10,
                 background: 'rgba(255,255,255,0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0,
               }}
             >
-              <Crown style={{ width: 20, height: 20, color: GOLD_LIGHT }} />
+              <Crown style={{ width: 18, height: 18, color: GOLD_LIGHT }} />
             </div>
-            <div>
-              <p style={{ fontSize: 10, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1, opacity: 0.85, margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
-                <Sparkles style={{ width: 12, height: 12, display: 'inline', marginRight: 4, verticalAlign: 'middle' }} />
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 9, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 0.8, opacity: 0.85, margin: 0, fontFamily: "Inter, system-ui, sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Sparkles style={{ width: 11, height: 11, display: 'inline', marginRight: 3, verticalAlign: 'middle' }} />
                 Total Revenue ({monthLabel})
               </p>
-              <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+              <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 'clamp(13px, 3vw, 18px)', fontWeight: 700, margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {fmt(thisMonthSales)}
               </p>
             </div>
@@ -1242,18 +1251,18 @@ const BottomKpi = ({ icon: Icon, accentFrom, accentTo, label, value }) => {
     <div
       style={{
         ...glassCard,
-        padding: 16,
+        padding: '12px 14px',
         transition: 'all 0.3s cubic-bezier(0.34,1.56,0.64,1)',
         ...(hovered ? { transform: 'translateY(-2px)', boxShadow: glassCardHover.boxShadow } : {}),
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div
           style={{
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             borderRadius: 10,
             background: accentFrom,
             display: 'flex',
@@ -1261,15 +1270,16 @@ const BottomKpi = ({ icon: Icon, accentFrom, accentTo, label, value }) => {
             justifyContent: 'center',
             transition: 'transform 0.35s cubic-bezier(0.34,1.56,0.64,1)',
             transform: hovered ? 'scale(1.08)' : 'scale(1)',
+            flexShrink: 0,
           }}
         >
-          <Icon style={{ width: 20, height: 20, color: '#fff' }} />
+          <Icon style={{ width: 18, height: 18, color: '#fff' }} />
         </div>
-        <div>
-          <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, color: 'var(--text-muted)', fontWeight: 600, margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.8, color: 'var(--text-muted)', fontWeight: 600, margin: 0, fontFamily: "Inter, system-ui, sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {label}
           </p>
-          <p style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+          <p style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 'clamp(13px, 3vw, 18px)', fontWeight: 700, color: 'var(--text-primary)', margin: '2px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {value}
           </p>
         </div>

@@ -349,7 +349,7 @@ const StaffByBranch = ({ token }) => {
  /* --------------------------- render ---------------------------- */
 
  return (
- <div className="min-h-screen bg-[#F7F7F8] p-4 sm:p-6 lg:p-8">
+ <div className="min-h-0 bg-[#F7F7F8] p-4 sm:p-6 lg:p-8 overflow-x-hidden">
  {/* Header */}
  <header
  className={`mb-6 transition-all duration-700 ${

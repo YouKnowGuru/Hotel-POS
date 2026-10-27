@@ -604,17 +604,17 @@ const getCss = (isDark) => ({
   deleteAction: { background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', color: isDark ? '#94a3b8' : '#64748b' },
 
   /* Row */
-  row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.7)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.3)' : '0 1px 8px rgba(0,0,0,0.03)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)' },
+  row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.7)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.3)' : '0 1px 8px rgba(0,0,0,0.03)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)', flexWrap: 'wrap' },
   rowImgWrap: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: isDark ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)' },
   rowImg: { width: '100%', height: '100%', objectFit: 'cover' },
   rowImgPH: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
   rowInfo: { flex: 1, minWidth: 0 },
   rowInfoTop: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  rowName: { margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b' },
+  rowName: { margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' },
   rowCat: { padding: '2px 8px', borderRadius: 50, fontSize: 10, fontWeight: 700, color: '#fff' },
   rowUnavail: { padding: '2px 8px', borderRadius: 50, fontSize: 10, fontWeight: 700, color: '#e11d48', background: 'rgba(244,63,94,0.08)' },
   rowDesc: { margin: '3px 0 0', fontSize: 12, color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  rowPrice: { fontSize: 16, fontWeight: 900, flexShrink: 0, background: 'linear-gradient(135deg, #f97316, #e11d48)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+  rowPrice: { fontSize: 16, fontWeight: 900, flexShrink: 0, background: 'linear-gradient(135deg, #f97316, #e11d48)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', whiteSpace: 'nowrap' },
   rowActions: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
 
   /* Modal */

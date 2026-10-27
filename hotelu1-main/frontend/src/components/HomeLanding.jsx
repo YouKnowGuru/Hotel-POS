@@ -169,7 +169,7 @@ const HomeLanding = () => {
         }} />
 
         <div className="pw-container relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 xl:gap-16 items-center">
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6 sm:gap-8 lg:gap-10 xl:gap-16 items-center">
 
             {/* Left — conversion copy (children stagger in via .hl-col CSS) */}
             <div className="hl-col">
@@ -235,7 +235,7 @@ const HomeLanding = () => {
 
               {/* Live stat strip — dishes counter is real data; the rest are
                   service promises already published on this site. */}
-              <div className="hl-stats grid grid-cols-3 gap-2.5 sm:gap-3 max-w-md">
+              <div className="hl-stats grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 max-w-md">
                 <div className="hl-stat">
                   <p className="hl-stat-num"><Counter target={Math.max(dishes.length, 1)} /></p>
                   <p className="hl-stat-label">Dishes on menu</p>
@@ -417,7 +417,6 @@ const HomeLanding = () => {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-      {/* ════════════════════════════════════════════════════════
           DISH MARQUEE (decorative ticker — the menu section below is the real thing)
       ════════════════════════════════════════════════════════ */}
       {dishTicker.length > 2 && (
@@ -514,7 +513,7 @@ const HomeLanding = () => {
               <Link
                 key={item.id}
                 to="/order"
-                className="group block rounded-2xl overflow-hidden pw-card pw-fx-tilt pw-fx-sheen pw-reveal"
+                className="group block rounded-2xl overflow-hidden pw-card pw-fx-tilt pw-fx-sheen pw-reveal min-w-0"
                 style={{ transitionDelay: `${Math.min(i, 7) * 55}ms` }}
               >
                 <div className="relative h-32 sm:h-36 overflow-hidden">
@@ -538,11 +537,11 @@ const HomeLanding = () => {
                   {item.description && (
                     <p className="pw-muted text-[12.5px] leading-relaxed line-clamp-2 mb-2.5">{item.description}</p>
                   )}
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-black text-[15px]" style={{ color: '#C2410C' }}>
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <p className="font-black text-[14px] sm:text-[15px] shrink-0 whitespace-nowrap" style={{ color: '#C2410C' }}>
                       {CURRENCY}{Number(item.price).toFixed(2)}
                     </p>
-                    <span className="inline-flex items-center gap-1 text-[12px] font-bold pw-muted transition-colors group-hover:opacity-80">
+                    <span className="inline-flex items-center gap-1 text-[11px] sm:text-[12px] font-bold pw-muted transition-colors group-hover:opacity-80 shrink-0 whitespace-nowrap">
                       Order <ArrowRight size={13} aria-hidden="true" />
                     </span>
                   </div>

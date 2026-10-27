@@ -186,7 +186,7 @@ const PermissionManagementNew = ({ token }) => {
  };
 
  return (
- <div className="min-h-screen bg-[#FFF8F0] p-4 md:p-8">
+ <div className="min-h-0 bg-[#FFF8F0] p-4 md:p-8 overflow-x-hidden">
  <div className="max-w-7xl mx-auto">
  {notification && (
  <Notification

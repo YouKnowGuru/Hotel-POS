@@ -611,7 +611,7 @@ const DeliveryMenu = () => {
                       <ul className="mt-4 space-y-1.5 text-[12.5px]">
                         {(o.items || []).map((it, ii) => (
                           <li key={ii} className="flex justify-between gap-3 pw-muted">
-                            <span className="truncate"><span className="font-bold pw-ink">{it.quantity || it.qty}×</span> {it.name}</span>
+                            <span className="truncate min-w-0 flex-1"><span className="font-bold pw-ink">{it.quantity || it.qty}×</span> {it.name}</span>
                             <span className="tabular-nums shrink-0">{CURRENCY}{Number(it.price).toFixed(2)}</span>
                           </li>
                         ))}
@@ -974,7 +974,7 @@ const DeliveryMenu = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" aria-hidden="true">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" aria-hidden="true">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="rounded-2xl overflow-hidden animate-pulse dm-skel" style={{ height: 260 }} />
             ))}
@@ -991,7 +991,7 @@ const DeliveryMenu = () => {
 
         {/* Dishes grid */}
         {!loading && !error && (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
             {visible.map((item, i) => {
               const qty = cartQty(item.id);
               return (
@@ -1765,13 +1765,13 @@ const checkoutCSS = `
   .pw-root .df-submit{
     position:sticky;bottom:0;z-index:2;
     padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));
-    background:rgba(14,17,25,0.97);
+    background:rgba(255,251,246,0.97);
     backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
     border-top:1px solid var(--pw-line);
   }
-  .pw-root .df-fineprint{ margin-top:10px;text-align:center;font-size:11.5px;line-height:1.6;color:#7A6553; }
+  .pw-root .df-fineprint{ margin-top:10px;text-align:center;font-size:11.5px;line-height:1.6;color:#5C4B3A; }
   .pw-root .df-fineprint a{ color:#C2410C;font-weight:600;text-decoration:underline;text-underline-offset:2px; }
-  .pw-root .df-fineprint a:hover{ color:#FDE68A; }
+  .pw-root .df-fineprint a:hover{ color:#F97316; }
   /* Payment method chooser */
   .pw-root .dm-payset{ border:0;padding:0;margin:26px 0 0; }
   .pw-root .dm-paylegend{
@@ -1816,7 +1816,8 @@ const placedCSS = `
   .dm-trk-badge{
     margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
     font-size:11px;font-weight:800;letter-spacing:0.02em;
-    padding:6px 11px;border-radius:999px;white-space:nowrap;
+    padding:6px 11px;border-radius:999px;
+    max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     background:rgba(63,32,4,0.05);border:1px solid var(--pw-line);color:#5C4B3A;
   }
   .dm-trk-bar{transition:width .6s var(--pw-ease);animation:dmPulseBar 2.4s ease infinite;}

@@ -477,7 +477,7 @@ const Reports = ({ locationSettings }) => {
 
  return (
  <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
+ className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 bg-[#F7F7F8] dark:bg-[#0B1220] overflow-x-hidden transition-opacity duration-500 ${
  isLoaded ? 'opacity-100' : 'opacity-0'
  }`}
  >
@@ -485,7 +485,7 @@ const Reports = ({ locationSettings }) => {
  <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
  <div>
  <div className="flex items-center gap-2 flex-wrap">
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+ <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
  Reports &amp; Analytics
  </h1>
  {includesToday && (
@@ -510,21 +510,21 @@ const Reports = ({ locationSettings }) => {
  </span>
  )}
  </div>
- <p className="text-sm text-gray-500 mt-1">Comprehensive business intelligence</p>
+ <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Comprehensive business intelligence</p>
  </div>
 
  <div className="flex items-center gap-2 flex-wrap">
- <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1 flex items-center gap-1">
+ <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1 flex items-center gap-1 flex-wrap dark:bg-[#141C2E] dark:border-slate-700/60">
  {QUICK_RANGES.map((q) => {
  const active = activeRange === q.id;
  return (
  <button
  key={q.id}
  onClick={() => setQuickDateRange(q.id)}
- className={`px-4 py-1.5 text-xs sm:text-sm font-semibold rounded-full transition-all ${
+ className={`px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold rounded-full whitespace-nowrap transition-all ${
  active
  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/50'
- : 'text-gray-600 hover:text-gray-900'
+ : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
  }`}
  >
  {q.label}
@@ -537,7 +537,7 @@ const Reports = ({ locationSettings }) => {
  className={`w-10 h-10 rounded-full border flex items-center justify-center transition ${
  showFilters
  ? 'bg-indigo-600 text-white border-indigo-500'
- : 'bg-white text-gray-500 border-gray-200 hover:text-gray-800 hover:border-gray-300'
+ : 'bg-white text-gray-500 border-gray-200 hover:text-gray-800 hover:border-gray-300 dark:bg-[#141C2E] dark:text-gray-400 dark:border-slate-700/60 dark:hover:text-gray-200 dark:hover:border-slate-600'
  }`}
  title="Show filters"
  >
@@ -545,7 +545,7 @@ const Reports = ({ locationSettings }) => {
  </button>
  <button
  onClick={handleExport}
- className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300 flex items-center justify-center transition shadow-sm"
+ className="w-10 h-10 rounded-full bg-white border border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300 flex items-center justify-center transition shadow-sm dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-slate-600"
  title="Download report"
  >
  <Download className="w-4 h-4" />
@@ -555,10 +555,10 @@ const Reports = ({ locationSettings }) => {
 
  {/* Report Filters panel — styled per image 3 */}
  {showFilters && (
- <div className="bg-[#FFFAF3] border border-indigo-100 rounded-2xl shadow-sm p-5 mb-5 animate-fade-in">
+ <div className="bg-[#FFFAF3] border border-indigo-100 rounded-2xl shadow-sm p-5 mb-5 animate-fade-in dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex items-center gap-2 mb-4">
- <Filter className="w-4 h-4 text-indigo-500" />
- <h3 className="text-base font-bold text-gray-900">Report Filters</h3>
+ <Filter className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+ <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Report Filters</h3>
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
  <DateInput
@@ -587,7 +587,7 @@ const Reports = ({ locationSettings }) => {
  )}
 
  {/* KPI cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+ <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-5 min-w-0">
  {kpis.map((k, idx) => (
  <KpiCard
  key={k.id}
@@ -603,10 +603,10 @@ const Reports = ({ locationSettings }) => {
  </div>
 
  {/* Revenue Trend + Peak Sales Hours */}
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-5 min-w-0">
  <ChartCard title="Revenue Trend">
  {revenueTrend.length === 0 ? (
- <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+ <div className="h-[260px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
  No sales data for selected period
  </div>
  ) : (
@@ -664,7 +664,7 @@ const Reports = ({ locationSettings }) => {
 
  <ChartCard title="Peak Sales Hours">
  {peakHours.length === 0 ? (
- <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+ <div className="h-[260px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
  No sales data for selected period
  </div>
  ) : (
@@ -704,7 +704,7 @@ const Reports = ({ locationSettings }) => {
  </div>
 
  {/* Order Distribution + Top Selling Items */}
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
  <ChartCard title="Order Distribution">
  {orderDistribution.length === 0 ? (
  <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
@@ -744,8 +744,8 @@ const Reports = ({ locationSettings }) => {
  className="w-2 h-2 rounded-full"
  style={{ background: d.color }}
  />
- <span className="text-gray-600 font-medium">
- {d.name}: <span className="text-gray-900 font-bold">{d.value}</span>
+ <span className="text-gray-600 font-medium dark:text-gray-400">
+ {d.name}: <span className="text-gray-900 font-bold dark:text-gray-100">{d.value}</span>
  </span>
  </div>
  ))}
@@ -756,7 +756,7 @@ const Reports = ({ locationSettings }) => {
 
  <ChartCard title="Top Selling Items">
  {topItems.length === 0 ? (
- <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+ <div className="h-[260px] flex items-center justify-center text-sm text-gray-400 dark:text-gray-500">
  No sales data for selected period
  </div>
  ) : (
@@ -773,19 +773,19 @@ const Reports = ({ locationSettings }) => {
  : 'none',
  }}
  >
- <div className="w-7 h-7 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+ <div className="w-7 h-7 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 dark:bg-indigo-950/40 dark:text-indigo-400">
  {idx + 1}
  </div>
  <div className="flex-1 min-w-0">
  <div className="flex items-baseline justify-between gap-3">
- <p className="text-sm font-bold text-gray-900 truncate">
+ <p className="text-sm font-bold text-gray-900 truncate dark:text-gray-100">
  {it.name}
  </p>
- <p className="text-sm font-bold text-gray-900 shrink-0">
+ <p className="text-sm font-bold text-gray-900 shrink-0 dark:text-gray-100">
  {fmt(it.revenue)}
  </p>
  </div>
- <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+ <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden dark:bg-slate-700">
  <div
  className="h-full bg-indigo-500 transition-all duration-500"
  style={{ width: `${Math.min(100, Math.max(8, pct))}%` }}
@@ -927,26 +927,27 @@ const KpiCard = ({ label, value, delta, color, Icon, delay, isLoaded }) => {
  const positive = delta >= 0;
  return (
  <div
- className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+ className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 sm:p-5 min-w-0 overflow-hidden"
  style={{ animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none' }}
  >
- <div className="flex items-center justify-between mb-2">
- <p className="text-[10px] font-bold tracking-wider text-gray-400">{label}</p>
+ <div className="flex items-center justify-between mb-1.5 sm:mb-2 gap-1">
+ <p className="text-[10px] sm:text-[11px] font-bold tracking-wider text-gray-500 dark:text-slate-400 leading-tight">{label}</p>
  {Icon && (
- <div className={`w-7 h-7 rounded-lg bg-gray-50 ${color} flex items-center justify-center`}>
+ <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gray-50 ${color} flex items-center justify-center shrink-0`}>
  <Icon className="w-3.5 h-3.5" />
  </div>
  )}
- </div>  <p className={`text-lg sm:text-2xl lg:text-3xl font-bold ${color} leading-none`}>{value}</p>
+ </div>
+ <p className={`text-base sm:text-xl lg:text-2xl xl:text-3xl font-bold ${color} leading-tight break-words`} title={String(value)}>{value}</p>
  <div
- className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold ${
+ className={`mt-1.5 sm:mt-2 inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold truncate ${
  positive ? 'text-emerald-500' : 'text-rose-500'
  }`}
  >
  {positive ? (
- <TrendingUp className="w-3.5 h-3.5" />
+ <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
  ) : (
- <TrendingDown className="w-3.5 h-3.5" />
+ <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
  )}
  {positive ? '+' : ''}
  {(delta || 0).toFixed(1)}%
@@ -1141,15 +1142,15 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
 
  if (staffList.length === 0) {
  return (
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="flex items-center justify-between mb-2">
  <div className="flex items-center gap-2">
  <span className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center">
  <Utensils className="w-5 h-5" />
  </span>
  <div>
- <h3 className="text-base font-bold text-gray-900">Kitchen Staff Performance</h3>
- <p className="text-xs text-gray-500">
+ <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Kitchen Staff Performance</h3>
+ <p className="text-xs text-gray-500 dark:text-gray-400">
  Prep-time analytics per kitchen staff member
  </p>
  </div>
@@ -1175,7 +1176,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  const maxOrders = Math.max(...staffList.map((c) => c.ordersPrepared || 0), 1);
 
  return (
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
  <div className="flex items-center gap-2">
@@ -1381,7 +1382,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  tick={{ fontSize: 12, fill: '#475569', fontWeight: 600 }}
  axisLine={false}
  tickLine={false}
- width={90}
+ width={60}
  />
  <RechartsTooltip
  cursor={{ fill: 'rgba(148,163,184,0.10)' }}

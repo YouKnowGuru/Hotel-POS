@@ -88,7 +88,7 @@ const OrderConfirmation = () => {
  <div className="text-center mb-4">
  <p className="text-gray-500 text-sm uppercase tracking-wide mb-2">Your Order Token</p>
  <div className="bg-gradient-to-r from-indigo-600 to-red-100 rounded-xl p-6">
- <p className="text-5xl font-bold text-indigo-600 tracking-wider">{token || order?.token || 'N/A'}</p>
+ <p className="text-3xl sm:text-5xl font-bold text-indigo-600 tracking-wider break-all">{token || order?.token || 'N/A'}</p>
  </div>
  <p className="text-gray-500 text-sm mt-3">Show this token at the counter</p>
  </div>
@@ -98,16 +98,16 @@ const OrderConfirmation = () => {
  <div className="bg-white rounded-2xl p-6 mb-4 shadow-md border border-indigo-100">
  <h2 className="text-lg font-bold text-gray-800 mb-4">Order Details</h2>
  <div className="space-y-3 text-sm">
- <div className="flex justify-between">
- <span className="text-gray-500">Order ID</span>
- <span className="font-semibold text-gray-800">#{orderId || order?.id}</span>
+ <div className="flex justify-between gap-2">
+ <span className="text-gray-500 shrink-0">Order ID</span>
+ <span className="font-semibold text-gray-800 truncate">{orderId || order?.id}</span>
  </div>
- <div className="flex justify-between">
- <span className="text-gray-500">Date & Time</span>
- <span className="font-semibold text-gray-800">{orderDate}</span>
+ <div className="flex justify-between gap-2">
+ <span className="text-gray-500 shrink-0">Date &amp; Time</span>
+ <span className="font-semibold text-gray-800 truncate text-right">{orderDate}</span>
  </div>
- <div className="flex justify-between">
- <span className="text-gray-500">Status</span>
+ <div className="flex justify-between gap-2">
+ <span className="text-gray-500 shrink-0">Status</span>
  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
  Pending
  </span>
@@ -125,12 +125,12 @@ const OrderConfirmation = () => {
  <h2 className="text-lg font-bold text-gray-800 mb-4">Items Ordered</h2>
  <div className="space-y-3">
  {lineItems.map((item, idx) => (
- <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
- <div>
- <p className="font-semibold text-gray-800">{item.name}</p>
- <p className="text-xs text-gray-500">{item.qty || item.quantity}x {fmt(item.price)}</p>
+ <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0 gap-2">
+ <div className="min-w-0">
+ <p className="font-semibold text-gray-800 truncate">{item.name}</p>
+ <p className="text-xs text-gray-500 whitespace-nowrap">{item.qty || item.quantity}x {fmt(item.price)}</p>
  </div>
- <span className="font-semibold text-indigo-600">
+ <span className="font-semibold text-indigo-600 shrink-0 whitespace-nowrap">
  {fmt(item.price * (item.qty || item.quantity || 1))}
  </span>
  </div>
@@ -153,9 +153,9 @@ const OrderConfirmation = () => {
  <span className="text-gray-600">Tax ({enriched.taxPercent}%)</span>
  <span className="font-medium text-gray-800">+{fmt(enriched.taxAmount)}</span>
  </div>
- <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200 mt-2">
- <span className="text-lg font-bold text-gray-800">Total Amount</span>
- <span className="text-2xl font-bold text-indigo-600">{fmt(enriched.total)}</span>
+ <div className="flex justify-between items-center pt-2 border-t-2 border-gray-200 mt-2 gap-2">
+ <span className="text-lg font-bold text-gray-800 shrink-0">Total Amount</span>
+ <span className="text-xl sm:text-2xl font-bold text-indigo-600 truncate whitespace-nowrap" title={fmt(enriched.total)}>{fmt(enriched.total)}</span>
  </div>
  </div>
  )}

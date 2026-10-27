@@ -159,8 +159,8 @@ const AboutPage = () => (
             <dl className="divide-y" style={{ borderColor: 'var(--pw-line)' }}>
               {FACTS.map(({ label, val }) => (
                 <div key={label} className="flex justify-between items-center gap-4 px-6 sm:px-7 py-4">
-                  <dt className="pw-muted text-[14px]">{label}</dt>
-                  <dd className="pw-ink font-extrabold tabular-nums">{val}</dd>
+                  <dt className="pw-muted text-[14px] shrink-0">{label}</dt>
+                  <dd className="pw-ink font-extrabold tabular-nums text-right min-w-0 truncate">{val}</dd>
                 </div>
               ))}
             </dl>

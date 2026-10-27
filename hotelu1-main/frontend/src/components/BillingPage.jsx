@@ -512,21 +512,21 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  /* --------------------------- render --------------------------- */
  return (
  <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
+ className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 bg-[#F7F7F8] dark:bg-[#0B1220] overflow-x-hidden transition-opacity duration-500 ${
  isLoaded ? 'opacity-100' : 'opacity-0'
  }`}
  >
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
  <div>
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Billing</h1>
- <p className="text-sm text-gray-500 mt-1">
+ <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Billing</h1>
+ <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
  Generate bills for completed orders
  </p>
  </div>
  <button
  onClick={handleExport}
- className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-[0.98] text-sm font-medium shadow-sm transition"
+ className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-[0.98] text-sm font-medium shadow-sm transition dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-300 dark:hover:bg-slate-800"
  >
  <Download className="w-4 h-4" />
  Export
@@ -534,17 +534,17 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  </div>
 
  {/* Status tabs */}
- <div className="flex flex-wrap gap-2 mb-5">
+ <div className="flex flex-wrap gap-2 mb-5 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
  {STATUS_TABS.map((t) => {
  const active = activeStatus === t.id;
  return (
  <button
  key={t.id}
  onClick={() => setActiveStatus(t.id)}
- className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+ className={`px-4 sm:px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap shrink-0 ${
  active
  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/60 scale-[1.02]'
- : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
+ : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800 dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-300 dark:hover:border-slate-600'
  }`}
  >
  {t.label}
@@ -565,12 +565,12 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  )}
 
  {/* Main grid */}
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 min-w-0">
  {/* Orders list */}
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="flex items-baseline justify-between mb-4">
- <h2 className="text-lg font-bold text-gray-900">Orders</h2>
- <span className="text-xs text-gray-500">
+ <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Orders</h2>
+ <span className="text-xs text-gray-500 dark:text-gray-400">
  {filteredOrders.length} {filteredOrders.length === 1 ? 'order' : 'orders'}
  </span>
  </div>
@@ -578,10 +578,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1 custom-scroll">
  {filteredOrders.length === 0 ? (
  <div className="text-center py-12">
- <div className="w-12 h-12 mx-auto rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3">
+ <div className="w-12 h-12 mx-auto rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3 dark:bg-slate-800 dark:text-gray-600">
  <Receipt className="w-6 h-6" />
  </div>
- <p className="text-sm text-gray-400">No orders in this category</p>
+ <p className="text-sm text-gray-400 dark:text-gray-500">No orders in this category</p>
  </div>
  ) : (
  filteredOrders.map((order, idx) => {
@@ -597,8 +597,8 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  onClick={() => handleSelectOrder(order)}
  className={`w-full text-left rounded-xl p-4 transition-all duration-200 border ${
  isSel
- ? 'bg-white border-indigo-300 shadow-sm ring-2 ring-indigo-500'
- : 'bg-gray-50 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm'
+ ? 'bg-white border-indigo-300 shadow-sm ring-2 ring-indigo-500 dark:bg-[#1A2336] dark:border-indigo-700'
+ : 'bg-gray-50 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm dark:bg-[#1A2336] dark:hover:bg-[#1E293B] dark:hover:border-slate-600'
  }`}
  style={{
  animation: isLoaded
@@ -637,29 +637,29 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  {/* Invoice panel */}
  <div
  ref={billRef}
- className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[60vh]"
+ className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col min-h-[60vh] dark:bg-[#141C2E] dark:border-slate-700/60"
  >
  {!selectedOrder ? (
  <div className="flex-1 flex flex-col items-center justify-center p-10 text-center">
- <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 animate-pulse-soft">
+ <div className="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 animate-pulse-soft dark:bg-indigo-950/40 dark:text-indigo-400">
  <Receipt className="w-7 h-7" />
  </div>
- <p className="text-gray-800 font-semibold">
+ <p className="text-gray-800 font-semibold dark:text-gray-200">
  Select an order to view invoice
  </p>
- <p className="text-sm text-gray-400 mt-1">
+ <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
  Choose an order from the list to generate the invoice
  </p>
  </div>
  ) : (
  <>
- <div className="p-5 sm:p-6 border-b border-gray-100">
+ <div className="p-5 sm:p-6 border-b border-gray-100 dark:border-slate-700/60">
  <div className="flex items-start justify-between gap-3">
  <div>
- <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+ <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
  Invoice #{selectedOrder.id}
  </h3>
- <p className="text-xs text-gray-500 mt-1">
+ <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
  {selectedOrder.table_name
  ? `Table ${tableShort(selectedOrder.table_name)} · `
  : ''}
@@ -683,19 +683,19 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  style={{ animationDelay: `${idx * 40}ms` }}
  >
  <div className="flex items-start gap-3 min-w-0">
- <span className="text-sm font-semibold text-gray-700 mt-0.5 shrink-0">
+ <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-0.5 shrink-0">
  {item.quantity}x
  </span>
  <div className="min-w-0">
- <p className="text-sm font-semibold text-gray-900 truncate">
+ <p className="text-sm font-semibold text-gray-900 truncate dark:text-gray-100">
  {item.name}
  </p>
- <p className="text-xs text-gray-400 mt-0.5">
+ <p className="text-xs text-gray-400 mt-0.5 dark:text-gray-500">
  {fmt(item.price)} each
  </p>
  </div>
  </div>
- <p className="text-sm font-semibold text-gray-900 shrink-0">
+ <p className="text-sm font-semibold text-gray-900 shrink-0 dark:text-gray-100">
  {fmt(item.totalPrice)}
  </p>
  </div>
@@ -703,10 +703,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  </div>
  </div>
 
- <div className="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 space-y-2">
+ <div className="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 space-y-2 dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex items-center justify-between text-sm">
- <span className="text-gray-500">Subtotal</span>
- <span className="text-gray-900 font-medium">
+ <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+ <span className="text-gray-900 font-medium dark:text-gray-100">
  {fmt(currentOrderTotals.subtotal)}
  </span>
  </div>
@@ -736,11 +736,11 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  )}
  {/* Service Charge — separate from GST */}
  <div className="flex items-center justify-between text-sm">
- <span className="flex items-center gap-1.5 font-semibold" style={{ color: '#1a5c3e' }}>
+ <span className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-300">
  <Percent className="w-3.5 h-3.5" />
  Service Charge ({SERVICE_CHARGE_PERCENT}%)
  </span>
- <span className="font-semibold" style={{ color: '#1a5c3e' }}>
+ <span className="font-semibold text-emerald-700 dark:text-emerald-300">
  +{fmt(currentOrderTotals.serviceCharge)}
  </span>
  </div>
@@ -752,9 +752,9 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  {fmt(currentOrderTotals.tax)}
  </span>
  </div>
- <div className="flex items-center justify-between pt-2 border-t border-gray-200">
- <span className="text-base font-bold text-gray-900">Grand Total</span>
- <span className="text-lg font-bold text-indigo-500">
+ <div className="flex items-center justify-between pt-2 border-t border-gray-200 gap-2">
+ <span className="text-base font-bold text-gray-900 shrink-0">Grand Total</span>
+ <span className="text-lg font-bold text-indigo-500 truncate whitespace-nowrap" title={fmt(currentOrderTotals.total)}>
  {fmt(currentOrderTotals.total)}
  </span>
  </div>
@@ -763,7 +763,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex items-center gap-3">
  <button
  onClick={handlePrintBill}
- className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition active:scale-[0.98]"
+ className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
  >
  <Printer className="w-4 h-4" />
  Print
@@ -784,10 +784,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  }}
  className={`flex-[1.4] inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white shadow-md transition active:scale-[0.98] ${
  isSelectedPaid
- ? 'bg-gray-300 cursor-not-allowed shadow-none'
+ ? 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-slate-700'
  : canProcessPayment
  ? 'bg-indigo-600 hover:shadow-lg hover:shadow-indigo-600/60'
- : 'bg-gray-300 cursor-not-allowed shadow-none'
+ : 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-slate-700'
  }`}
  title={!canProcessPayment ? 'Only Admin or Manager can process payments' : undefined}
  >
@@ -918,9 +918,9 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
  /* ---------- Render ---------- */
  return (
  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
- <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-6 sm:p-6 animate-modal-in">
- <h3 className="text-base font-bold text-gray-900">Payment</h3>
- <p className="text-2xl font-bold text-indigo-500 mt-1 mb-5">{fmt(amount)}</p>
+ <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-6 sm:p-6 animate-modal-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ <h3 className="text-base font-bold text-gray-900 dark:text-gray-100">Payment</h3>
+ <p className="text-xl sm:text-2xl font-bold text-indigo-500 mt-1 mb-5 break-words">{fmt(amount)}</p>
 
  <div className="space-y-2.5">
  {methods.map(({ id, label, sub, Icon, color, bg }) => (
@@ -928,7 +928,7 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
  key={id}
  disabled={paying}
  onClick={() => handlePick(id)}
- className={`w-full inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 ${bg} text-gray-800 font-medium text-sm transition active:scale-[0.99] disabled:opacity-60`}
+ className={`w-full inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 ${bg} text-gray-800 font-medium text-sm transition active:scale-[0.99] disabled:opacity-60 dark:bg-[#1A2336] dark:text-gray-200`}
  >
  <Icon className={`w-5 h-5 ${color} shrink-0`} />
  <span className="flex-1 text-left">
@@ -943,7 +943,7 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
  <button
  onClick={onCancel}
  disabled={paying}
- className="w-full mt-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 text-sm font-medium transition disabled:opacity-60"
+ className="w-full mt-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 text-sm font-medium transition disabled:opacity-60 dark:bg-[#1A2336] dark:hover:bg-slate-800 dark:text-gray-400"
  >
  Cancel
  </button>
@@ -954,12 +954,12 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
 
 const SuccessModal = ({ amount, fmt }) => (
  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
- <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center animate-modal-in">
+ <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center animate-modal-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  <div className="w-16 h-16 rounded-full bg-emerald-500 mx-auto flex items-center justify-center animate-check-pop">
  <CheckCircle2 className="w-9 h-9 text-white" strokeWidth={2.5} />
  </div>
- <p className="text-base font-bold text-gray-900 mt-4">Payment Successful!</p>
- <p className="text-sm text-gray-500 mt-1">{fmt(amount)}</p>
+ <p className="text-base font-bold text-gray-900 dark:text-gray-100 mt-4">Payment Successful!</p>
+ <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{fmt(amount)}</p>
  </div>
  </div>
 );

@@ -241,23 +241,23 @@ const SettingsPage = () => {
 
  return (
  <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
+ className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 bg-[#F7F7F8] dark:bg-[#0B1220] transition-opacity duration-500 overflow-x-hidden ${
  isLoaded ? 'opacity-100' : 'opacity-0'
  }`}
  >
  {/* Header */}
  <div className="mb-5">
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">System Settings</h1>
- <p className="text-sm text-gray-500 mt-1">
+ <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">System Settings</h1>
+ <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
  Configure parameters, printer variables, taxation settings, and global
  defaults
  </p>
  </div>
 
  {/* Two-pane layout */}
- <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
+ <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-w-0">
  {/* Tabs panel */}
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 h-fit">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 h-fit dark:bg-[#141C2E] dark:border-slate-700/60">
  <ul className="space-y-1.5">
  {TABS.map((t) => {
  const active = activeTab === t.id;
@@ -268,15 +268,15 @@ const SettingsPage = () => {
  onClick={() => setActiveTab(t.id)}
  className={`w-full flex items-start gap-3 px-3 py-3 rounded-2xl text-left transition-all ${
  active
- ? 'bg-indigo-50 border border-indigo-100'
- : 'border border-transparent hover:bg-indigo-50/40'
+ ? 'bg-indigo-50 border border-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-800/60'
+ : 'border border-transparent hover:bg-indigo-50/40 dark:hover:bg-white/5'
  }`}
  >
  <span
  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
  active
  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/60'
- : 'bg-gray-100 text-gray-500'
+ : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400'
  }`}
  >
  <Icon className="w-4 h-4" />
@@ -284,7 +284,7 @@ const SettingsPage = () => {
  <span className="flex-1 min-w-0">
  <span
  className={`block text-sm font-semibold ${
- active ? 'text-indigo-600' : 'text-gray-800'
+ active ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'
  }`}
  >
  {t.label}
@@ -301,7 +301,7 @@ const SettingsPage = () => {
  </div>
 
  {/* Tab content */}
- <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+ <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6 min-w-0 dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="flex items-center gap-2 mb-5">
  <SettingsIcon className="w-3.5 h-3.5 text-gray-400" />
  <h2 className="text-[11px] font-bold tracking-widest text-gray-500 uppercase">
@@ -615,18 +615,18 @@ const PaymentsForm = () => {
 
  return (
  <div>
- <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
- <p className="font-bold text-emerald-900">Customer checkout payment QR</p>
- <p className="mt-1 text-sm text-emerald-800">Upload the QR image customers should scan before placing an order. This image is shown on every QR-menu checkout.</p>
+ <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-800/60 dark:bg-emerald-950/40">
+ <p className="font-bold text-emerald-900 dark:text-emerald-200">Customer checkout payment QR</p>
+ <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">Upload the QR image customers should scan before placing an order. This image is shown on every QR-menu checkout.</p>
  <div className="mt-3 flex flex-col sm:flex-row gap-4 sm:items-center">
- <div className="h-28 w-28 rounded-xl border border-emerald-200 bg-white flex items-center justify-center overflow-hidden">
- {uploadedQr ? <img src={uploadedQr} alt="Uploaded payment QR" className="h-full w-full object-contain p-1" /> : <span className="text-xs text-gray-400 text-center px-2">No QR uploaded</span>}
+ <div className="h-28 w-28 rounded-xl border border-emerald-200 bg-white flex items-center justify-center overflow-hidden dark:border-emerald-800/60 dark:bg-slate-800">
+ {uploadedQr ? <img src={uploadedQr} alt="Uploaded payment QR" className="h-full w-full object-contain p-1" /> : <span className="text-xs text-gray-400 text-center px-2 dark:text-gray-500">No QR uploaded</span>}
  </div>
- <div className="flex-1">
+ <div className="flex-1 min-w-0">
  <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => uploadPaymentQr(e.target.files?.[0])}
- className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:font-semibold file:text-white" />
- <p className="mt-2 text-xs text-gray-500">PNG, JPG, or WebP; maximum 45 KB. Use a clean, square QR image.</p>
- {qrMessage && <p className={`mt-2 text-sm ${qrMessage.startsWith('Payment QR uploaded') ? 'text-emerald-700' : 'text-rose-600'}`}>{qrSaving ? 'Uploading…' : qrMessage}</p>}
+ className="block w-full text-sm text-gray-600 dark:text-gray-300 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:font-semibold file:text-white" />
+ <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">PNG, JPG, or WebP; maximum 45 KB. Use a clean, square QR image.</p>
+ {qrMessage && <p className={`mt-2 text-sm ${qrMessage.startsWith('Payment QR uploaded') ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>{qrSaving ? 'Uploading…' : qrMessage}</p>}
  </div>
  </div>
  </div>

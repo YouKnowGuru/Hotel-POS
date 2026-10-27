@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap");
+/* Google Fonts (Inter + Playfair Display) are now loaded via <link>
+   tags in public/index.html with preconnect + preload for faster,
+   non-blocking font loading with font-display: swap. */
 @import "./styles/3d-animations.css";
 @tailwind base;
 @tailwind components;
@@ -1324,6 +1326,132 @@ html.dark .badge-danger {
   color: #F87171;
 }
 
+/* ── Deep colored text fixes (Dark) ──────────────────────────────────
+   Tailwind -900/-800/-700 text shades used on tinted backgrounds
+   (amber-900 on amber-50, emerald-900 on emerald-50, etc.) become
+   nearly invisible in dark mode because the background goes dark
+   but the text stays dark. Map them to bright, readable variants. */
+html.dark .text-amber-900,
+html.dark .text-amber-800,
+html.dark .text-amber-700 {
+  color: #FCD34D !important;
+}
+html.dark .text-emerald-900,
+html.dark .text-emerald-800,
+html.dark .text-emerald-700 {
+  color: #6EE7B7 !important;
+}
+html.dark .text-blue-900,
+html.dark .text-blue-800,
+html.dark .text-blue-700 {
+  color: #93C5FD !important;
+}
+html.dark .text-indigo-900,
+html.dark .text-indigo-800,
+html.dark .text-indigo-700 {
+  color: #A5B4FC !important;
+}
+html.dark .text-rose-900,
+html.dark .text-rose-800,
+html.dark .text-rose-700 {
+  color: #FECACA !important;
+}
+html.dark .text-purple-900,
+html.dark .text-purple-800,
+html.dark .text-purple-700 {
+  color: #D8B4FE !important;
+}
+html.dark .text-teal-900,
+html.dark .text-teal-800,
+html.dark .text-teal-700 {
+  color: #5EEAD4 !important;
+}
+html.dark .text-cyan-900,
+html.dark .text-cyan-800,
+html.dark .text-cyan-700 {
+  color: #67E8F9 !important;
+}
+html.dark .text-orange-900,
+html.dark .text-orange-800,
+html.dark .text-orange-700 {
+  color: #FDBA74 !important;
+}
+html.dark .text-green-900,
+html.dark .text-green-800,
+html.dark .text-green-700 {
+  color: #6EE7B7 !important;
+}
+html.dark .text-yellow-900,
+html.dark .text-yellow-800,
+html.dark .text-yellow-700 {
+  color: #FDE68A !important;
+}
+html.dark .text-sky-900,
+html.dark .text-sky-800,
+html.dark .text-sky-700 {
+  color: #7DD3FC !important;
+}
+html.dark .text-violet-900,
+html.dark .text-violet-800,
+html.dark .text-violet-700 {
+  color: #C4B5FD !important;
+}
+html.dark .text-fuchsia-900,
+html.dark .text-fuchsia-800,
+html.dark .text-fuchsia-700 {
+  color: #E879F9 !important;
+}
+html.dark .text-lime-900,
+html.dark .text-lime-800,
+html.dark .text-lime-700 {
+  color: #BEF264 !important;
+}
+html.dark .text-pink-900,
+html.dark .text-pink-800,
+html.dark .text-pink-700 {
+  color: #F9A8D4 !important;
+}
+
+/* ── Deep colored background tints for alert/notice boxes (Dark) ────
+   Boxes using bg-amber-50/bg-emerald-50/etc. with dark text on top
+   need their backgrounds to remain subtly visible in dark mode.
+   The generic bg-* overrides above already handle the background,
+   but the combined text + border needs to look intentional. */
+html.dark .bg-amber-50,
+html.dark [class*="bg-amber-50\\/"] {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+html.dark .bg-emerald-50,
+html.dark [class*="bg-emerald-50\\/"] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+html.dark .bg-green-50,
+html.dark [class*="bg-green-50\\/"] {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+/* ── Border tints for colored boxes (Dark) ─────────────────────────── */
+html.dark .border-amber-300,
+html.dark .border-amber-400 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+html.dark .border-emerald-300,
+html.dark .border-emerald-400 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+html.dark .border-green-300,
+html.dark .border-green-400 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ── Service Charge inline color fix (Dark) ──────────────────────────
+   BillingPage uses inline style color: '#1a5c3e' for service charge
+   labels — invisible on dark cards. Override via a utility hook. */
+html.dark [style*="color: #1a5c3e"],
+html.dark [style*="color:#1a5c3e"] {
+  color: #6EE7B7 !important;
+}
+
 /* ==========================================================================
    GLOBAL TRANSITIONS
    ========================================================================== */
@@ -1356,6 +1484,14 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Ensure the main content scroll container works on mobile.
+   iOS Safari needs explicit touch scrolling + a concrete height
+   boundary on the scroll element, not just overflow-y:auto. */
+main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
+}
+
 /* Larger, more touch-friendly tap targets on phones (min 44px per WCAG). */
 @media (max-width: 640px) {
   button,
@@ -1368,6 +1504,146 @@ body {
   select,
   textarea {
     font-size: 16px; /* prevents iOS auto-zoom on focus */
+  }
+}
+
+/* ── Responsive overflow prevention ───────────────────────────────────
+   Cards, grid items, and flex children must never force the page
+   wider than the viewport. min-width:0 is the critical fix —
+   without it, flex/grid children with long text content (order IDs,
+   currency amounts, item names) expand to their intrinsic width
+   and cause horizontal overflow on phones. */
+
+/* Every grid and flex child should allow shrinking below content width */
+.grid > *,
+.flex > * {
+  min-width: 0;
+}
+
+/* Cards with long content must break words, not overflow */
+.kpi-card,
+.glass-card,
+.feature-card,
+.glass,
+.glass-heavy {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Tables: wrap in scrollable container on mobile instead of overflowing */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+  /* Keep horizontal layout for small tables (status pills, etc.) */
+  thead {
+    display: table;
+    width: 100%;
+  }
+  tbody {
+    display: table;
+    width: 100%;
+  }
+  tr {
+    display: table-row;
+  }
+  th,
+  td {
+    display: table-cell;
+  }
+  /* But for wide data tables, let them scroll horizontally */
+  .overflow-x-auto table,
+  table.min-w-full {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+  }
+  .overflow-x-auto thead,
+  .overflow-x-auto tbody,
+  .overflow-x-auto tr,
+  .overflow-x-auto th,
+  .overflow-x-auto td {
+    display: revert;
+  }
+}
+
+/* Prevent flex items from overflowing on mobile */
+@media (max-width: 640px) {
+  .flex {
+    flex-wrap: wrap;
+  }
+  /* But don't break layouts that intentionally use flex-nowrap (tabs, pills) */
+  .flex.flex-nowrap,
+  .overflow-x-auto .flex,
+  .scrollbar-hide .flex {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Ensure modal and card content doesn't exceed viewport on mobile */
+@media (max-width: 640px) {
+  .fixed.inset-0 {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .fixed.inset-0 > div {
+    max-width: calc(100vw - 2rem) !important;
+    max-height: calc(100vh - 2rem) !important;
+  }
+}
+
+/* KPI/stat number text should not overflow card on small screens */
+@media (max-width: 480px) {
+  .text-2xl,
+  .text-3xl,
+  .text-4xl {
+    word-break: break-all;
+  }
+}
+
+/* Status tab buttons: prevent text from forcing card width */
+@media (max-width: 640px) {
+  .grid > button > span,
+  .grid > button > div {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Two-pane settings layout: stack vertically on mobile */
+@media (max-width: 1023px) {
+  .lg\:grid-cols-\[320px_1fr\] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Chart containers must not overflow */
+.recharts-responsive-container,
+.recharts-wrapper {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Prevent horizontal overflow from negative margins */
+@media (max-width: 640px) {
+  .-mx-3,
+  .-mx-4,
+  .-mx-5,
+  .-mx-6,
+  .-mx-8 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 }
 
@@ -1392,6 +1668,35 @@ body {
   display: none;
 }
 
+/* ── Scrollbar None (alias for scrollbar-hide) ────────────────────── */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Custom Scroll (smooth styled scrollbar) ──────────────────────── */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
 /* ==========================================================================
    ANIMATIONS
    ========================================================================== */
@@ -1409,6 +1714,11 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideInLeft {
@@ -1465,6 +1775,10 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.4s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.3s ease forwards;
 }
 
 .animate-slide-in-left {

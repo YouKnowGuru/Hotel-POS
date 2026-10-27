@@ -139,7 +139,7 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
  const currentStatus = statusConfig[order.status] || statusConfig.pending;
 
  return (
- <div className="w-full max-w-md mx-auto">
+ <div className="w-full max-w-md mx-auto px-4">
  {/* Ready banner — shows for 8s after the kitchen marks the order ready */}
  {readyBanner && (
  <div className="mb-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white p-4 shadow-lg flex items-center gap-3 animate-pulse">
@@ -213,11 +213,11 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
  <h4 className="font-bold text-gray-800 mb-3 text-lg">Your Order</h4>
  <div className="space-y-2">
  {(order.items || []).map((item, idx) => (
- <div key={idx} className="flex justify-between items-center border-b pb-2 last:border-b-0">
- <span className="text-gray-700">
+ <div key={idx} className="flex justify-between items-center border-b pb-2 last:border-b-0 gap-2">
+ <span className="text-gray-700 min-w-0 flex-1 truncate">
  <span className="font-semibold">{item.qty || item.quantity}x</span> {item.name}
  </span>
- <span className="text-gray-600 font-semibold">{fmt(item.price * (item.qty || item.quantity))}</span>
+ <span className="text-gray-600 font-semibold shrink-0 whitespace-nowrap">{fmt(item.price * (item.qty || item.quantity))}</span>
  </div>
  ))}
  </div>

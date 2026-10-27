@@ -242,7 +242,7 @@ const InventoryManagement = () => {
 
  /* ---------------- render ---------------- */
  return (
- <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] px-4 sm:px-6 lg:px-8 py-6 text-gray-800 dark:text-slate-100 transition-colors duration-200">
+ <div className="min-h-0 bg-[#F8FAFC] dark:bg-[#0B1220] px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-gray-800 dark:text-slate-100 transition-colors duration-200 overflow-x-hidden">
  {notification && (
  <Notification
  message={notification.message}
@@ -254,7 +254,7 @@ const InventoryManagement = () => {
  {/* Header */}
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
  <div>
- <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+ <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
  Inventory Management
  </h1>
  <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">
@@ -270,7 +270,7 @@ const InventoryManagement = () => {
  </div>
 
  {/* Summary cards — Unified 5-Column Responsive Grid */}
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3.5 mb-6 min-w-0">
  <SummaryCard
  icon={Package}
  iconBg="bg-indigo-50 dark:bg-indigo-950/40"
@@ -336,7 +336,7 @@ const InventoryManagement = () => {
  </div>
 
  {/* Category Pills */}
- <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none">
+ <div className="flex items-center gap-1.5 overflow-x-auto pb-1 w-full md:w-auto scrollbar-hide -mx-1 px-1">
  {CATEGORY_LIST.map((cat) => {
  const active = selectedCategory === cat;
  return (
@@ -370,7 +370,7 @@ const InventoryManagement = () => {
  </p>
  </div>
  ) : (
- <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
  {filtered.map((item) => (
  <InventoryCard
  key={item.id}
@@ -429,7 +429,7 @@ const InventoryManagement = () => {
  </div>
 
  {/* Stock Fields */}
- <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+ <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
  <div>
  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">
  Initial Stock *
@@ -493,7 +493,7 @@ const InventoryManagement = () => {
  </div>
 
  {/* Prices */}
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  <div>
  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">
  Selling Price / Unit
@@ -532,7 +532,7 @@ const InventoryManagement = () => {
  GST Input (Purchase Tax)
  </span>
  </div>
- <div className="grid grid-cols-2 gap-3">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
  <div>
  <label className="block text-xs font-semibold text-gray-600 dark:text-slate-300 mb-1">
  GST Rate on Purchase (%)
@@ -602,22 +602,22 @@ const InventoryManagement = () => {
 /* ─── SummaryCard ─── */
 const SummaryCard = ({ icon: Icon, iconBg, iconColor, label, value, valueClass = '', highlight = false, sub }) => (
  <div
- className={`rounded-2xl bg-white dark:bg-slate-800/90 border p-4 shadow-sm hover:shadow-md transition flex items-start gap-3.5 ${
+ className={`rounded-2xl bg-white dark:bg-slate-800/90 border p-3 sm:p-4 shadow-sm hover:shadow-md transition flex items-start gap-2.5 sm:gap-3.5 overflow-hidden ${
  highlight
  ? 'border-rose-200 dark:border-rose-800/60 bg-rose-50/20 dark:bg-rose-950/20'
  : 'border-gray-100 dark:border-slate-700/80'
  }`}
  >
- <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${iconBg}`}>
- <Icon className={`w-5 h-5 ${iconColor}`} />
- </div>  <div className="min-w-0 flex-1">
-  <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-400 font-bold leading-snug">
+ <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${iconBg}`}>
+ <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${iconColor}`} />
+ </div>  <div className="min-w-0 flex-1 overflow-hidden">
+  <p className="text-[9px] sm:text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-400 font-bold leading-snug truncate">
   {label}
   </p>
-  <p className={`text-lg sm:text-2xl font-extrabold mt-0.5 leading-tight break-words ${valueClass || 'text-gray-900 dark:text-white'}`}>
+  <p className={`text-base sm:text-2xl font-extrabold mt-0.5 leading-tight break-words ${valueClass || 'text-gray-900 dark:text-white'}`}>
   {value}
   </p>
-  {sub && <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5 leading-snug">{sub}</p>}
+  {sub && <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-slate-400 mt-0.5 leading-snug truncate">{sub}</p>}
   </div>
  </div>
 );
@@ -665,7 +665,7 @@ const InventoryCard = ({
  const totalItemGst = gstPerUnit * current;
 
  return (
- <div className="bg-white dark:bg-slate-800/90 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm hover:shadow-md transition p-4 flex flex-col justify-between">
+ <div className="bg-white dark:bg-slate-800/90 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm hover:shadow-md transition p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
  <div>
  {/* Top title & badge */}
  <div className="flex items-start justify-between gap-2 mb-3">
@@ -679,7 +679,7 @@ const InventoryCard = ({
  </span>
  {supplier && (
  <span
- className="text-[10px] text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-slate-700/60 px-2 py-0.5 rounded-full border border-gray-100 dark:border-slate-600 truncate max-w-[130px]"
+ className="text-[10px] text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-slate-700/60 px-2 py-0.5 rounded-full border border-gray-100 dark:border-slate-600 truncate max-w-[100px] sm:max-w-[130px]"
  title={`Supplier: ${supplier}`}
  >
  {supplier}

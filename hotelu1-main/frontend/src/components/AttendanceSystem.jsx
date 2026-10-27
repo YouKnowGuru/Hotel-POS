@@ -183,20 +183,20 @@ function LiveClockWidget({
   const scfg = myStatus ? STATUS_CONFIG[myStatus.status] : null;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1E36] via-[#162B4D] to-[#0B1220] text-white p-6 sm:p-8 shadow-xl border border-blue-900/40">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1E36] via-[#162B4D] to-[#0B1220] text-white p-4 sm:p-6 lg:p-8 shadow-xl border border-blue-900/40">
       {/* Decorative ambient background glows */}
       <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6">
         {/* Left Column: Live Time & Date */}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1.5 text-blue-300 text-xs font-semibold tracking-wider uppercase">
             <Timer className="w-4 h-4 text-amber-400" />
             <span>Real-Time Attendance Clock</span>
           </div>
 
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight tabular-nums font-mono drop-shadow-sm">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight tabular-nums font-mono drop-shadow-sm break-all">
             {time.toLocaleTimeString('en-IN', {
               hour: '2-digit',
               minute: '2-digit',
@@ -249,7 +249,7 @@ function LiveClockWidget({
         </div>
 
         {/* Right Column: Shift Controls */}
-        <div className="flex flex-col gap-3 min-w-[280px] max-w-md w-full bg-[#132043] border border-white/10 p-5 rounded-2xl">
+        <div className="flex flex-col gap-3 w-full lg:min-w-[280px] lg:max-w-md bg-[#132043] border border-white/10 p-4 sm:p-5 rounded-2xl">
           {!isIn ? (
             <>
               <div>
@@ -365,22 +365,22 @@ function LiveClockWidget({
 /* ── Modern Stat Card ──────────────────────────── */
 function StatCard({ icon: Icon, label, value, color, bgLight, subtitle }) {
   return (
-    <div className="bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all">
-      <div className="flex items-center gap-3.5">
+    <div className="bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all overflow-hidden">
+      <div className="flex items-center gap-2.5 sm:gap-3.5">
         <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${bgLight}`}
+          className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${bgLight}`}
         >
-          <Icon className="w-6 h-6" style={{ color }} />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" style={{ color }} />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight">
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <p className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white leading-tight break-words">
             {value}
           </p>
-          <p className="text-xs font-medium text-gray-500 dark:text-slate-400 truncate mt-0.5">
+          <p className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-slate-400 truncate mt-0.5">
             {label}
           </p>
           {subtitle && (
-            <p className="text-[11px] text-gray-400 dark:text-slate-500 truncate mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-gray-400 dark:text-slate-500 truncate mt-0.5">
               {subtitle}
             </p>
           )}
@@ -407,8 +407,8 @@ function AttendanceTable({ records, isAdmin, onApprove, onEdit, onDelete }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs sm:text-sm">
+    <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
+      <table className="w-full min-w-[700px] text-left text-xs sm:text-sm">
         <thead>
           <tr className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-gray-200/80 dark:border-slate-800">
             <th className="py-3 px-4">Date</th>
@@ -566,11 +566,11 @@ function RecordModal({ record, staff, onClose, onSave }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 animate-fade-in overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#111C35] border border-gray-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-[#111C35] border border-gray-200 dark:border-slate-800 rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
@@ -1272,15 +1272,15 @@ const AttendanceSystem = ({ currentUser }) => {
     });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-0 bg-[#F8FAFC] dark:bg-[#0B1220] p-3 sm:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-200 overflow-x-hidden">
       {/* ── Page Header ── */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm">
-              <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+      <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 mb-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm shrink-0">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
               Attendance &amp; Shift Management
             </h1>
           </div>
@@ -1296,7 +1296,7 @@ const AttendanceSystem = ({ currentUser }) => {
               <button
                 onClick={handleExportExcel}
                 title="Export Formatted Excel (.xlsx)"
-                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/60 text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/60 text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="hidden sm:inline">Export Excel</span>
@@ -1305,7 +1305,7 @@ const AttendanceSystem = ({ currentUser }) => {
               <button
                 onClick={exportCSV}
                 title="Export Clean CSV"
-                className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <Download className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 <span className="hidden sm:inline">Export CSV</span>
@@ -1313,7 +1313,7 @@ const AttendanceSystem = ({ currentUser }) => {
 
               <button
                 onClick={() => setModal({})}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-900/30 transition active:scale-[0.98] cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-900/30 transition active:scale-[0.98] cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Add Record
@@ -1324,10 +1324,10 @@ const AttendanceSystem = ({ currentUser }) => {
       </div>
 
       {/* ── Navigation Tabs ── */}
-      <div className="flex items-center gap-2 mb-6 border-b border-gray-200/80 dark:border-slate-800 pb-3 flex-wrap">
+      <div className="flex items-center gap-2 mb-6 border-b border-gray-200/80 dark:border-slate-800 pb-3 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
         <button
           onClick={() => setTab('dashboard')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             tab === 'dashboard'
               ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
               : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
@@ -1340,7 +1340,7 @@ const AttendanceSystem = ({ currentUser }) => {
         {isAdmin && (
           <button
             onClick={() => setTab('today')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
               tab === 'today'
                 ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
                 : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
@@ -1353,7 +1353,7 @@ const AttendanceSystem = ({ currentUser }) => {
 
         <button
           onClick={() => setTab('records')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer ${
+          className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             tab === 'records'
               ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
               : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
@@ -1378,7 +1378,7 @@ const AttendanceSystem = ({ currentUser }) => {
           />
 
           {/* Month Selector Bar */}
-          <div className="flex items-center justify-between bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3.5 px-4 shadow-sm">
+          <div className="flex items-center justify-between bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-3.5 px-3 sm:px-4 shadow-sm">
             <div className="flex items-center gap-2">
               <button
                 onClick={prevMonth}
@@ -1402,7 +1402,7 @@ const AttendanceSystem = ({ currentUser }) => {
           </div>
 
           {/* Stat Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
             <StatCard
               icon={CheckCircle2}
               label="Present Days"
@@ -1466,7 +1466,7 @@ const AttendanceSystem = ({ currentUser }) => {
       {/* ── TAB 2: TODAY'S LIVE ROSTER (ADMIN) ── */}
       {tab === 'today' && isAdmin && (
         <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm animate-fade-in">
-          <div className="p-4 sm:p-5 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-3">
+          <div className="p-3 sm:p-5 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 sm:gap-3">
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white text-base">
                 Today's Active Roster
@@ -1498,10 +1498,10 @@ const AttendanceSystem = ({ currentUser }) => {
       {tab === 'records' && (
         <div className="space-y-4 animate-fade-in">
           {/* Filters Bar */}
-          <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 p-4 shadow-sm">
-            <div className="flex flex-wrap items-center gap-3">
+          <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-sm">
+            <div className="flex flex-col sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
               {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1513,10 +1513,10 @@ const AttendanceSystem = ({ currentUser }) => {
               </div>
 
               {/* Month Navigation */}
-              <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-1">
+              <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-1 w-full sm:w-auto justify-center">
                 <button
                   onClick={prevMonth}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                 </button>
@@ -1525,7 +1525,7 @@ const AttendanceSystem = ({ currentUser }) => {
                 </span>
                 <button
                   onClick={nextMonth}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
                 >
                   <ChevronRight className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                 </button>
@@ -1535,7 +1535,7 @@ const AttendanceSystem = ({ currentUser }) => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters((p) => ({ ...p, status: e.target.value }))}
-                className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-xs sm:text-sm text-gray-800 dark:text-slate-100 outline-none"
+                className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-xs sm:text-sm text-gray-800 dark:text-slate-100 outline-none"
               >
                 <option value="">All Statuses</option>
                 {Object.entries(STATUS_CONFIG).map(([k, v]) => (
@@ -1550,7 +1550,7 @@ const AttendanceSystem = ({ currentUser }) => {
                 <select
                   value={filters.user_id}
                   onChange={(e) => setFilters((p) => ({ ...p, user_id: e.target.value }))}
-                  className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-xs sm:text-sm text-gray-800 dark:text-slate-100 outline-none"
+                  className="w-full sm:w-auto px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-[#0B1220] text-xs sm:text-sm text-gray-800 dark:text-slate-100 outline-none"
                 >
                   <option value="">All Staff</option>
                   {staff.map((u) => (
@@ -1563,7 +1563,7 @@ const AttendanceSystem = ({ currentUser }) => {
 
               <button
                 onClick={fetchRecords}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer shadow-sm"
+                className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer shadow-sm w-full sm:w-auto"
               >
                 <Filter className="w-3.5 h-3.5" />
                 Apply
@@ -1573,7 +1573,7 @@ const AttendanceSystem = ({ currentUser }) => {
 
           {/* Records Table Card */}
           <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-3 sm:p-4 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between">
               <span className="font-bold text-gray-900 dark:text-white text-sm">
                 {records.length} Attendance Records Found
               </span>
@@ -1609,7 +1609,7 @@ const AttendanceSystem = ({ currentUser }) => {
       {/* ── Toast Notification ── */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl text-white text-xs sm:text-sm font-semibold max-w-sm animate-slide-up ${
+          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex items-center gap-2.5 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl shadow-xl text-white text-xs sm:text-sm font-semibold max-w-[calc(100vw-2rem)] sm:max-w-sm animate-slide-up ${
             toast.type === 'error' ? 'bg-rose-600' : 'bg-emerald-600'
           }`}
         >

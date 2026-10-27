@@ -353,7 +353,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  return (
 	<div
-		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen transition-opacity duration-500 ${
+		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 overflow-x-hidden transition-opacity duration-500 ${
 			isLoaded ? 'opacity-100' : 'opacity-0'
 		} ${isDark ? 'dark:bg-[#0F141F] dark:text-gray-100' : 'bg-[#F7F7F8] text-gray-900'}`}
 	>
@@ -390,7 +390,7 @@ Takeaway Orders
  </div>
 
  {/* Summary cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-5">
 	<SummaryCard
 		label="ACTIVE ORDERS"
 		value={counts.all}
@@ -476,7 +476,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-70
  </button>
  </div>
  ) : (
- <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+ <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
  {filteredOrders.map((order, index) => (
  <OrderCard
  key={order.id}
@@ -907,12 +907,12 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  {(order.items || []).map((item, idx) => (
  <div
  key={idx}
- className="flex justify-between text-sm"
+ className="flex justify-between text-sm gap-2"
  >
- <span className="text-gray-700">
+ <span className="text-gray-700 min-w-0 truncate">
  {item.qty || item.quantity}× {item.name}
  </span>
- <span className="font-semibold text-gray-900">
+ <span className="font-semibold text-gray-900 shrink-0 whitespace-nowrap">
  {fmt(item.price * (item.qty || item.quantity || 1))}
  </span>
  </div>

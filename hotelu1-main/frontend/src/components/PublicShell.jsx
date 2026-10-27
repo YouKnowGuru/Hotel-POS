@@ -256,7 +256,7 @@ const PublicShell = ({ active = '', children }) => {
           <span className="pw-announce-dot" aria-hidden="true" />
           <p className="text-[12px] sm:text-[12.5px] font-bold tracking-wide text-center">
             Free delivery on 3+ packs
-            <span className="mx-2 opacity-50" aria-hidden="true">•</span>
+            <span className="mx-2 opacity-50 hidden sm:inline" aria-hidden="true">•</span>
             <span className="hidden sm:inline">Open daily 10 AM – 9 PM</span>
             <a href={`tel:${RESTAURANT_PHONE.replace(/\s+/g, '')}`}
                className="hidden sm:inline underline underline-offset-2 hover:opacity-80">
@@ -784,6 +784,61 @@ const PublicShell = ({ active = '', children }) => {
           .pw-fx-shimmer,.pw-fx-float,.pw-fx-float-b,
           .pw-fx-orb-a,.pw-fx-orb-b,.pw-fx-marquee-inner,
           .pw-fx-tilt,.pw-fx-glow::before{animation:none !important;}
+        }
+
+        /* ── Keyboard focus-visible (amber, scoped to public pages) ──
+           The global :focus-visible uses #3B82F6 (blue) which clashes
+           with the warm amber palette. Override with amber-themed rings
+           for all interactive elements inside .pw-root. */
+        .pw-root a:focus-visible,
+        .pw-root button:focus-visible,
+        .pw-root [role="button"]:focus-visible,
+        .pw-root input:focus-visible,
+        .pw-root select:focus-visible,
+        .pw-root textarea:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: 2px;
+          border-radius: 6px;
+        }
+        .pw-root .pw-nav-link:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: 2px;
+          background: rgba(234,88,12,0.12);
+        }
+        .pw-root .pw-btn-primary:focus-visible,
+        .pw-root .pw-nav-cta:focus-visible {
+          outline: 2px solid #1B0F02;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 4px rgba(245,158,11,0.4);
+        }
+        .pw-root .pw-btn-ghost-lg:focus-visible,
+        .pw-root .pw-btn-ghost:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: 2px;
+        }
+        .pw-root .pw-icon-btn:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: 2px;
+        }
+        .pw-root .pw-drawer-link:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: -2px;
+        }
+        .pw-root .pw-footer-link:focus-visible,
+        .pw-root .pw-footer-legal:focus-visible {
+          outline: 2px solid #EA580C;
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+        .pw-root .pw-skip:focus {
+          outline: none;
+        }
+        /* Card links with overflow-hidden would clip the outline —
+           use an inset ring instead so focus is still visible. */
+        .pw-root .pw-card:focus-visible,
+        .pw-root a[class*="overflow-hidden"]:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 3px #EA580C, 0 0 0 5px rgba(245,158,11,0.3);
         }
       `}</style>
     </div>

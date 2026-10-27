@@ -23,9 +23,9 @@ const STATUS_CONFIG = {
  summaryLabel: 'Free',
  dot: 'bg-emerald-500',
  ringColor: '#10B981',
- badgeBg: 'bg-emerald-100/70',
- text: 'text-emerald-700',
- bigBg: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
+ badgeBg: 'bg-emerald-100/70 dark:bg-emerald-950/60 dark:text-emerald-300',
+ text: 'text-emerald-700 dark:text-emerald-300',
+ bigBg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/60 dark:to-emerald-900/40 border border-emerald-200/50 dark:border-emerald-800/50',
  cardRing: 'ring-1 ring-emerald-100 hover:ring-emerald-300',
  showDot: false,
  hint: 'Tap to seat guests',
@@ -35,9 +35,9 @@ const STATUS_CONFIG = {
  summaryLabel: 'Occupied',
  dot: 'bg-indigo-600',
  ringColor: '#F97316',
- badgeBg: 'bg-indigo-100/70',
- text: 'text-indigo-600',
- bigBg: 'bg-indigo-50',
+ badgeBg: 'bg-indigo-100/70 dark:bg-indigo-950/60 dark:text-indigo-300',
+ text: 'text-indigo-600 dark:text-indigo-300',
+ bigBg: 'bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/50 dark:border-indigo-800/50',
  cardRing: 'ring-1 ring-indigo-500 hover:ring-indigo-500',
  showDot: true,
  hint: 'Tap to add items',
@@ -45,12 +45,12 @@ const STATUS_CONFIG = {
  reserved: {
  label: 'RESERVED',
  summaryLabel: 'Reserved',
- dot: 'bg-yellow-400',
+ dot: 'bg-amber-400',
  ringColor: '#FACC15',
- badgeBg: 'bg-yellow-100/80',
- text: 'text-yellow-700',
- bigBg: 'bg-gradient-to-br from-yellow-50 to-yellow-100',
- cardRing: 'ring-1 ring-yellow-100 hover:ring-yellow-300',
+ badgeBg: 'bg-amber-100/80 dark:bg-amber-950/60 dark:text-amber-300',
+ text: 'text-amber-800 dark:text-amber-300',
+ bigBg: 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/60 dark:to-amber-900/40 border border-amber-200/50 dark:border-amber-800/50',
+ cardRing: 'ring-1 ring-amber-100 hover:ring-amber-300',
  showDot: false,
  hint: 'Tap to view',
  },
@@ -59,9 +59,9 @@ const STATUS_CONFIG = {
  summaryLabel: 'Cleaning',
  dot: 'bg-blue-500',
  ringColor: '#3B82F6',
- badgeBg: 'bg-blue-100/70',
- text: 'text-blue-600',
- bigBg: 'bg-gradient-to-br from-blue-50 to-blue-100',
+ badgeBg: 'bg-blue-100/70 dark:bg-blue-950/60 dark:text-blue-300',
+ text: 'text-blue-700 dark:text-blue-300',
+ bigBg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/60 dark:to-blue-900/40 border border-blue-200/50 dark:border-blue-800/50',
  cardRing: 'ring-1 ring-blue-100 hover:ring-blue-300',
  showDot: false,
  hint: 'Tap “Done Cleaning” to free',
@@ -71,9 +71,9 @@ const STATUS_CONFIG = {
  summaryLabel: 'Waiting Payment',
  dot: 'bg-amber-500',
  ringColor: '#F59E0B',
- badgeBg: 'bg-amber-100/70',
- text: 'text-amber-600',
- bigBg: 'bg-gradient-to-br from-amber-50 to-amber-100',
+ badgeBg: 'bg-amber-100/70 dark:bg-amber-950/60 dark:text-amber-300',
+ text: 'text-amber-700 dark:text-amber-300',
+ bigBg: 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/60 dark:to-amber-900/40 border border-amber-200/50 dark:border-amber-800/50',
  cardRing: 'ring-1 ring-amber-100 hover:ring-amber-300',
  showDot: true,
  hint: 'Tap to settle bill',
@@ -475,14 +475,14 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  /* ----------------------------- render ----------------------------- */
  return (
  <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
+ className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 bg-[#F7F7F8] overflow-x-hidden transition-opacity duration-500 ${
  isLoaded ? 'opacity-100' : 'opacity-0'
  }`}
  >
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
  <div>
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+ <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
  Table Management
  </h1>
  <p className="text-sm text-gray-500 mt-1">
@@ -491,7 +491,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
  <button
  onClick={() => setShowAddTable(true)}
- className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition"
+ className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition"
  >
  <Plus className="w-4 h-4" />
  ADD TABLE
@@ -509,7 +509,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  )}
 
  {/* Summary cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-5">
  {['available', 'occupied', 'waiting_payment', 'cleaning'].map((status, idx) => {
  const cfg = STATUS_CONFIG[status];
  const total = tables.length || 1;
@@ -517,7 +517,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  return (
  <div
  key={status}
- className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4"
+ className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 sm:px-5 sm:py-4 min-w-0"
  style={{
  animation: isLoaded
  ? `slideUpFade .35s ease-out ${idx * 60}ms both`
@@ -527,23 +527,23 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  <div className={`absolute inset-x-0 top-0 h-1 ${cfg.dot}`} />
  <div className="flex items-start justify-between">
  <div>
- <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+ <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 leading-snug">
  {cfg.summaryLabel}
  </p>
- <p className="text-3xl font-extrabold text-gray-900 leading-none mt-1.5">
+ <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white leading-none mt-1 sm:mt-1.5 break-words">
  {summaryCounts[status]}
  </p>
  <p className="text-[11px] text-gray-400 mt-1">of {total} tables</p>
  </div>
  {/* Donut ring */}
  <div
- className="w-11 h-11 rounded-full grid place-items-center shrink-0"
+ className="w-9 h-9 sm:w-11 sm:h-11 rounded-full grid place-items-center shrink-0"
  style={{
  background: `conic-gradient(currentColor ${pct * 3.6}deg, #F1F5F9 0deg)`,
  color: cfg.ringColor,
  }}
  >
- <span className="w-8 h-8 rounded-full bg-white grid place-items-center text-[10px] font-bold text-gray-600">
+ <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white grid place-items-center text-[9px] sm:text-[10px] font-bold text-gray-600">
  {pct}%
  </span>
  </div>
@@ -554,7 +554,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
 
  {/* Floor tabs */}
- <div className="flex flex-wrap items-center gap-2 mb-5">
+ <div className="flex items-center gap-2 mb-4 sm:mb-5 overflow-x-auto max-w-full pb-1 scrollbar-none flex-nowrap sm:flex-wrap">
  {[{ key: 'all', label: 'All Floors' }, ...floors].map((f) => {
  const active = activeFloor === f.key;
  return (
@@ -582,7 +582,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
 
  {/* Tables grid */}
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 min-w-0">
  {filteredTables.map((table, idx) => {
  const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG.available;
  const tableOrder = orderForTable(table.id);
@@ -622,7 +622,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  onKeyDown={(e) => {
  if (e.key === 'Enter' || e.key === ' ') handleTableClick(table);
  }}
- className={`relative text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-4 ${cfg.cardRing} hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500`}
+ className={`relative text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-4 ${cfg.cardRing} hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#141C2E] dark:border-slate-700/60 dark:hover:border-slate-600`}
  style={{
  animation: isLoaded
  ? `cardPop .35s ease-out ${Math.min(idx * 35, 600)}ms both`
@@ -646,11 +646,11 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </span>
 
  {/* Big square badge */}
- <div className={`mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ${cfg.bigBg} flex flex-col items-center justify-center shadow-inner`}>
+ <div className={`mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ${cfg.bigBg} flex flex-col items-center justify-center shadow-inner mt-5 sm:mt-4`}>
  <span className={`text-2xl sm:text-3xl font-extrabold ${cfg.text} leading-none`}>
  {table.id}
  </span>
- <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mt-1">
+ <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 mt-0.5">
  Table
  </span>
  </div>
@@ -698,11 +698,11 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
  </div>
  {orderValue > 0 && (
- <p className="flex items-center justify-between rounded-lg bg-indigo-50/70 px-2 py-1">
- <span className="inline-flex items-center gap-1 uppercase tracking-wide text-gray-400">
- <Receipt className="w-3 h-3" /> Value
+ <p className="flex items-center justify-between rounded-lg bg-indigo-50/70 px-2 py-1 gap-1 min-w-0">
+ <span className="inline-flex items-center gap-1 uppercase tracking-wide text-gray-400 shrink-0 text-[9px] sm:text-[10px]">
+ <Receipt className="w-3 h-3 shrink-0" /> Val
  </span>
- <span className="font-bold text-indigo-600">{fmt(orderValue)}</span>
+ <span className="font-bold text-indigo-600 truncate whitespace-nowrap text-[10px] sm:text-xs" title={fmt(orderValue)}>{fmt(orderValue)}</span>
  </p>
  )}
  <p className="text-center text-[10px] font-semibold text-gray-400 uppercase tracking-wider pt-0.5">
@@ -731,7 +731,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  type="button"
  onClick={() => handleMarkTableAvailable(table.id)}
  disabled={busyCleaning[table.id]}
- className={`w-full inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-200 ${
+ className={`w-full inline-flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-[11px] font-bold uppercase tracking-wider transition-all duration-200 truncate ${
  table.status === 'cleaning'
  ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
  : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'

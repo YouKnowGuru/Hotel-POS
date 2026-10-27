@@ -146,29 +146,31 @@ const getItemNames = (order) => {
 /* ─── stat card ──────────────────────────────────────────────────────── */
 
 const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
- <div className="rounded-2xl p-4 sm:p-5 flex items-start gap-3 sm:gap-4 transition hover:shadow-md bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700/80 shadow-sm">
+ <div className="rounded-2xl p-3.5 sm:p-5 flex items-start gap-3 sm:gap-4 transition hover:shadow-md bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700/80 shadow-sm min-w-0">
  <div
- className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
+ className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
  style={{ background: color + '15', border: `1px solid ${color}30` }}
  >
  <Icon className="w-5 h-5" style={{ color }} />
- </div>  <div className="min-w-0 flex-1">
-  <div className="flex flex-wrap items-start justify-between gap-1">
-  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-400 leading-snug min-w-0">
-  {label}
-  </p>
+ </div>
+ <div className="min-w-0 flex-1">
+ <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
+ <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400 leading-tight">
+ {label}
+ </p>
  {badge && (
  <span
- className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+ className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
  style={{ background: color + '15', color }}
  >
  {badge}
  </span>
  )}
- </div>  <p className="text-xl sm:text-2xl font-extrabold text-gray-800 dark:text-white mt-0.5 leading-tight break-words">
-  {value}
-  </p>
-  {sub && <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-snug">{sub}</p>}
+ </div>
+ <p className="text-lg sm:text-xl md:text-2xl font-extrabold text-gray-800 dark:text-white mt-0.5 leading-tight break-words">
+ {value}
+ </p>
+ {sub && <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-400 mt-1 leading-snug line-clamp-2">{sub}</p>}
  </div>
  </div>
 );
@@ -919,11 +921,11 @@ const GSTLedger = ({ locationSettings }) => {
  /* ── render ──────────────────────────────────────────────────────── */
 
  return (
- <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-200">
+ <div className="min-h-0 bg-[#F8FAFC] dark:bg-[#0B1220] p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-slate-100 transition-colors duration-200 overflow-x-hidden">
 
  {/* ── Page Header ── */}
  <div className="mb-6">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+ <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
  <div>
  <div className="flex items-center gap-3 mb-1">
  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/60 shadow-sm">
@@ -1111,13 +1113,13 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
 
  {/* Formula Breakdown Cards */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 items-stretch bg-gray-50 dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-700/60">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch bg-gray-50 dark:bg-slate-900 p-3 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-700/60 min-w-0">
  <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 flex flex-col justify-between">
  <div>
  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
  1. GST Output (Collected)
  </p>
- <p className="text-2xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1">
+ <p className="text-lg sm:text-xl md:text-2xl font-extrabold text-emerald-800 dark:text-emerald-200 mt-1 break-all" title={fmt(totalGSTOutput)}>
  {fmt(totalGSTOutput)}
  </p>
  </div>
@@ -1131,7 +1133,7 @@ const GSTLedger = ({ locationSettings }) => {
  <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">
  2. Less: GST Input (ITC Claimed)
  </p>
- <p className="text-2xl font-extrabold text-violet-800 dark:text-violet-200 mt-1">
+ <p className="text-lg sm:text-xl md:text-2xl font-extrabold text-violet-800 dark:text-violet-200 mt-1 break-all" title={fmt(totalGSTInput)}>
  {fmt(totalGSTInput)}
  </p>
  </div>
@@ -1151,9 +1153,9 @@ const GSTLedger = ({ locationSettings }) => {
  }`}>
  3. {isNetPayable ? '= Net Tax Payable to Govt' : '= Net ITC Refund / Carry Forward'}
  </p>
- <p className={`text-2xl font-extrabold mt-1 ${
+ <p className={`text-lg sm:text-xl md:text-2xl font-extrabold mt-1 break-all ${
  isNetPayable ? 'text-amber-900 dark:text-amber-100' : 'text-emerald-900 dark:text-emerald-100'
- }`}>
+ }`} title={fmt(Math.abs(netGSTPayable))}>
  {fmt(Math.abs(netGSTPayable))}
  </p>
  </div>
@@ -1167,9 +1169,9 @@ const GSTLedger = ({ locationSettings }) => {
 
  {/* Offset Progress Bar */}
  <div className="mt-5">
- <div className="flex justify-between text-xs text-gray-500 dark:text-slate-400 mb-1.5">
- <span>Input Tax Credit Applied: {fmt(totalGSTInput)}</span>
- <span>Total Output Liability: {fmt(totalGSTOutput)}</span>
+ <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs text-gray-500 dark:text-slate-400 mb-1.5">
+ <span className="truncate">Input Tax Credit Applied: {fmt(totalGSTInput)}</span>
+ <span className="truncate sm:text-right">Total Output Liability: {fmt(totalGSTOutput)}</span>
  </div>
  <div className="h-3 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden flex">
  <div
@@ -1181,7 +1183,7 @@ const GSTLedger = ({ locationSettings }) => {
  style={{ width: `${Math.max(0, 100 - itcCoverageRatio)}%` }}
  />
  </div>
- <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-500 dark:text-slate-400">
+ <div className="flex flex-wrap items-center gap-4 mt-2 text-[11px] text-gray-500 dark:text-slate-400">
  <div className="flex items-center gap-1.5">
  <span className="w-2.5 h-2.5 rounded-full bg-violet-500" />
  <span>Input Tax Credit (ITC Paid)</span>
@@ -1282,7 +1284,7 @@ const GSTLedger = ({ locationSettings }) => {
  </p>
  <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between text-xs">
  <span className="text-gray-400 dark:text-slate-400">Total Output:</span>
- <span className="font-bold text-emerald-600 dark:text-emerald-400">{fmt(totalGSTOutput)}</span>
+ <span className="font-bold text-emerald-600 dark:text-emerald-400 truncate text-right">{fmt(totalGSTOutput)}</span>
  </div>
  </div>
 
@@ -1302,7 +1304,7 @@ const GSTLedger = ({ locationSettings }) => {
  </p>
  <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between text-xs">
  <span className="text-gray-400 dark:text-slate-400">Total ITC:</span>
- <span className="font-bold text-violet-600 dark:text-violet-400">{fmt(totalGSTInput)}</span>
+ <span className="font-bold text-violet-600 dark:text-violet-400 truncate text-right">{fmt(totalGSTInput)}</span>
  </div>
  </div>
  </div>
@@ -1514,7 +1516,7 @@ const GSTLedger = ({ locationSettings }) => {
  {activeTab === 'input' && (
  <div className="space-y-6">
  {/* Summary Cards */}
- <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
  <StatCard
  icon={Package}
  label="Total Inventory Materials"

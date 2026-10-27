@@ -140,7 +140,7 @@ const SectionBlock = React.memo(function SectionBlock({
  <h4 style={s.cardName}>{item.name}</h4>
  {item.description && <p style={s.cardDesc}>{item.description}</p>}
  <div style={s.cardFoot}>
- <span style={{ ...s.cardPrice, color: g1 }}>{fmt(item.price)}</span>
+ <span style={{ ...s.cardPrice, color: (g1 === '#eab308' || g1 === '#f59e0b') ? '#b45309' : g1 }}>{fmt(item.price)}</span>
  {inCart ? (
  <div style={s.qtyRowSm}>
  <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
@@ -689,7 +689,18 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <Utensils size={20} color="#fff" />
  </div>
  <div>
+ <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
  <h1 style={s.brandName}>Our Menu</h1>
+ {tableId && (
+ <span style={{
+ fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 12,
+ background: 'rgba(255,60,172,0.1)', color: '#ff3cac', border: '1px solid rgba(255,60,172,0.2)',
+ letterSpacing: '0.02em', textTransform: 'uppercase'
+ }}>
+ {isTakeaway ? 'Takeaway' : `Table ${tableId}`}
+ </span>
+ )}
+ </div>
  </div>
  </div>
  <button ref={cartBtnRef} aria-label={`Open cart, ${cartCount} items`} style={{ ...s.cartBtn, ...(cartCount ? s.cartBtnActive : {}) }} onClick={() => setCartOpen(true)}>
@@ -1029,38 +1040,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </p>
  </div>
 
- {/* ── Payment method selector ── */}
- <p style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '14px 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
- <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
- {[
- { id: 'cash', label: 'Pay with Cash', sub: 'Pay our staff directly', Icon: Banknote, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
- { id: 'qr', label: 'Pay Online', sub: 'Scan QR & upload proof', Icon: QrCode, color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.3)' },
- ].map(({ id, label, sub, Icon, color, bg, border }) => {
- const active = paymentMethod === id;
- return (
- <button
- key={id}
- onClick={() => setPaymentMethod(id)}
- style={{
- display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
- padding: '10px 12px', borderRadius: 14, border: `2px solid ${active ? border : 'rgba(0,0,0,0.06)'}`,
- background: active ? bg : '#fafafa', cursor: 'pointer', textAlign: 'left',
- transition: 'all 0.2s', boxShadow: active ? `0 4px 14px ${color}22` : 'none',
- transform: active ? 'scale(1.02)' : 'scale(1)',
- }}
- >
- <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
- <Icon size={15} color={active ? color : '#94a3b8'} />
- <span style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
- </div>
- <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
- {active && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color }}>✓</span>}
- </button>
- );
- })}
- </div>
-
- {/* Guests at this table — shown before payment selection */}
+ {/* Guests at this table */}
  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, padding: '10px 14px', marginBottom: 14 }}>
  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#1e40af' }}>
  <Utensils size={14} /> Guests at table
@@ -1091,6 +1071,37 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  +
  </button>
  </div>
+ </div>
+
+ {/* ── Payment method selector ── */}
+ <p style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
+ <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+ {[
+ { id: 'cash', label: 'Pay with Cash', sub: 'Pay our staff directly', Icon: Banknote, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
+ { id: 'qr', label: 'Pay Online', sub: 'Scan QR & upload proof', Icon: QrCode, color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.3)' },
+ ].map(({ id, label, sub, Icon, color, bg, border }) => {
+ const active = paymentMethod === id;
+ return (
+ <button
+ key={id}
+ onClick={() => setPaymentMethod(id)}
+ style={{
+ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, position: 'relative',
+ padding: '10px 12px', borderRadius: 14, border: `2px solid ${active ? border : 'rgba(0,0,0,0.06)'}`,
+ background: active ? bg : '#fafafa', cursor: 'pointer', textAlign: 'left',
+ transition: 'all 0.2s', boxShadow: active ? `0 4px 14px ${color}22` : 'none',
+ transform: active ? 'scale(1.02)' : 'scale(1)',
+ }}
+ >
+ <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+ <Icon size={15} color={active ? color : '#94a3b8'} />
+ <span style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
+ </div>
+ <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
+ {active && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color }}>✓</span>}
+ </button>
+ );
+ })}
  </div>
 
  <button className="sm-order-btn" style={{ ...s.orderBtn, ...((placing || (tableStatus === 'occupied' && !tableMine)) ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing || (tableStatus === 'occupied' && !tableMine)}>
@@ -1355,7 +1366,7 @@ const s = {
  paidTitle: { margin: 0, fontSize: 13, fontWeight: 800, color: '#15803d' },
  paidSub: { margin: '1px 0 0', fontSize: 10.5, color: '#86efac' },
 
- catStrip: { position: 'sticky', top: 57, zIndex: 30, background: 'rgba(255,255,255,0.96)', borderBottom: '1px solid rgba(0,0,0,0.05)' },
+ catStrip: { position: 'sticky', top: 0, zIndex: 30, background: 'rgba(255,255,255,0.96)', borderBottom: '1px solid rgba(0,0,0,0.05)' },
  catStripInner: { maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 8, padding: '10px 16px', overflowX: 'auto', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' },
  catPill: { flexShrink: 0, padding: '8px 14px', borderRadius: 50, border: '1.5px solid rgba(0,0,0,0.06)', background: '#fff', color: '#475569', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 5, boxShadow: '0 1px 4px rgba(15,23,42,0.04)' },
  catPillOn: { background: 'linear-gradient(135deg,#ff3cac,#784ba0)', color: '#fff', border: '2px solid transparent', boxShadow: '0 6px 24px rgba(255,60,172,0.35)', transform: 'scale(1.05)' },
@@ -1384,7 +1395,7 @@ const s = {
  spotlightContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: '16px 18px' },
  spotlightBadge: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 12px', borderRadius: 50, fontSize: 10, fontWeight: 700, color: '#fff', marginBottom: 8 },
  spotlightName: { margin: '0 0 2px', fontSize: 20, fontWeight: 900, color: '#fff', letterSpacing: '-0.3px' },
- spotlightDesc: { margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 },
+ spotlightDesc: { margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.92)', lineHeight: 1.4, textShadow: '0 1px 3px rgba(0,0,0,0.6)' },
  spotlightFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 },
  spotlightPrice: { fontSize: 22, fontWeight: 900, background: 'linear-gradient(135deg,#ff3cac,#f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
  addLg: { display: 'flex', alignItems: 'center', gap: 5, padding: '10px 18px', borderRadius: 12, border: 'none', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', position: 'relative', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.2)', transition: 'transform 0.2s', flexShrink: 0 },
@@ -1394,13 +1405,13 @@ const s = {
  grid: { display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 },
  card: { background: '#fff', border: '1px solid rgba(15,23,42,0.05)', borderRadius: 20, overflow: 'hidden', animation: 'fadeUp 0.4s ease both', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' },
  cardTop: { height: 132, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
- cardImg: { width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
+ cardImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
  // Category chip: absolute top-left. Width-capped so a long category
  // name can never collide with a ribbon/badge on the right side of the
  // narrow two-column card (the old 'Popular' badge overlap bug).
  cardCat: { position: 'absolute', top: 8, left: 8, padding: '3px 9px', borderRadius: 50, fontSize: 9, fontWeight: 800, color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.18)', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
  cardBody: { padding: '11px 13px 13px', minWidth: 0 },
- cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+ cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 34 },
  cardDesc: { margin: '0 0 9px', fontSize: 11, color: '#64748b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
  cardFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, rowGap: 6, flexWrap: 'wrap', minWidth: 0 },
  cardPrice: { fontSize: 15, fontWeight: 900, letterSpacing: '-0.3px', whiteSpace: 'nowrap' },

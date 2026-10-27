@@ -179,7 +179,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
 
  return (
  <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
+ className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 bg-[#F7F7F8] transition-opacity duration-500 overflow-x-hidden ${
  isLoaded ? 'opacity-100' : 'opacity-0'
  }`}
  >
@@ -288,7 +288,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  dataKey="revenue"
  fill="#F97316"
  radius={[8, 8, 0, 0]}
- barSize={36}
+ barSize={28}
  />
  </BarChart>
  </ResponsiveContainer>
@@ -410,7 +410,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  )}
 
  {isFranchiseOwner && locations.length === 0 && (
- <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-6 text-sm text-blue-900">
+ <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mt-6 text-sm text-blue-900 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-200">
  <strong>No location linked yet.</strong> Ask admin to assign your franchise account
  to a location.
  </div>
@@ -439,7 +439,7 @@ const KpiCard = ({ label, value, sub, Icon, tone = 'orange', delay = 0, isLoaded
  const t = tones[tone] || tones.orange;
  return (
  <div
- className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+ className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 min-w-0 overflow-hidden"
  style={{
  animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none',
  }}
@@ -452,8 +452,8 @@ const KpiCard = ({ label, value, sub, Icon, tone = 'orange', delay = 0, isLoaded
  <Icon className="w-4 h-4" />
  </div>
  </div>
- <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-none break-words">{value}</p>
- <p className="text-xs text-gray-500 mt-2">{sub}</p>
+ <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-none break-words truncate" title={value}>{value}</p>
+ <p className="text-xs text-gray-500 mt-2 truncate">{sub}</p>
  </div>
  );
 };
@@ -508,7 +508,7 @@ const OutletRow = ({ loc, idx, isAdmin, isLoaded, onClick }) => {
  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
  Gross Sales
  </p>
- <p className="text-sm font-semibold text-gray-900 mt-0.5">
+ <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate whitespace-nowrap" title={formatBTN(loc.gross)}>
  {formatBTN(loc.gross)}
  </p>
  </div>
@@ -517,7 +517,7 @@ const OutletRow = ({ loc, idx, isAdmin, isLoaded, onClick }) => {
  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
  Orders Vol
  </p>
- <p className="text-sm font-semibold text-gray-900 mt-0.5">
+ <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate whitespace-nowrap">
  {(loc.orders || 0).toLocaleString('en-IN')}
  </p>
  </div>
@@ -526,7 +526,7 @@ const OutletRow = ({ loc, idx, isAdmin, isLoaded, onClick }) => {
  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
  Active Customers
  </p>
- <p className="text-sm font-semibold text-gray-900 mt-0.5">
+ <p className="text-sm font-semibold text-gray-900 mt-0.5 truncate whitespace-nowrap">
  {(loc.customers || 0).toLocaleString('en-IN')}
  </p>
  </div>

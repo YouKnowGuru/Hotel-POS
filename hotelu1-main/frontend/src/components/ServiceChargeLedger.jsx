@@ -103,7 +103,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
  <Icon className="w-5 h-5" style={{ color }} />
  </div>  <div className="min-w-0 flex-1 w-full sm:w-auto">
   <div className="flex items-start justify-between gap-1">
-  <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-snug">{label}</p>
+  <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-snug truncate">{label}</p>
   {badge && (
   <span
   className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
@@ -111,7 +111,7 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
   >{badge}</span>
   )}
   </div>
-  <p className="text-base sm:text-xl font-extrabold text-gray-800 mt-0.5 leading-tight break-words">{value}</p>
+  <p className="text-base sm:text-xl font-extrabold text-gray-800 mt-0.5 leading-tight break-words truncate" title={value}>{value}</p>
   {sub && <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{sub}</p>}
   </div>
  </div>
@@ -372,7 +372,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
 
  /* ── Render ─────────────────────────────────────────────────── */
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6 min-h-screen">
+ <div className="px-4 sm:px-6 lg:px-8 py-6 min-h-0 overflow-x-hidden">
 
  {/* ── Header ─────────────────────────────────────────────── */}
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -501,14 +501,14 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  <span className="text-sm font-semibold text-gray-700">{monthLabel(m.key)}</span>
  <span className="text-[11px] text-gray-400">{m.count} orders</span>
  </div>
- <div className="flex items-center justify-between">
- <div>
+ <div className="flex items-start justify-between gap-2 min-w-0">
+ <div className="min-w-0">
  <p className="text-[10px] text-gray-400">Service Charge</p>
- <p className="text-base font-bold" style={{ color: TEAL }}>{fmt(m.serviceCharge)}</p>
+ <p className="text-sm sm:text-base font-bold truncate whitespace-nowrap" style={{ color: TEAL }} title={fmt(m.serviceCharge)}>{fmt(m.serviceCharge)}</p>
  </div>
- <div className="text-right">
+ <div className="text-right min-w-0 shrink-0">
  <p className="text-[10px] text-gray-400">Grand Total</p>
- <p className="text-sm font-semibold text-gray-700">{fmt(m.grand)}</p>
+ <p className="text-xs sm:text-sm font-semibold text-gray-700 truncate whitespace-nowrap" title={fmt(m.grand)}>{fmt(m.grand)}</p>
  </div>
  </div>
  </div>
@@ -574,9 +574,9 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  <span className="block text-xs text-gray-500 mt-0.5 truncate">{o.table_name}</span>
  )}
  </td>
- <td className="px-4 py-3 text-right text-gray-700">{fmt(o._sc.subtotal)}</td>
- <td className="px-4 py-3 text-right font-bold" style={{ color: TEAL }}>{fmt(o._sc.serviceCharge)}</td>
- <td className="px-4 py-3 text-right font-bold text-gray-900">{fmt(o._sc.total)}</td>
+ <td className="px-4 py-3 text-right text-gray-700 whitespace-nowrap">{fmt(o._sc.subtotal)}</td>
+ <td className="px-4 py-3 text-right font-bold whitespace-nowrap" style={{ color: TEAL }}>{fmt(o._sc.serviceCharge)}</td>
+ <td className="px-4 py-3 text-right font-bold text-gray-900 whitespace-nowrap">{fmt(o._sc.total)}</td>
  <td className="px-4 py-3 text-center">
  <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">
  <CheckCircle className="w-3 h-3" /> Paid
