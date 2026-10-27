@@ -657,19 +657,18 @@ const Sidebar = ({
   // so they are completely outside the flex layout container
   return createPortal(
     <>
-      {/* ── Backdrop ──────────────────────────────────────────── */}
-      <div
-        onClick={() => setIsMobileMenuOpen(false)}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 40,
-          background: 'rgba(15, 23, 42, 0.6)',
-          opacity: isMobileMenuOpen ? 1 : 0,
-          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
-          transition: 'opacity 0.3s ease',
-        }}
-      />
+      {/* ── Backdrop: only in DOM when open so it can never block touches ── */}
+      {isMobileMenuOpen && (
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 40,
+            background: 'rgba(15, 23, 42, 0.6)',
+          }}
+        />
+      )}
 
       {/* ── Drawer ────────────────────────────────────────────── */}
       <aside
@@ -686,10 +685,13 @@ const Sidebar = ({
           background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           boxShadow: isMobileMenuOpen ? '4px 0 32px rgba(0,0,0,0.4)' : 'none',
-          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-110%)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           willChange: 'transform',
           overflowY: 'auto',
+          // Completely disable interaction when closed — critical for mobile
+          visibility: isMobileMenuOpen ? 'visible' : 'hidden',
+          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
         }}
       >
         {/* Close button */}
@@ -729,3 +731,4 @@ const Sidebar = ({
 };
 
 export default Sidebar;
+
