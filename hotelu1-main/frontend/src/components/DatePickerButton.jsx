@@ -91,7 +91,7 @@ const DatePickerButton = ({
  aria-expanded={open}
  >
  <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
- <span>{formatDateButtonLabel(value, allDates)}</span>
+ <span className="whitespace-nowrap">{formatDateButtonLabel(value, allDates)}</span>
  </button>
 
  {open && (

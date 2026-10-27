@@ -205,26 +205,26 @@ const PermissionManagementNew = ({ token }) => {
  </div>
 
  {/* Tabs */}
- <div className="flex gap-2 mb-8 border-b-2 border-indigo-200">
+ <div className="flex gap-1 sm:gap-2 mb-8 border-b-2 border-indigo-200">
  <button
  onClick={() => setActiveTab('roles')}
- className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+ className={`flex-1 sm:flex-none text-[13px] sm:text-base whitespace-nowrap px-2 sm:px-6 py-3 font-semibold transition-all rounded-t-lg ${
  activeTab === 'roles'
  ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
  : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
  }`}
  >
- <span className="inline-flex items-center gap-2"><Users className="text-indigo-500" /> Manage Roles (Jobs)</span>
+ <span className="inline-flex items-center gap-1.5 sm:gap-2"><Users className="w-4 h-4 text-indigo-500 shrink-0" /> Manage Roles (Jobs)</span>
  </button>
  <button
  onClick={() => setActiveTab('permissions')}
- className={`px-6 py-3 font-semibold transition-all rounded-t-lg ${
+ className={`flex-1 sm:flex-none text-[13px] sm:text-base whitespace-nowrap px-2 sm:px-6 py-3 font-semibold transition-all rounded-t-lg ${
  activeTab === 'permissions'
  ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50'
  : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50/50'
  }`}
  >
- <span className="inline-flex items-center gap-2"><Clipboard className="text-indigo-500" /> View Permissions</span>
+ <span className="inline-flex items-center gap-1.5 sm:gap-2"><Clipboard className="w-4 h-4 text-indigo-500 shrink-0" /> View Permissions</span>
  </button>
  </div>
 

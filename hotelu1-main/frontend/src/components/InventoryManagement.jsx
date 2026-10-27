@@ -610,16 +610,15 @@ const SummaryCard = ({ icon: Icon, iconBg, iconColor, label, value, valueClass =
  >
  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${iconBg}`}>
  <Icon className={`w-5 h-5 ${iconColor}`} />
- </div>
- <div className="min-w-0 flex-1">
- <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-400 font-bold truncate">
- {label}
- </p>
- <p className={`text-xl sm:text-2xl font-extrabold mt-0.5 truncate ${valueClass || 'text-gray-900 dark:text-white'}`}>
- {value}
- </p>
- {sub && <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5 truncate">{sub}</p>}
- </div>
+ </div>  <div className="min-w-0 flex-1">
+  <p className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-slate-400 font-bold leading-snug">
+  {label}
+  </p>
+  <p className={`text-lg sm:text-2xl font-extrabold mt-0.5 leading-tight break-words ${valueClass || 'text-gray-900 dark:text-white'}`}>
+  {value}
+  </p>
+  {sub && <p className="text-[11px] text-gray-400 dark:text-slate-400 mt-0.5 leading-snug">{sub}</p>}
+  </div>
  </div>
 );
 

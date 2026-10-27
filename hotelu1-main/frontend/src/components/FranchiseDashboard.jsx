@@ -212,7 +212,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  )}
 
  {/* KPI cards */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+ <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-5">
  <KpiCard
  label="ENTERPRISE REVENUE"
  value={formatBTNShort(totalEnterpriseRevenue)}
@@ -452,7 +452,7 @@ const KpiCard = ({ label, value, sub, Icon, tone = 'orange', delay = 0, isLoaded
  <Icon className="w-4 h-4" />
  </div>
  </div>
- <p className="text-2xl sm:text-3xl font-bold text-gray-900 leading-none">{value}</p>
+ <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-none break-words">{value}</p>
  <p className="text-xs text-gray-500 mt-2">{sub}</p>
  </div>
  );

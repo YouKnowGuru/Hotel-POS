@@ -152,12 +152,11 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
  style={{ background: color + '15', border: `1px solid ${color}30` }}
  >
  <Icon className="w-5 h-5" style={{ color }} />
- </div>
- <div className="min-w-0 flex-1">
- <div className="flex items-center justify-between gap-1">
- <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-400 truncate">
- {label}
- </p>
+ </div>  <div className="min-w-0 flex-1">
+  <div className="flex flex-wrap items-start justify-between gap-1">
+  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-400 leading-snug min-w-0">
+  {label}
+  </p>
  {badge && (
  <span
  className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
@@ -166,11 +165,10 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
  {badge}
  </span>
  )}
- </div>
- <p className="text-xl sm:text-2xl font-extrabold text-gray-800 dark:text-white mt-0.5 truncate">
- {value}
- </p>
- {sub && <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-400 mt-0.5 truncate">{sub}</p>}
+ </div>  <p className="text-xl sm:text-2xl font-extrabold text-gray-800 dark:text-white mt-0.5 leading-tight break-words">
+  {value}
+  </p>
+  {sub && <p className="text-[11px] sm:text-xs text-gray-400 dark:text-slate-400 mt-0.5 leading-snug">{sub}</p>}
  </div>
  </div>
 );

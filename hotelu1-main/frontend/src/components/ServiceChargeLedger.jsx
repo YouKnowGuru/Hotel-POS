@@ -98,20 +98,19 @@ const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
  style={{ background: color + '15', border: `1px solid ${color}30` }}
  >
  <Icon className="w-5 h-5" style={{ color }} />
- </div>
- <div className="min-w-0 flex-1">
- <div className="flex items-center justify-between gap-1">
- <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 truncate">{label}</p>
- {badge && (
- <span
- className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
- style={{ background: color + '15', color }}
- >{badge}</span>
- )}
- </div>
- <p className="text-xl font-extrabold text-gray-800 mt-0.5 truncate">{value}</p>
- {sub && <p className="text-[11px] text-gray-400 mt-0.5 truncate">{sub}</p>}
- </div>
+ </div>  <div className="min-w-0 flex-1">
+  <div className="flex items-start justify-between gap-1">
+  <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-snug">{label}</p>
+  {badge && (
+  <span
+  className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0"
+  style={{ background: color + '15', color }}
+  >{badge}</span>
+  )}
+  </div>
+  <p className="text-base sm:text-xl font-extrabold text-gray-800 mt-0.5 leading-tight break-words">{value}</p>
+  {sub && <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{sub}</p>}
+  </div>
  </div>
 );
 

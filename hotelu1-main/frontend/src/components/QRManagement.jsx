@@ -871,13 +871,12 @@ const KpiCard = ({ label, value, Icon, tone = 'orange', delay = 0, isLoaded }) =
  >
  <div className={`w-9 h-9 rounded-xl ${t.bg} ${t.text} flex items-center justify-center shrink-0`}>
  <Icon className="w-4 h-4" />
- </div>
- <div className="min-w-0">
- <p className="text-xl sm:text-2xl font-bold text-gray-900 leading-none">{value}</p>
- <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-1 truncate">
- {label}
- </p>
- </div>
+ </div>  <div className="min-w-0">
+  <p className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight break-words">{value}</p>
+  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-1 leading-snug">
+  {label}
+  </p>
+  </div>
  </div>
  );
 };

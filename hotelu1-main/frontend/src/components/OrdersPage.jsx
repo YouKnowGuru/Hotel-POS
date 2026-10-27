@@ -377,7 +377,7 @@ const OrdersPage = ({ locationSettings }) => {
  )}
  </p>
  </div>
- <div className="flex items-center gap-2 relative">
+ <div className="flex flex-wrap items-center gap-2 relative">
  <div className="relative" ref={typeMenuRef}>
  <button
  onClick={() => setShowTypeMenu((v) => !v)}
@@ -457,9 +457,9 @@ const OrdersPage = ({ locationSettings }) => {
  : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
  }`}
  >
- <div className="flex items-center gap-2 min-w-0">
+ <div className="flex items-center gap-1.5 min-w-0">
  <Icon className={`w-4 h-4 shrink-0 ${active ? '' : 'text-gray-400'}`} />
- <span className="text-sm font-semibold truncate">{t.label}</span>
+ <span className="text-[13px] leading-tight font-semibold text-left">{t.label}</span>
  </div>
  <span
  className={`text-xs font-bold min-w-[22px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
@@ -533,14 +533,14 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
 
  <div className="flex flex-wrap items-center justify-between gap-3">
- <div className="flex items-center gap-3 min-w-0 flex-1">
- <div className="flex items-center gap-1 text-sm text-gray-700">
- <TypeIcon className="w-4 h-4 text-indigo-500" />
- <span className="font-semibold">
+ <div className="flex items-center gap-3 min-w-0 flex-1 flex-wrap">
+ <div className="flex items-center gap-1 text-sm text-gray-700 min-w-0">
+ <TypeIcon className="w-4 h-4 text-indigo-500 shrink-0" />
+ <span className="font-semibold truncate">
  {o.table_name || o.customer_name || TYPE_LABEL[typeKey] || 'Counter'}
  </span>
  </div>
- <span className="text-xs text-gray-500">
+ <span className="text-xs text-gray-500 whitespace-nowrap">
  {TYPE_LABEL[typeKey] || 'Dine-In'} • {itemCount} item
  {itemCount !== 1 ? 's' : ''}
  </span>

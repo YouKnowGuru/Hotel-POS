@@ -72,7 +72,7 @@ const StatusBadge = ({ status, isDark = true }) => {
 };
 
 const StatCard = ({ icon: Icon, label, value, sub, accent = GOLD, isDark = true }) => (
-  <div style={{ ...getGlass(isDark), padding: '20px 22px', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+  <div style={{ ...getGlass(isDark), padding: 'clamp(14px,3vw,20px) clamp(13px,3.5vw,22px)', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
     <div style={{ position: 'absolute', top: -20, right: -20, width: 80, height: 80, borderRadius: '50%', background: `${accent}15`, filter: 'blur(20px)' }} />
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
       <div style={{ width: 38, height: 38, borderRadius: 12, background: `${accent}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${accent}30` }}>
@@ -80,7 +80,7 @@ const StatCard = ({ icon: Icon, label, value, sub, accent = GOLD, isDark = true 
       </div>
       <span style={{ fontSize: 12, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>{label}</span>
     </div>
-    <div style={{ fontSize: 22, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.02em', marginBottom: 4 }}>{value}</div>
+    <div style={{ fontSize: 'clamp(17px,5vw,22px)', fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.02em', marginBottom: 4, overflowWrap: 'break-word' }}>{value}</div>
     {sub && <div style={{ fontSize: 11, color: isDark ? '#64748B' : '#94A3B8' }}>{sub}</div>}
   </div>
 );
@@ -1646,7 +1646,7 @@ const PayrollSystem = ({ currentUser }) => {
           </div>
 
           {/* KPI cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 16, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 12, marginBottom: 24 }}>
             <StatCard icon={DollarSign}   label="Total Gross"          value={fmtShort(summary?.totalGross      || 0)} sub={`${summary?.total || 0} employees`} accent={GOLD}    isDark={isDark} />
             <StatCard icon={Wallet}       label="Total Net Payout"     value={fmtShort(summary?.totalNet        || 0)} sub="After all deductions"               accent="#3B82F6" isDark={isDark} />
             <StatCard icon={TrendingDown} label="Total Deductions"     value={fmtShort(summary?.totalDeductions || 0)} sub="Tax, PF, penalties"                 accent="#EF4444" isDark={isDark} />

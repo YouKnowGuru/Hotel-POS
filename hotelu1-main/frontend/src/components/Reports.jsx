@@ -587,7 +587,7 @@ const Reports = ({ locationSettings }) => {
  )}
 
  {/* KPI cards */}
- <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
  {kpis.map((k, idx) => (
  <KpiCard
  key={k.id}
@@ -925,8 +925,7 @@ const KpiCard = ({ label, value, delta, color, Icon, delay, isLoaded }) => {
  <Icon className="w-3.5 h-3.5" />
  </div>
  )}
- </div>
- <p className={`text-2xl sm:text-3xl font-bold ${color} leading-none`}>{value}</p>
+ </div>  <p className={`text-lg sm:text-2xl lg:text-3xl font-bold ${color} leading-none`}>{value}</p>
  <div
  className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold ${
  positive ? 'text-emerald-500' : 'text-rose-500'

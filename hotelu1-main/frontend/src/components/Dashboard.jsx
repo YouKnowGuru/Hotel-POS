@@ -202,10 +202,10 @@ const KpiCard = ({
       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
         {label}
       </p>
-      <p style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <p style={{ fontSize: 'clamp(19px, 5vw, 26px)', fontWeight: 800, color: 'var(--text-primary)', margin: 0, overflowWrap: 'break-word', lineHeight: 1.15, fontFamily: "Inter, system-ui, sans-serif" }}>
         {value}
       </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 8, fontSize: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 8, fontSize: 12 }}>
         <span
           style={{
             display: 'inline-flex',
@@ -711,7 +711,7 @@ const Dashboard = ({ locationSettings }) => {
       </div>
 
       {/* ===== KPI row ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <KpiCard
           icon={ShoppingCart}
           accentFrom={NAVY}
