@@ -605,6 +605,11 @@ const Reports = ({ locationSettings }) => {
  {/* Revenue Trend + Peak Sales Hours */}
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
  <ChartCard title="Revenue Trend">
+ {revenueTrend.length === 0 ? (
+ <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+ No sales data for selected period
+ </div>
+ ) : (
  <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={260}>
  <LineChart
  data={revenueTrend}
@@ -616,7 +621,7 @@ const Reports = ({ locationSettings }) => {
  <stop offset="100%" stopColor="#F97316" stopOpacity={0} />
  </linearGradient>
  </defs>
- <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" vertical={false} />
+ <CartesianGrid stroke="rgba(148,163,184,0.25)" strokeDasharray="3 3" vertical={false} />
  <XAxis
  dataKey="period"
  tick={{ fontSize: 11, fill: '#94A3B8' }}
@@ -654,15 +659,21 @@ const Reports = ({ locationSettings }) => {
  />
  </LineChart>
  </ResponsiveContainer>
+ )}
  </ChartCard>
 
  <ChartCard title="Peak Sales Hours">
+ {peakHours.length === 0 ? (
+ <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
+ No sales data for selected period
+ </div>
+ ) : (
  <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={260}>
  <BarChart
  data={peakHours}
  margin={{ top: 10, right: 14, left: 0, bottom: 0 }}
  >
- <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" vertical={false} />
+ <CartesianGrid stroke="rgba(148,163,184,0.25)" strokeDasharray="3 3" vertical={false} />
  <XAxis
  dataKey="period"
  tick={{ fontSize: 10, fill: '#94A3B8' }}
@@ -677,7 +688,7 @@ const Reports = ({ locationSettings }) => {
  tickFormatter={(v) => shortAmount(v)}
  />
  <RechartsTooltip
- cursor={{ fill: '#FFF7ED' }}
+ cursor={{ fill: 'rgba(148,163,184,0.10)' }}
  contentStyle={{
  borderRadius: 12,
  border: '1px solid #E5E7EB',
@@ -688,6 +699,7 @@ const Reports = ({ locationSettings }) => {
  <Bar dataKey="sales" fill="#F97316" radius={[6, 6, 0, 0]} barSize={18} />
  </BarChart>
  </ResponsiveContainer>
+ )}
  </ChartCard>
  </div>
 
@@ -1354,7 +1366,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  layout="vertical"
  margin={{ top: 5, right: 16, left: 4, bottom: 5 }}
  >
- <CartesianGrid stroke="#F1F5F9" strokeDasharray="3 3" horizontal={false} />
+ <CartesianGrid stroke="rgba(148,163,184,0.25)" strokeDasharray="3 3" horizontal={false} />
  <XAxis
  type="number"
  tick={{ fontSize: 11, fill: '#94A3B8' }}
@@ -1372,7 +1384,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  width={90}
  />
  <RechartsTooltip
- cursor={{ fill: '#FFF7ED' }}
+ cursor={{ fill: 'rgba(148,163,184,0.10)' }}
  contentStyle={{
  borderRadius: 12,
  border: '1px solid #E5E7EB',

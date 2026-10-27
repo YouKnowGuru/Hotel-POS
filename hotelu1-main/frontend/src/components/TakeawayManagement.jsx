@@ -111,6 +111,8 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  // --- STATE (preserved) ---
  const [showOrderModal, setShowOrderModal] = useState(false);
+ // Id of the takeaway order whose manual pay-&-complete is in flight
+ const [completingId, setCompletingId] = useState(null);
  const [activeOrders, setActiveOrders] = useState([]);
  const [notification, setNotification] = useState(null);
  const [editingOrder, setEditingOrder] = useState(null);
@@ -297,6 +299,35 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  setTimeout(() => setNotification(null), 3000);
  };
 
+ /* Manual recovery: close a paid-but-still-pending takeaway order.
+    Goes through /complete-payment so the SAME server path the
+    payment modal uses records payment + the money snapshot
+    (food subtotal, service charge, GST) on the ledger. */
+ const handlePayComplete = async (order) => {
+ setCompletingId(order.id);
+ try {
+ const res = await authFetch(`/api/orders/${order.id}/complete-payment`, {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ payment_method: order.payment_method || 'cash' }),
+ });
+ if (!res.ok) {
+ const errData = await res.json().catch(() => ({}));
+ throw new Error(errData.message || 'Server refused payment completion');
+ }
+ setActiveOrders((prev) => prev.filter((o) => o.id !== order.id));
+ setNotification({
+ message: `Order #${order.id} paid & completed — ${fmt(order.service_charge ?? 0)} service charge and ${fmt(order.tax_amount ?? 0)} GST recorded`,
+ type: 'success',
+ });
+ } catch (error) {
+ console.error('Pay & complete failed:', error);
+ setNotification({ message: `Could not complete order #${order.id}: ${error.message}`, type: 'error' });
+ }
+ setCompletingId(null);
+ setTimeout(() => setNotification(null), 4000);
+ };
+
  /* -------------- derived counts + filtered list -------------- */
 
  const counts = useMemo(() => {
@@ -392,7 +423,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  </div>
 
  {/* Status filter pills */}
- <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit overflow-x-auto">
+ <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin">
  {STATUS_TABS.map((tab) => {
  const isActive = activeFilter === tab.id;
  const count = counts[tab.id] ?? 0;
@@ -447,6 +478,8 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  index={index}
  isLoaded={isLoaded}
  onMarkCompleted={() => handleMarkCompleted(order.id)}
+ onPayComplete={() => handlePayComplete(order)}
+ completingId={completingId}
  onAddItems={() => handleAddMoreItems(order)}
  onDeleteEmpty={() => handleDeleteEmptyOrder(order)}
  />
@@ -586,6 +619,8 @@ const OrderCard = ({
  index,
  isLoaded,
  onMarkCompleted,
+ onPayComplete,
+ completingId,
  onAddItems,
  onDeleteEmpty,
 }) => {
@@ -695,12 +730,17 @@ const OrderCard = ({
  </button>
  )}
  {order.status === 'pending' && (
+ /* There is no kitchen step in the takeaway flow: once the money is
+    collected the order must CLOSE and its service charge, GST and
+    food price are recorded via /complete-payment (with a manual
+    fallback here so an order can never get stuck in this state). */
  <button
- disabled
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-amber-50 text-amber-600 text-sm font-semibold cursor-not-allowed"
+ onClick={() => onPayComplete(order)}
+ disabled={completingId === order.id}
+ className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-sm transition disabled:opacity-60"
  >
- <Clock className="w-4 h-4" />
- Waiting for kitchen
+ <CheckCircle2 className="w-4 h-4" />
+ {completingId === order.id ? 'Completing…' : 'Pay & complete order'}
  </button>
  )}
  {order.status === 'preparing' && (

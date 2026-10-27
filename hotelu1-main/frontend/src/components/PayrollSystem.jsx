@@ -24,6 +24,28 @@ const getGlass = (isDark) => ({
   boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.30)' : '0 4px 18px rgba(0,0,0,0.04)',
 });
 
+/* ── Responsive form grids (skill §5 mobile-first: rows collapse to a
+   single column on phones instead of squeezing 3–5 inputs side by side) */
+const PAY_FORM_CSS = `
+.pay-g2  { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.pay-g2x { grid-template-columns: 1.2fr minmax(0,1fr); }
+.pay-g2w { grid-template-columns: 2fr minmax(0,1fr); }
+.pay-g3  { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.pay-g3x { grid-template-columns: 1fr 1fr 1.5fr; }
+.pay-g4  { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.pay-g5  { grid-template-columns: repeat(5, minmax(0,1fr)); }
+.pay-g2, .pay-g2x, .pay-g2w, .pay-g3, .pay-g3x, .pay-g4, .pay-g5 { display: grid; }
+@media (max-width: 720px) {
+  .pay-g2, .pay-g2x, .pay-g2w, .pay-g3x { grid-template-columns: minmax(0,1fr); }
+  .pay-g3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .pay-g4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .pay-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 400px) {
+  .pay-g3 { grid-template-columns: minmax(0,1fr); }
+}
+`;
+
 const fmt = (v) =>
   `Nu. ${Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -237,7 +259,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Attendance summary */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+          <div className="pay-g4" style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
             {[
               { label: 'Working Days', val: r.total_working_days, color: null },
               { label: 'Present',      val: r.days_present,       color: '#10B981' },
@@ -256,7 +278,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Earnings / Deductions */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+          <div className="pay-g2" style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
             <div style={{
               background: isDark ? 'rgba(16,185,129,0.08)' : '#F0FDF4',
               border: isDark ? '1px solid rgba(16,185,129,0.2)' : '1px solid #BBF7D0',
@@ -398,7 +420,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
               <div style={{ fontSize: 16, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', marginBottom: 16 }}>
                 {users.find((u) => u.id === selUser)?.name}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="pay-g2" style={{ display: 'grid', gap: 14 }}>
                 <InputField label="Department"     value={local[selUser].department}    onChange={(v) => upd(selUser,'department',v)} isDark={isDark} />
                 <InputField label="Basic Salary"   value={local[selUser].basic_salary}  onChange={(v) => upd(selUser,'basic_salary',v)}  type="number" prefix="Nu." isDark={isDark} />
                 <InputField label="Hourly Rate"    value={local[selUser].hourly_rate}   onChange={(v) => upd(selUser,'hourly_rate',v)}   type="number" prefix="Nu." isDark={isDark} />
@@ -431,7 +453,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
                     borderRadius: 14, padding: 16
                   }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#64748B', marginBottom: 10 }}>MONTHLY ESTIMATE (excl. OT)</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                    <div className="pay-g3" style={{ display: 'grid', gap: 10 }}>
                       {[
                         { l: 'Gross', v: e.gross, c: '#10B981', bg: isDark ? '#10B98115' : '#ECFDF5', border: isDark ? '#10B98130' : '#A7F3D0' },
                         { l: 'Deductions', v: e.ded, c: '#EF4444', bg: isDark ? '#EF444415' : '#FEF2F2', border: isDark ? '#EF444430' : '#FECACA' },
@@ -548,7 +570,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+        <div className="pay-g2" style={{ display: 'grid', gap: 14, marginBottom: 20 }}>
           <div>
             <label style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Year</label>
             <input
@@ -924,7 +946,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           {/* TAB 1: EMPLOYEE & PERIOD */}
           {activeTab === 'employee' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 14 }}>
+              <div className="pay-g2x" style={{ display: 'grid', gap: 14 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Select Staff Member *</label>
                   <select
@@ -956,7 +978,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: GOLD, textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Calendar size={14} /> Pay Period Selection
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: 12, marginBottom: 12 }}>
+                <div className="pay-g3x" style={{ display: 'grid', gap: 12, marginBottom: 12 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#475569', textTransform: 'uppercase' }}>Month</label>
                     <select
@@ -994,7 +1016,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                   </div>
                   <InputField label="Period Label (Payslip Display)" value={form.pay_period_label} onChange={(v) => upd('pay_period_label', v)} isDark={isDark} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div className="pay-g2" style={{ display: 'grid', gap: 12 }}>
                   <InputField label="Period Start Date" type="date" value={form.pay_period_start} onChange={(v) => upd('pay_period_start', v)} isDark={isDark} />
                   <InputField label="Period End Date" type="date" value={form.pay_period_end} onChange={(v) => upd('pay_period_end', v)} isDark={isDark} />
                 </div>
@@ -1005,14 +1027,14 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#0284C7', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Clock size={14} /> Attendance & Work Metrics
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 14 }}>
+                <div className="pay-g5" style={{ display: 'grid', gap: 10, marginBottom: 14 }}>
                   <InputField label="Working Days"  type="number" value={form.total_working_days} onChange={(v) => upd('total_working_days', v)} isDark={isDark} />
                   <InputField label="Present Days"  type="number" value={form.days_present}       onChange={(v) => upd('days_present', v)} isDark={isDark} />
                   <InputField label="Absent Days"   type="number" value={form.days_absent}        onChange={(v) => upd('days_absent', v)} isDark={isDark} />
                   <InputField label="Leave Days"    type="number" value={form.days_leave}         onChange={(v) => upd('days_leave', v)} isDark={isDark} />
                   <InputField label="Holidays"      type="number" value={form.days_holiday}       onChange={(v) => upd('days_holiday', v)} isDark={isDark} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div className="pay-g2" style={{ display: 'grid', gap: 14 }}>
                   <InputField label="Regular Hours Worked" type="number" value={form.regular_hours} onChange={(v) => upd('regular_hours', v)} prefix="hrs" isDark={isDark} />
                   <InputField label="Overtime Hours" type="number" value={form.overtime_hours} onChange={(v) => upd('overtime_hours', v)} prefix="hrs" isDark={isDark} />
                 </div>
@@ -1023,7 +1045,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           {/* TAB 2: EARNINGS & OVERTIME */}
           {activeTab === 'earnings' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+              <div className="pay-g3" style={{ display: 'grid', gap: 14 }}>
                 <InputField label="Basic Salary *" type="number" prefix="Nu." value={form.basic_salary} onChange={(v) => upd('basic_salary', v)} isDark={isDark} />
                 <InputField label="Hourly Rate"   type="number" prefix="Nu." value={form.hourly_rate}   onChange={(v) => upd('hourly_rate', v)} isDark={isDark} />
                 <InputField label="OT Multiplier" type="number" prefix="x"   value={form.overtime_rate} onChange={(v) => upd('overtime_rate', v)} isDark={isDark} />
@@ -1065,7 +1087,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: GOLD, textTransform: 'uppercase', marginBottom: 12 }}>
                   Monthly Allowances (Total: {fmt(totalAllowances)})
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                <div className="pay-g3" style={{ display: 'grid', gap: 12 }}>
                   <InputField label="HRA (Housing)"   type="number" prefix="Nu." value={form.hra}              onChange={(v) => upd('hra', v)} isDark={isDark} />
                   <InputField label="Transport"       type="number" prefix="Nu." value={form.transport}        onChange={(v) => upd('transport', v)} isDark={isDark} />
                   <InputField label="Meals"           type="number" prefix="Nu." value={form.meals}            onChange={(v) => upd('meals', v)} isDark={isDark} />
@@ -1083,7 +1105,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#10B981', textTransform: 'uppercase', marginBottom: 12 }}>
                   Incentives & Bonuses
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div className="pay-g3" style={{ display: 'grid', gap: 12 }}>
                   <InputField label="Performance Bonus" type="number" prefix="Nu." value={form.performance_bonus} onChange={(v) => upd('performance_bonus', v)} isDark={isDark} />
                   <InputField label="Festival Bonus"    type="number" prefix="Nu." value={form.festival_bonus}    onChange={(v) => upd('festival_bonus', v)} isDark={isDark} />
                   <InputField label="Tips Shared"       type="number" prefix="Nu." value={form.tips_shared}       onChange={(v) => upd('tips_shared', v)} isDark={isDark} />
@@ -1103,7 +1125,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#EF4444', textTransform: 'uppercase', marginBottom: 12 }}>
                   Statutory Deductions (Total: {fmt(totalDeductions)})
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+                <div className="pay-g3" style={{ display: 'grid', gap: 14 }}>
                   <InputField label="Tax (Income Tax)"  type="number" prefix="Nu." value={form.tax}            onChange={(v) => upd('tax', v)} isDark={isDark} />
                   <InputField label="Provident Fund"   type="number" prefix="Nu." value={form.provident_fund} onChange={(v) => upd('provident_fund', v)} isDark={isDark} />
                   <InputField label="Insurance"        type="number" prefix="Nu." value={form.insurance}      onChange={(v) => upd('insurance', v)} isDark={isDark} />
@@ -1118,7 +1140,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#D97706', textTransform: 'uppercase', marginBottom: 12 }}>
                   Adjustments & Penalties
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+                <div className="pay-g2" style={{ display: 'grid', gap: 14, marginBottom: 14 }}>
                   <InputField label="Advance / Loan Repayment" type="number" prefix="Nu." value={form.advance_deduction} onChange={(v) => upd('advance_deduction', v)} isDark={isDark} />
                   <InputField label="Late Arrival Penalty"     type="number" prefix="Nu." value={form.late_deduction}    onChange={(v) => upd('late_deduction', v)} isDark={isDark} />
                 </div>
@@ -1161,7 +1183,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           {/* TAB 4: STATUS & PAYOUT */}
           {activeTab === 'payout' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div className="pay-g2" style={{ display: 'grid', gap: 14 }}>
                 <div>
                   <label style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Payroll Status *</label>
                   <select
@@ -1213,7 +1235,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                     <Banknote size={15} /> Payment Settlement Details
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div className="pay-g2" style={{ display: 'grid', gap: 14 }}>
                     <InputField label="Payment Reference / Txn ID" value={form.payment_reference} onChange={(v) => upd('payment_reference', v)} isDark={isDark} />
                     <InputField label="Payment Date" type="date" value={form.payment_date} onChange={(v) => upd('payment_date', v)} isDark={isDark} />
                   </div>
@@ -1242,10 +1264,10 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Live Calculation Metric Bar */}
-        <div style={{
+        <div className="pay-g4" style={{
           background: isDark ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
-          padding: '14px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, flexShrink: 0
+          padding: '14px 24px', display: 'grid', gap: 12, flexShrink: 0
         }}>
           <div style={{
             background: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
@@ -1502,13 +1524,15 @@ const PayrollSystem = ({ currentUser }) => {
 
   /* ── render ── */
   return (
-    <div style={{
-      padding: '24px 32px',
+    <div className="payroll-page" style={{
+      padding: '24px 16px',
       maxWidth: 1400,
       margin: '0 auto',
       fontFamily: 'Inter, system-ui, sans-serif',
       color: isDark ? '#FFFFFF' : '#0F172A',
       minHeight: '100vh',
+      width: '100%',
+      boxSizing: 'border-box',
     }}>
 
       {/* Toast */}
@@ -1517,6 +1541,7 @@ const PayrollSystem = ({ currentUser }) => {
           {toast.msg}
         </div>
       )}
+      <style>{PAY_FORM_CSS}</style>
       <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }`}</style>
 
       {/* Modals */}
@@ -1654,7 +1679,7 @@ const PayrollSystem = ({ currentUser }) => {
           </div>
 
           {/* Charts */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20, marginBottom: 24 }}>
+          <div className="pay-g2w" style={{ display: 'grid', gap: 20, marginBottom: 24 }}>
             <div style={{ ...getGlass(isDark), padding: 22 }}>
               <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>Salary Breakdown by Employee</h3>
               <div style={{ height: 260 }}>
@@ -1986,7 +2011,7 @@ const PayrollSystem = ({ currentUser }) => {
                     </div>
                     <StatusBadge status={r.status} isDark={isDark} />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+                  <div className="pay-g2" style={{ display: 'grid', gap: 10, marginBottom: 12 }}>
                     <div style={{
                       background: isDark ? 'rgba(16,185,129,0.08)' : '#ECFDF5',
                       border: isDark ? '1px solid rgba(16,185,129,0.2)' : '1px solid #A7F3D0',

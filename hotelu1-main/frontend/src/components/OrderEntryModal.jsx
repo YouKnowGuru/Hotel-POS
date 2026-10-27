@@ -75,13 +75,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  
  // Set the menu to available items
  setMenu(availableMenu);
- 
- // If no available items, show a notification
- if (availableMenu.length === 0 && allItems.length > 0) {
- setNotification({ message: 'No menu items are currently available', type: 'warning' });
- } else if (availableMenu.length > 0) {
- setNotification({ message: `Loaded ${availableMenu.length} menu items`, type: 'success' });
- }
+ /* No success toast here: it used to render on top of the modal header
+    (z-[3000] fixed toast) and block the close button on phones. */
  })
  .catch(err => {
  console.error('OrderEntryModal: Error fetching menu:', err);
@@ -198,8 +193,15 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  });
 
  if (!response.ok) {
- // If status update fails, still proceed with receipt
- console.warn('Payment completion failed, proceeding with receipt');
+ // BUGFIX: this used to "succeed" silently — the receipt printed as PAID
+ // while the server kept the order pending forever, dead-ending the
+ // takeaway board on "Waiting for kitchen". Now we surface the error
+ // and keep the payment modal open so the cashier can retry; nothing
+ // else is closed until the server confirms the payment.
+ const errData = await response.json().catch(() => ({}));
+ setNotification({ message: errData.message || 'Payment could not be completed — please try again', type: 'error' });
+ setTimeout(() => setNotification(null), 5000);
+ return;
  }
 
  const data = await response.json().catch(() => ({}));
@@ -787,11 +789,18 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <span className="text-gray-500">Date & Time</span>
  <span className="font-semibold text-gray-900">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
  </div>
- <div className="flex justify-between text-sm">
- <span className="text-gray-500">Status</span>
- <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
- Pending
- </span>
+ <div className="flex justify-between text-sm">                        <span className="text-gray-500">Status</span>
+                        {/* REAL payment state — a paid takeaway used to read
+                            "Pending" while the board said waiting-for-kitchen */}
+                        {confirmedOrder.payment_status === 'paid' || confirmedOrder.status === 'completed' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Paid — Order Complete
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pending
+                          </span>
+                        )}
  </div>
  </div>
 

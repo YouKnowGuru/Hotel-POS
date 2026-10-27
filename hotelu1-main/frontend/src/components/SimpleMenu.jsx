@@ -1305,7 +1305,9 @@ const s = {
  trackerSection: { position: 'relative', zIndex: 1, marginBottom: 8 },
  trackerLabel: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8, paddingLeft: 2 },
  trackerDot: { width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.6)', animation: 'pulse 2s ease-in-out infinite' },
- trackerCard: { display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 16, background: 'rgba(255,255,255,0.75)', border: '1.5px solid', marginBottom: 8, animation: 'fadeUp 0.35s ease both' },
+ /* FIX: the 0.75 white made notification cards wash out over
+    content behind them — nearly-solid keeps the status text readable. */
+ trackerCard: { display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderRadius: 16, background: 'rgba(255,255,255,0.97)', border: '1.5px solid', marginBottom: 8, animation: 'fadeUp 0.35s ease both', boxShadow: '0 2px 10px rgba(15,23,42,0.06)' },
  trackerIcon: { width: 36, height: 36, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
  trackerOrder: { margin: 0, fontSize: 13, fontWeight: 700, color: '#0f172a' },
  trackerStatus: { margin: '0 0 6px', fontSize: 11, fontWeight: 600 },
