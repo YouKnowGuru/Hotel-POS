@@ -298,7 +298,7 @@ const App = () => {
 
     return (
       <div
-        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
+        className="font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
         style={{ height: '100dvh', overflow: 'hidden' }}
       >
         <Sidebar
@@ -309,7 +309,18 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
+        <div
+          className="flex flex-col app-content-fixed"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            minHeight: 0,
+            zIndex: 10,
+          }}
+        >
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main
             className="flex-1 bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin"
@@ -319,7 +330,7 @@ const App = () => {
               WebkitOverflowScrolling: 'touch',
               minHeight: 0,
               touchAction: 'pan-y',
-              // Ensure bottom content isn't hidden behind mobile browser chrome
+              overscrollBehaviorY: 'contain',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
@@ -345,7 +356,7 @@ const App = () => {
 
     return (
       <div
-        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
+        className="font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
         style={{ height: '100dvh', overflow: 'hidden' }}
       >
         <Sidebar
@@ -356,7 +367,18 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        <div className="flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
+        <div
+          className="flex flex-col app-content-fixed"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            minHeight: 0,
+            zIndex: 10,
+          }}
+        >
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main
             className="flex-1 bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin"
@@ -366,6 +388,7 @@ const App = () => {
               WebkitOverflowScrolling: 'touch',
               minHeight: 0,
               touchAction: 'pan-y',
+              overscrollBehaviorY: 'contain',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >

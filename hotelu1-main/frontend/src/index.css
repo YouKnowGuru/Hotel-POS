@@ -1601,6 +1601,18 @@ main {
   overscroll-behavior-y: contain;
 }
 
+/* ── Fixed layout shell (App.jsx MenuLayout / DashboardLayout) ──────
+   The content column uses position:fixed so it always fills the
+   viewport — no flex chain that can break on mobile. On desktop
+   (lg ≥ 1024px) the sidebar is 16rem wide and in normal flow, so
+   the fixed content panel must offset left by 16rem. On mobile the
+   sidebar is a portal overlay, so the content takes the full width. */
+@media (min-width: 1024px) {
+  .app-content-fixed {
+    left: 16rem !important;
+  }
+}
+
 /* Larger, more touch-friendly tap targets on phones (min 44px per WCAG). */
 @media (max-width: 640px) {
   button,
