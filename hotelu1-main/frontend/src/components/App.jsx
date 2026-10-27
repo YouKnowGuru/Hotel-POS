@@ -297,7 +297,10 @@ const App = () => {
     }
 
     return (
-      <div className="flex h-screen overflow-hidden font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
+      <div
+        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]"
+        style={{ height: '100dvh', overflow: 'hidden' }}
+      >
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -306,12 +309,21 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        {/* Single unified top bar (TopHeader) now handles the notch
-            safe-area itself — the separate fixed mobile hamburger bar was
-            removed because it stacked two nav rows on small screens. */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-auto bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>{children}</main>
+          <main
+            className="flex-1 bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin"
+            style={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              WebkitOverflowScrolling: 'touch',
+              minHeight: 0,
+              // Ensure bottom content isn't hidden behind mobile browser chrome
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            {children}
+          </main>
         </div>
       </div>
     );
@@ -331,7 +343,10 @@ const App = () => {
     }
 
     return (
-      <div className="flex h-screen overflow-hidden font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]">
+      <div
+        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]"
+        style={{ height: '100dvh', overflow: 'hidden' }}
+      >
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -340,12 +355,20 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        {/* Single unified top bar (TopHeader) now handles the notch
-            safe-area itself — the separate fixed mobile hamburger bar was
-            removed because it stacked two nav rows on small screens. */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0" style={{ minHeight: 0 }}>
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
-          <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-auto bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin" style={{ WebkitOverflowScrolling: 'touch' }}>{renderContent()}</main>
+          <main
+            className="flex-1 bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin"
+            style={{
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              WebkitOverflowScrolling: 'touch',
+              minHeight: 0,
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
+          >
+            {renderContent()}
+          </main>
         </div>
       </div>
     );
