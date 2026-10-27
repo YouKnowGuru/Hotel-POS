@@ -8,6 +8,7 @@ const puppeteer = require('puppeteer-core');
 
 const PORT = 5090;
 const API_PORT = 3001;
+const WIDTH = Number(process.argv[4]) || 375;
 const ROOT = path.join(__dirname, '..', 'build');
 const SHOTS = path.join(__dirname, '..', '.pw-shots');
 
@@ -111,7 +112,7 @@ async function httpGetHomepage() {
 
   const srv = await serveStatic();
   const page = await browser.newPage();
-  await page.setViewport({ width: 375, height: 812, deviceScaleFactor: 2, isMobile: true, hasTouch: true, isLandscape: false });
+  await page.setViewport({ width: WIDTH, height: 812, deviceScaleFactor: 2, isMobile: true, hasTouch: true, isLandscape: false });
 
   const results = [];
   for (const route of routes) {
@@ -164,7 +165,7 @@ async function httpGetHomepage() {
       });
 
       const name = route.replace(/\//g, '_').slice(1) || 'root';
-      await page.screenshot({ path: path.join(SHOTS, `${shotPrefix}${name}-375.png`), fullPage: false });
+      await page.screenshot({ path: path.join(SHOTS, `${shotPrefix}${name}-${WIDTH}.png`), fullPage: false });
       results.push({ route, status: audit.overflowPx > 2 ? 'OVERFLOW' : 'ok', ...audit });
       console.log(`${route}  ->  ${audit.overflowPx > 2 ? 'OVERFLOW +' + audit.overflowPx + 'px' : 'ok'}  [${audit.heading}]${audit.offenders.length ? '  (offenders: ' + audit.offenders.length + ')' : ''}`);
     } catch (e) {
