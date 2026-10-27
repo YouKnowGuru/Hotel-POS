@@ -1,6 +1,6 @@
-/* Mobile responsive audit: loads every admin/waiter route at 375x812 with a
-   real login, reports horizontal overflow + offending elements, saves shots.
-   Usage: node scripts/pw-audit-mobile.js [admin|waiter] [routeFilter] */
+/* Mobile responsive audit: loads every admin/waiter/public route at 375x812,
+   reports horizontal overflow + offending elements, saves shots.
+   Usage: node scripts/pw-audit-mobile.js [admin|waiter|public] [routeFilter] */
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -30,6 +30,10 @@ const ADMIN_ROUTES = process.argv[3] ? [process.argv[3]] : [
   '/notifications',
 ];
 const WAITER_ROUTES = ['/delivery', '/orders'];
+const PUBLIC_ROUTES = process.argv[3] ? [process.argv[3]] : [
+  '/', '/order', '/about', '/privacy', '/terms', '/login',
+  '/qr-ordering', '/order-confirmation',
+];
 
 function serveStatic() {
   const TYPES = {
@@ -85,14 +89,16 @@ async function httpGetHomepage() {
 (async () => {
   const roleArg = process.argv[2] || 'admin';
   const role = ROLES[roleArg] ? roleArg : 'admin';
-  const routes = role === 'waiter' && !process.argv[3] ? WAITER_ROUTES : (roleArg === 'waiter' && process.argv[3] ? [process.argv[3]] : ADMIN_ROUTES);
+  const shotPrefix = roleArg;
+  const routes = roleArg === 'public' ? PUBLIC_ROUTES : (role === 'waiter' && !process.argv[3] ? WAITER_ROUTES : (roleArg === 'waiter' && process.argv[3] ? [process.argv[3]] : ADMIN_ROUTES));
 
   // Backend healthy?
   const health = await httpGetHomepage().catch(() => null);
   if (!health) { console.error('FATAL: backend not running on ' + API_PORT); process.exit(2); }
 
-  const login = await apiLogin(ROLES[role]);
-  if (!login.token) { console.error('FATAL: login failed for ' + role + ':', login); process.exit(2); }
+  // Public pages need no login — point them at the real backend for menu data.
+  const login = roleArg === 'public' ? { token: null, user: null } : await apiLogin(ROLES[role]);
+  if (roleArg !== 'public' && !login.token) { console.error('FATAL: login failed for ' + role + ':', login); process.exit(2); }
 
   fs.mkdirSync(SHOTS, { recursive: true });
 
@@ -114,8 +120,8 @@ async function httpGetHomepage() {
       await page.goto(`http://localhost:${PORT}/login`, { waitUntil: 'domcontentloaded' });
       await page.evaluate(({ token, user, api }) => {
         try { localStorage.clear(); } catch (e) { /* ignore */ }
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        if (token) localStorage.setItem('token', token);
+        if (user) localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('apiUrl', api);
       }, { token: login.token, user: login.user, api: `http://localhost:${API_PORT}` });
 
@@ -158,7 +164,7 @@ async function httpGetHomepage() {
       });
 
       const name = route.replace(/\//g, '_').slice(1) || 'root';
-      await page.screenshot({ path: path.join(SHOTS, `${role}${name}-375.png`), fullPage: false });
+      await page.screenshot({ path: path.join(SHOTS, `${shotPrefix}${name}-375.png`), fullPage: false });
       results.push({ route, status: audit.overflowPx > 2 ? 'OVERFLOW' : 'ok', ...audit });
       console.log(`${route}  ->  ${audit.overflowPx > 2 ? 'OVERFLOW +' + audit.overflowPx + 'px' : 'ok'}  [${audit.heading}]${audit.offenders.length ? '  (offenders: ' + audit.offenders.length + ')' : ''}`);
     } catch (e) {
