@@ -127,7 +127,7 @@ const getItemPrice = (item) => {
 };
 
 const reportableFilter = (o) =>
- o && (o.status === 'completed' || o.bill_status === 'paid' || o.payment_status === 'paid');
+ o && (String(o.status || '').toLowerCase() === 'completed' || String(o.bill_status || '').toLowerCase() === 'paid' || String(o.payment_status || '').toLowerCase() === 'paid');
 
 /* ------------------------------------------------------------------ */
 /* Custom date input (styled like image 3, native picker inside) */
