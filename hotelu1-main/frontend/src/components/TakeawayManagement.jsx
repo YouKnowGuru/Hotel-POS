@@ -6,6 +6,7 @@ import Notification from './Notification';
 import OrderEntryModal from './OrderEntryModal';
 import useCurrency from '../hooks/useCurrency';
 import SourceBadge from './SourceBadge';
+import { useTheme } from '../contexts/ThemeContext';
 import {
  Plus,
  ShoppingBag,
@@ -69,10 +70,12 @@ const STATUS_TABS = [
 const statusKey = (s) => (s in STATUS_META ? s : 'pending');
 
 const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => {
- const { format: fmt } = useCurrency(locationSettings);
- const navigate = useNavigate();
+	const { format: fmt } = useCurrency(locationSettings);
+	const navigate = useNavigate();
+	const { resolvedTheme } = useTheme();
+	const isDark = resolvedTheme === 'dark';
 
- // Thermal print styles for 80mm billing printer
+	// Thermal print styles for 80mm billing printer
  const thermalPrintStyles = `
  @media print {
  @page { size: 80mm auto; margin: 0; }
@@ -349,11 +352,11 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  /* ------------------------------------------------------------------ */
 
  return (
- <div
- className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen bg-[#F7F7F8] transition-opacity duration-500 ${
- isLoaded ? 'opacity-100' : 'opacity-0'
- }`}
- >
+	<div
+		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-screen transition-opacity duration-500 ${
+			isLoaded ? 'opacity-100' : 'opacity-0'
+		} ${isDark ? 'dark:bg-[#0F141F] dark:text-gray-100' : 'bg-[#F7F7F8] text-gray-900'}`}
+	>
  <style dangerouslySetInnerHTML={{ __html: thermalPrintStyles }} />
 
  {notification && (
@@ -367,13 +370,13 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
  <div>
- <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2">
- <span className="w-9 h-9 rounded-xl bg-indigo-600/10 text-indigo-500 flex items-center justify-center">
- <ShoppingBag className="w-5 h-5" />
- </span>
- Takeaway Orders
- </h1>
- <p className="text-sm text-gray-500 mt-1 ml-11">
+<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+<span className="w-9 h-9 rounded-xl bg-indigo-600/10 text-indigo-500 flex items-center justify-center">
+<ShoppingBag className="w-5 h-5" />
+</span>
+Takeaway Orders
+</h1>
+<p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-11">
  Quick service orders &amp; live token tracking
  </p>
  </div>
@@ -388,42 +391,46 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  {/* Summary cards */}
  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
- <SummaryCard
- label="ACTIVE ORDERS"
- value={counts.all}
- Icon={ShoppingBag}
- color="text-indigo-500"
- delay={0}
- isLoaded={isLoaded}
- />
- <SummaryCard
- label="PENDING"
- value={counts.pending}
- Icon={Clock}
- color="text-amber-500"
- delay={60}
- isLoaded={isLoaded}
- />
- <SummaryCard
- label="PREPARING"
- value={counts.preparing}
- Icon={Utensils}
- color="text-blue-500"
- delay={120}
- isLoaded={isLoaded}
- />
- <SummaryCard
- label="READY"
- value={counts.ready}
- Icon={PackageCheck}
- color="text-emerald-500"
- delay={180}
- isLoaded={isLoaded}
- />
+	<SummaryCard
+		label="ACTIVE ORDERS"
+		value={counts.all}
+		Icon={ShoppingBag}
+		color="text-indigo-500"
+		delay={0}
+		isLoaded={isLoaded}
+		isDark={isDark}
+	/>
+	<SummaryCard
+		label="PENDING"
+		value={counts.pending}
+		Icon={Clock}
+		color="text-amber-500"
+		delay={60}
+		isLoaded={isLoaded}
+		isDark={isDark}
+	/>
+	<SummaryCard
+		label="PREPARING"
+		value={counts.preparing}
+		Icon={Utensils}
+		color="text-blue-500"
+		delay={120}
+		isLoaded={isLoaded}
+		isDark={isDark}
+	/>
+	<SummaryCard
+		label="READY"
+		value={counts.ready}
+		Icon={PackageCheck}
+		color="text-emerald-500"
+		delay={180}
+		isLoaded={isLoaded}
+		isDark={isDark}
+	/>
  </div>
 
  {/* Status filter pills */}
- <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin">
+ <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin dark:bg-[#121A29] dark:border-gray-800">
  {STATUS_TABS.map((tab) => {
  const isActive = activeFilter === tab.id;
  const count = counts[tab.id] ?? 0;
@@ -434,14 +441,14 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
  isActive
  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/60'
- : `${tab.accent} hover:bg-gray-50`
+ : `${tab.accent} hover:bg-gray-50 dark:hover:bg-white/5`
  }`}
  >
  {tab.label}
  <span
- className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
- isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'
- }`}
+className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+}`}
  >
  {count}
  </span>
@@ -452,12 +459,12 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  {/* Orders grid */}
  {filteredOrders.length === 0 ? (
- <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center">
- <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto mb-3 flex items-center justify-center">
- <ShoppingBag className="w-7 h-7" />
- </div>
- <p className="text-base font-semibold text-gray-900">No takeaway orders</p>
- <p className="text-sm text-gray-500 mt-1">
+<div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center dark:bg-[#121A29] dark:border-gray-800">
+<div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto mb-3 flex items-center justify-center dark:bg-indigo-500/10 dark:text-indigo-500">
+<ShoppingBag className="w-7 h-7" />
+</div>
+<p className="text-base font-semibold text-gray-900 dark:text-gray-100">No takeaway orders</p>
+<p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
  New orders will appear here in real time.
  </p>
  <button
@@ -477,6 +484,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  fmt={fmt}
  index={index}
  isLoaded={isLoaded}
+ isDark={isDark}
  onMarkCompleted={() => handleMarkCompleted(order.id)}
  onPayComplete={() => handlePayComplete(order)}
  completingId={completingId}
@@ -596,21 +604,29 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 /* Subcomponents */
 /* ------------------------------------------------------------------ */
 
-const SummaryCard = ({ label, value, Icon, color, delay, isLoaded }) => (
- <div
- className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5"
- style={{
- animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none',
- }}
- >
- <div className="flex items-center justify-between mb-2">
- <p className="text-[10px] font-bold tracking-wider text-gray-400">{label}</p>
- <div className={`w-7 h-7 rounded-lg bg-gray-50 ${color} flex items-center justify-center`}>
- <Icon className="w-3.5 h-3.5" />
- </div>
- </div>
- <p className={`text-2xl sm:text-3xl font-bold ${color} leading-none`}>{value}</p>
- </div>
+const SummaryCard = ({ label, value, Icon, color, delay, isLoaded, isDark }) => (
+	<div
+		className={`rounded-2xl border shadow-sm p-4 sm:p-5 transition-colors ${
+			isDark
+				? 'bg-[#121A29] border-gray-800'
+				: 'bg-white border-gray-100'
+		}`}
+		style={{
+			animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none',
+		}}
+	>
+		<div className="flex items-center justify-between mb-2">
+			<p className={`text-[10px] font-bold tracking-wider ${
+				isDark ? 'text-gray-500' : 'text-gray-400'
+			}`}>{label}</p>
+			<div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+				isDark ? 'bg-white/10' : 'bg-gray-50'
+			} ${color}`}>
+				<Icon className="w-3.5 h-3.5" />
+			</div>
+		</div>
+		<p className={`text-2xl sm:text-3xl font-bold ${color} leading-none`}>{value}</p>
+	</div>
 );
 
 const OrderCard = ({
@@ -621,8 +637,9 @@ const OrderCard = ({
  onMarkCompleted,
  onPayComplete,
  completingId,
- onAddItems,
- onDeleteEmpty,
+	onAddItems,
+	onDeleteEmpty,
+	isDark,
 }) => {
  const meta = STATUS_META[statusKey(order.status)];
  const Icon = meta.Icon;
@@ -631,62 +648,72 @@ const OrderCard = ({
  typeof order.total === 'number' && !isNaN(order.total) ? order.total : 0;
 
  return (
- <div
- className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col"
- style={{
- animation: isLoaded
- ? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
- : 'none',
- }}
- >
+	<div
+		className={`rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col ${
+			isDark
+				? 'bg-[#121A29] border-gray-800'
+				: 'bg-white border-gray-100'
+		}`}
+		style={{
+			animation: isLoaded
+				? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
+				: 'none',
+		}}
+	>
  {/* Card header */}
- <div className="px-4 py-3 flex items-center justify-between border-b border-gray-50">
- <div className="min-w-0">
- <p className="text-xs font-semibold text-gray-400">Order</p>
- <div className="flex items-center gap-2 flex-wrap">
- <p className="text-base font-bold text-gray-900">#{order.id}</p>
- <SourceBadge source={order.source} />
- </div>
- </div>
- <span
- className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${meta.pill}`}
- >
- <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
- <Icon className="w-3 h-3" />
- {meta.label}
- </span>
- </div>
+		<div className="px-4 py-3 flex items-center justify-between border-b border-gray-50 dark:border-gray-800">
+				<div className="min-w-0">
+					<p className="text-xs font-semibold text-gray-400 dark:text-gray-500">Order</p>
+					<div className="flex items-center gap-2 flex-wrap">
+						<p className="text-base font-bold text-gray-900 dark:text-gray-100">#{order.id}</p>
+						<SourceBadge source={order.source} />
+					</div>
+				</div>
+				<span
+					className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${meta.pill}`}
+				>
+					<span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+					<Icon className="w-3 h-3" />
+					{meta.label}
+				</span>
+			</div>
 
  {/* Token badge */}
- {order.token && (
- <div className="mx-4 mt-3 mb-1 flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
- <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center">
- <Hash className="w-3.5 h-3.5" />
- </div>
- <div className="min-w-0">
- <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600">
- Token
- </p>
- <p className="text-base font-bold text-amber-700 leading-none tracking-wider">
- {order.token}
- </p>
- </div>
- </div>
- )}
+		{order.token && (
+			<div className={`mx-4 mt-3 mb-1 flex items-center gap-2 rounded-xl px-3 py-2 ${
+				isDark
+					? 'bg-amber-500/10 border-amber-500/30'
+					: 'bg-amber-50 border border-amber-100'
+			}`}>
+				<div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+					isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
+				}`}>
+					<Hash className="w-3.5 h-3.5" />
+				</div>
+				<div className="min-w-0">
+					<p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+						Token
+					</p>
+					<p className="text-base font-bold text-amber-700 dark:text-amber-400 leading-none tracking-wider break-all">
+						{order.token}
+					</p>
+				</div>
+			</div>
+		)}
 
  {/* Customer label */}
- {order.table_name && (
- <div className="px-4 pt-2 pb-1">
- <p className="text-xs text-gray-400">Customer / Label</p>
- <p className="text-sm font-semibold text-gray-800">{order.table_name}</p>
- </div>
- )}
+		{order.table_name && (
+			<div className="px-4 pt-2 pb-1">
+				<p className="text-xs text-gray-400 dark:text-gray-500">Customer / Label</p>
+				<p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{order.table_name}</p>
+			</div>
+		)}
 
  {/* Items */}
  <div className="px-4 py-3 flex-1">
- <p className="text-xs font-semibold text-gray-400 mb-2">Items</p>
+ <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Items</p>
  {isEmpty ? (
- <p className="text-xs text-gray-400 italic">No items in this order yet</p>
+ <p className="text-xs text-gray-400 dark:text-gray-500 italic">No items in this order yet</p>
  ) : (
  <ul className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
  {order.items.map((item, idx) => {
@@ -697,12 +724,12 @@ const OrderCard = ({
  className="flex items-center justify-between gap-2 text-sm"
  >
  <span className="flex items-center gap-2 min-w-0 flex-1">
- <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 text-[11px] font-bold shrink-0">
+ <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 text-[11px] font-bold shrink-0 ${isDark ? 'dark:bg-indigo-500/15 dark:text-indigo-400' : ''}`}>
  {qty}×
  </span>
- <span className="text-gray-800 truncate">{item.name}</span>
+ <span className="text-gray-800 dark:text-gray-200 truncate">{item.name}</span>
  </span>
- <span className="text-xs font-semibold text-gray-700 shrink-0">
+ <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 shrink-0">
  {fmt(item.price * qty)}
  </span>
  </li>
@@ -714,30 +741,34 @@ const OrderCard = ({
 
  {/* Total + money breakdown — the card used to show only a bare
      total, so staff couldn't see the recorded service charge / GST. */}
- <div className="px-4 py-3 border-t border-gray-50 bg-gray-50">
+ <div className={`px-4 py-3 border-t ${
+  isDark
+   ? 'border-gray-800 bg-[#0D141F]'
+   : 'border-gray-50 bg-gray-50'
+ }`}>
   {(() => {
     const t = enrichOrderWithTotals(order);
     return (
       <div className="space-y-1 mb-3 text-xs">
         <div className="flex justify-between">
-          <span className="text-gray-500">Subtotal</span>
-          <span className="font-semibold text-gray-700">{fmt(t.subtotal)}</span>
+          <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">Service charge ({t.serviceChargePercent}%)</span>
-          <span className="font-semibold text-gray-700">{fmt(t.serviceCharge)}</span>
+          <span className="text-gray-500 dark:text-gray-400">Service charge ({t.serviceChargePercent}%)</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.serviceCharge)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-500">GST ({t.taxPercent}%)</span>
-          <span className="font-semibold text-gray-700">{fmt(t.taxAmount)}</span>
+          <span className="text-gray-500 dark:text-gray-400">GST ({t.taxPercent}%)</span>
+          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.taxAmount)}</span>
         </div>
       </div>
     );
   })()}
- <div className="flex items-center justify-between mb-3">
- <span className="text-xs font-semibold text-gray-500">Total</span>
- <span className="text-lg font-bold text-gray-900">{fmt(totalSafe)}</span>
- </div>
+<div className="flex items-center justify-between mb-3">
+<span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total</span>
+<span className="text-lg font-bold text-gray-900 dark:text-gray-100">{fmt(totalSafe)}</span>
+</div>
 
  <div className="space-y-2">
  {order.status === 'ready' && (
@@ -766,7 +797,7 @@ const OrderCard = ({
  {order.status === 'preparing' && (
  <button
  disabled
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-semibold cursor-not-allowed"
+ className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-semibold cursor-not-allowed dark:bg-blue-500/10 dark:text-blue-400"
  >
  <Utensils className="w-4 h-4" />
  Being prepared
@@ -775,7 +806,7 @@ const OrderCard = ({
  {order.status === 'NOT_AVAILABLE' && (
  <button
  onClick={onAddItems}
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-semibold transition"
+ className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-semibold transition dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
  >
  <AlertTriangle className="w-4 h-4" />
  Retry order
@@ -784,22 +815,22 @@ const OrderCard = ({
 
  {/* Secondary actions row */}
  <div className="grid grid-cols-2 gap-2">
- <button
- onClick={onAddItems}
- className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition"
- >
- <Plus className="w-3.5 h-3.5" />
- Add items
- </button>
- {isEmpty && (
- <button
- onClick={onDeleteEmpty}
- className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition"
- >
- <Trash2 className="w-3.5 h-3.5" />
- Remove
- </button>
- )}
+	<button
+		onClick={onAddItems}
+		className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+	>
+		<Plus className="w-3.5 h-3.5" />
+		Add items
+	</button>
+	{isEmpty && (
+		<button
+			onClick={onDeleteEmpty}
+			className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-gray-800 dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50"
+		>
+			<Trash2 className="w-3.5 h-3.5" />
+			Remove
+		</button>
+	)}
  </div>
  </div>
  </div>
@@ -810,7 +841,7 @@ const OrderCard = ({
 const ReceiptModal = ({ order, fmt, onClose }) => {
  const t = enrichOrderWithTotals(order);
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
  <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[88vh] overflow-hidden flex flex-col animate-scale-in">
  {/* Header */}
  <div className="bg-indigo-600 p-5 text-center text-white relative">
