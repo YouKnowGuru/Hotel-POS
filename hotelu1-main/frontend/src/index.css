@@ -987,12 +987,14 @@ html.dark .text-gray-400,
 html.dark .text-slate-400,
 html.dark .text-neutral-400,
 html.dark .text-zinc-400 {
-  color: #64748B !important;
+  /* was #64748B — too dim on #141C2E cards; users reported "gray text
+     disappears" on takeaway labels (Order, Items, Subtotal, …) */
+  color: #94A3B8 !important;
 }
 
 html.dark .text-gray-300,
 html.dark .text-slate-300 {
-  color: #64748B !important;
+  color: #CBD5E1 !important;
 }
 
 html.dark .text-white {
@@ -1336,6 +1338,34 @@ html.dark .badge-danger {
 .recharts-responsive-container {
   min-width: 0 !important;
   max-width: 100%;
+}
+
+/* ── Mobile UX hardening ────────────────────────────────────────── */
+/* Prevent accidental horizontal scroll on narrow screens. */
+body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Larger, more touch-friendly tap targets on phones (min 44px per WCAG). */
+@media (max-width: 640px) {
+  button,
+  a,
+  .touch-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* prevents iOS auto-zoom on focus */
+  }
+}
+
+/* Smooth native-style scrolling on mobile. */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,

@@ -755,10 +755,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
 
- {/* Takeaway Order Receipt Modal - Orange Theme */}
+ {/* Takeaway Order Receipt Modal - Orange Theme - z-[100] to stay above Notification toasts */}
  {showReceipt && confirmedOrder && (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in border border-indigo-100">
+ <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+ {/* BUGFIX: constrain the card to the viewport so it's scrollable on small phones instead of clipping */}
+ <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100">
  {/* Header - Orange */}
  <div className="bg-indigo-600 p-6 text-center">
  <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -859,8 +860,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  )}
- {/* Floating Cart Button for Mobile */}
- <div className="md:hidden fixed bottom-4 right-4 z-50">
+ {/* Floating Cart Button for Mobile - z-[100] so it stays above Notification toasts (z-[90]) */}
+ <div className="md:hidden fixed bottom-4 right-4 z-[100]">
  <button
  onClick={() => setShowMobileCart(true)}
  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-xl transition-all transform hover:scale-110 relative"
@@ -878,10 +879,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
 
  {/* Mobile Cart Panel */}
  {showMobileCart && (
- <div className="md:hidden fixed inset-0 z-50 flex items-end">
- <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobileCart(false)} />
- <div className="relative bg-white w-full rounded-t-3xl shadow-2xl max-h-[80vh] overflow-y-auto">
- <div className="p-4">
+ <div className="md:hidden fixed inset-0 z-[100] flex items-end pointer-events-none">
+ <div className="absolute inset-0 bg-black/50 pointer-events-auto" onClick={() => setShowMobileCart(false)} />
+ <div className="relative bg-white w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto">
+ <div className="flex flex-col flex-1 overflow-hidden">
+ <div className="p-4 overflow-y-auto h-full">
  <div className="flex items-center justify-between mb-4">
  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
  <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1041,11 +1043,12 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  </div>
+ </div>
  )}
 
- {/* Payment Modal for Takeaway Orders */}
+ {/* Payment Modal for Takeaway Orders - z-[100] to stay above Notification toasts */}
  {showPaymentModal && pendingOrder && (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+ <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
  <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
  {/* Header */}
  <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-center">

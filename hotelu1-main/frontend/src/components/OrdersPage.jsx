@@ -1256,9 +1256,9 @@ const BillPreviewModal = ({ order, buildPrintableHtml, onClose, onPrint }) => {
 
  return (
  <div
- className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+ className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
  onClick={onClose}
- >
+>
  <div
  className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh]"
  onClick={(e) => e.stopPropagation()}

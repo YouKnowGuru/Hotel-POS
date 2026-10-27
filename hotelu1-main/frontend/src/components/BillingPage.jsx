@@ -917,8 +917,8 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
 
  /* ---------- Render ---------- */
  return (
- <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
- <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-modal-in">
+ <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
+ <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto p-6 sm:p-6 animate-modal-in">
  <h3 className="text-base font-bold text-gray-900">Payment</h3>
  <p className="text-2xl font-bold text-indigo-500 mt-1 mb-5">{fmt(amount)}</p>
 

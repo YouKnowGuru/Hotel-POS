@@ -712,8 +712,28 @@ const OrderCard = ({
  )}
  </div>
 
- {/* Total + actions */}
+ {/* Total + money breakdown — the card used to show only a bare
+     total, so staff couldn't see the recorded service charge / GST. */}
  <div className="px-4 py-3 border-t border-gray-50 bg-gray-50">
+  {(() => {
+    const t = enrichOrderWithTotals(order);
+    return (
+      <div className="space-y-1 mb-3 text-xs">
+        <div className="flex justify-between">
+          <span className="text-gray-500">Subtotal</span>
+          <span className="font-semibold text-gray-700">{fmt(t.subtotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">Service charge ({t.serviceChargePercent}%)</span>
+          <span className="font-semibold text-gray-700">{fmt(t.serviceCharge)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">GST ({t.taxPercent}%)</span>
+          <span className="font-semibold text-gray-700">{fmt(t.taxAmount)}</span>
+        </div>
+      </div>
+    );
+  })()}
  <div className="flex items-center justify-between mb-3">
  <span className="text-xs font-semibold text-gray-500">Total</span>
  <span className="text-lg font-bold text-gray-900">{fmt(totalSafe)}</span>

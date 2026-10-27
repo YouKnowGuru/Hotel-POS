@@ -531,9 +531,7 @@ const getCss = (isDark) => ({
   orb3: { position: 'absolute', top: '45%', left: '35%', width: '30vw', height: '30vw', borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.04), transparent 70%)', animation: 'orbC 25s linear infinite' },
   grid: { position: 'absolute', inset: 0, opacity: 0.015, backgroundImage: 'linear-gradient(rgba(0,0,0,0.08) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.08) 1px,transparent 1px)', backgroundSize: '50px 50px' },
 
-  container: { position: 'relative', zIndex: 1, maxWidth: 1400, margin: '0 auto', padding: '20px 16px' },
-  '@media (min-width:640px)': { container: { padding: '24px 20px' } },
-  '@media (min-width:1024px)': { container: { padding: '28px 24px' } },
+  container: { position: 'relative', zIndex: 1, maxWidth: 1400, margin: '0 auto' },
 
   /* Header */
   header: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 },

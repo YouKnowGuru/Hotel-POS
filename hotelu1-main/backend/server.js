@@ -1844,11 +1844,18 @@ function calculateOrderTotals(subtotal, settings) {
 
 function attachTotalsToOrder(order, items, totals) {
   const base = order.toJSON ? order.toJSON() : { ...order };
-  const normalizedItems = (items || base.items || []).map((item) => ({
-    ...item,
-    qty: item.qty ?? item.quantity,
-    quantity: item.quantity ?? item.qty,
-  }));
+  // BUGFIX: `{ ...item }` on a Sequelize model instance copies only own
+  // enumerable props — the real data lives on dataValues, so every item
+  // came back as `{}` (no name, no price) and receipts printed
+  // "3× undefined — Nu. 0.00". Always flatten via toJSON() first.
+  const normalizedItems = (items || base.items || []).map((item) => {
+    const plain = item && item.toJSON ? item.toJSON() : { ...(item || {}) };
+    return {
+      ...plain,
+      qty: plain.qty ?? plain.quantity,
+      quantity: plain.quantity ?? plain.qty,
+    };
+  });
   return { ...base, items: normalizedItems, ...totals };
 }
 
