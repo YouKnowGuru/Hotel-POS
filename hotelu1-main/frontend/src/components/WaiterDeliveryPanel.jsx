@@ -517,7 +517,7 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5">
           <SummaryCard
             label="ON THE PASS"
             value={readyOrders.length}
@@ -573,7 +573,7 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
         )}
 
         {/* Status filter pills — same as TakeawayManagement */}
-        <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto">
+        <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-full max-w-full overflow-x-auto">
           {[
             { id: 'all',      label: 'All',      Icon: Package,  count: readyOrders.length, accent: 'text-indigo-600' },
             { id: 'dinein',   label: 'Dine-In',  Icon: Utensils, count: dineInCount,        accent: 'text-blue-600' },
@@ -708,7 +708,7 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             {filtered.map((order, index) => (
               <Ticket
                 key={order.id}

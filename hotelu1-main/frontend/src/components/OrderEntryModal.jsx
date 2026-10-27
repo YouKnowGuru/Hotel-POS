@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { authFetch, getAPI_URL } from '../utils/api';
-import { enrichOrderWithTotals, fetchAndCacheGlobalSettings, calculateOrderTotals } from '../utils/orderTotals';
+import { enrichOrderWithTotals, fetchAndCacheGlobalSettings, calculateOrderTotals, getGlobalTaxDiscount } from '../utils/orderTotals';
 import Notification from './Notification';
 import useCurrency from '../hooks/useCurrency';
 import { Users } from 'lucide-react';
@@ -28,7 +28,9 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  const [isSubmitting, setIsSubmitting] = useState(false);
  // Shared tax/discount settings (fetched once) so totals always match
  // what the backend charges — Service charge + GST.
- const [taxSettings, setTaxSettings] = useState(null);
+ // BUGFIX: initialise from localStorage cache instead of null so the
+ // "GST (0%)" display never appears while the async fetch is in-flight.
+ const [taxSettings, setTaxSettings] = useState(() => getGlobalTaxDiscount());
 
  // Load the admin's Billing & Taxation settings once on open.
  useEffect(() => {
@@ -52,7 +54,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  .then(data => {
  // Show all items first, then filter available ones
  const allItems = data;
- const availableMenu = data.filter(item => item.isAvailable === true);
+ const availableMenu = data.filter(item => item.isAvailable !== false);
  
  // Extract categories from menu items with smart categorization
  const uniqueCategories = ['All', ...new Set(availableMenu.map(item => {
@@ -484,7 +486,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="p-3 sm:p-6 flex-grow overflow-hidden flex flex-col">
  <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-grow min-h-0">
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
- <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 max-h-[calc(100vh-120px)] lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
+ <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
  <h4 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
  <span className="mr-1 sm:mr-2 text-lg sm:text-2xl">🍽️</span> Menu Items

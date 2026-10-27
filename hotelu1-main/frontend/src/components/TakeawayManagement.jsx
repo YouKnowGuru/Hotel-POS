@@ -390,7 +390,7 @@ Takeaway Orders
  </div>
 
  {/* Summary cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-5">
+ <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5">
 	<SummaryCard
 		label="ACTIVE ORDERS"
 		value={counts.all}

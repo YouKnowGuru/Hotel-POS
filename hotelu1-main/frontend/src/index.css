@@ -11,25 +11,19 @@
    MOBILE-SPECIFIC RESPONSIVE FIXES
    ========================================================================== */
 
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-none {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;                  /* Chrome/Safari/Opera */
+}
+
 @media (max-width: 640px) {
   /* Stat/KPI cards: ensure 2-col layout never overflows */
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Tables in the app: always scroll on mobile */
-  table {
-    display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap;
-    width: 100%;
-  }
-
-  thead, tbody, tr {
-    display: table;
-    width: 100%;
-    table-layout: fixed;
   }
 
   /* Prevent fixed-width side panels from overflowing */

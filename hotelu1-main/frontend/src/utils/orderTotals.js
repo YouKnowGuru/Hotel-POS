@@ -5,9 +5,16 @@ export const getGlobalTaxDiscount = () => {
     const saved = localStorage.getItem("globalTaxDiscount");
     if (saved) {
       const parsed = JSON.parse(saved);
+      // Use 5% as the minimum-safe default — taxPercent:0 in localStorage
+      // almost always means the cache was written before the admin ever
+      // configured the rate (first-boot state), not a genuine zero-tax
+      // setting.  Genuine zero would be extremely rare and can always be
+      // overridden by explicitly saving it via Settings → Billing.
+      const tax = Number(parsed.taxPercent);
+      const disc = Number(parsed.discountPercent);
       return {
-        taxPercent: Number(parsed.taxPercent) || 0,
-        discountPercent: Number(parsed.discountPercent) || 0,
+        taxPercent: (Number.isFinite(tax) && tax > 0) ? tax : 5,
+        discountPercent: Number.isFinite(disc) ? disc : 0,
       };
     }
   } catch (_) {
@@ -38,8 +45,13 @@ export const fetchAndCacheGlobalSettings = async () => {
       const disc = Number(data?.discountPercent);
       if (!Number.isNaN(tax) || !Number.isNaN(disc)) {
         const settings = {
-          taxPercent: Number.isNaN(tax) ? 5 : tax,
-          discountPercent: Number.isNaN(disc) ? 0 : disc,
+          // If the server returns 0 for taxPercent it likely means the
+          // settings row was never written (first-boot) — fall back to 5%
+          // which is the server's own default in getTaxDiscountSettings().
+          // A genuine admin-configured 0% would need the admin to have
+          // explicitly saved "0" in Settings → Billing & Taxation.
+          taxPercent: (Number.isFinite(tax) && tax > 0) ? tax : 5,
+          discountPercent: Number.isFinite(disc) ? disc : 0,
         };
         localStorage.setItem("globalTaxDiscount", JSON.stringify(settings));
         return settings;

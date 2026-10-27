@@ -554,14 +554,14 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
 
  {/* Floor tabs */}
- <div className="flex items-center gap-2 mb-4 sm:mb-5 overflow-x-auto max-w-full pb-1 scrollbar-none flex-nowrap sm:flex-wrap">
+ <div className="flex items-center gap-2 mb-4 sm:mb-5 overflow-x-auto max-w-full pb-2 scrollbar-none flex-nowrap">
  {[{ key: 'all', label: 'All Floors' }, ...floors].map((f) => {
  const active = activeFloor === f.key;
  return (
  <button
  key={f.key}
  onClick={() => setActiveFloor(f.key)}
- className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+ className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 whitespace-nowrap ${
  active
  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/60 scale-[1.02]'
  : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
@@ -573,7 +573,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  })}
  <button
  onClick={() => setShowManageFloors(true)}
- className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-200"
+ className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-200 shrink-0 whitespace-nowrap"
  title="Add, rename or delete floors"
  >
  <Layers className="w-3.5 h-3.5" />
@@ -582,7 +582,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
 
  {/* Tables grid */}
- <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 min-w-0">
+ <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 min-w-0">
  {filteredTables.map((table, idx) => {
  const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG.available;
  const tableOrder = orderForTable(table.id);

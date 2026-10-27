@@ -56,7 +56,7 @@ const GlassIconBtn = ({ onClick, label, children, className = '', hide = '' }) =
   return (
     <button
       onClick={onClick}
-      className={`${hide} relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${className}`}
+      className={`${hide} relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${className}`}
       style={{
         background: hovered ? 'var(--card-bg)' : 'transparent',
         border: hovered ? '1px solid var(--border)' : '1px solid transparent',
@@ -276,7 +276,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
         paddingTop: 'env(safe-area-inset-top)',
       }}
     >
-      <div className="flex items-center gap-3 px-4 sm:px-6 h-16">
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 h-14 sm:h-16">
         {/* Menu toggle — opens the sidebar drawer on mobile (the sole
             top bar now; a second fixed bar used to stack above this one).
             On lg the sidebar is already visible, so the event is a no-op. */}
@@ -290,10 +290,10 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
         </GlassIconBtn>
 
         {/* ─── Search ─── */}
-        <div className="flex-1 max-w-2xl" ref={searchRef}>
+        <div className="flex-1 min-w-0" ref={searchRef}>
           <div className="relative">
             <Search
-              className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200"
+              className="w-4 h-4 absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200 shrink-0"
               style={{ color: searchFocused ? 'var(--text-primary)' : 'var(--text-muted)' }}
             />
             <input
@@ -310,8 +310,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               }}
               onBlur={() => setSearchFocused(false)}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Search orders, tables, menu items..."
-              className="w-full pl-11 pr-4 sm:pr-20 py-2.5 rounded-xl text-sm font-body transition-all duration-200"
+              placeholder="Search..."
+              className="w-full pl-10 sm:pl-11 pr-3 sm:pr-20 py-2 sm:py-2.5 rounded-xl text-sm font-body transition-all duration-200 min-w-0"
               style={{
                 background: searchFocused
                   ? 'var(--card-bg)'
@@ -343,15 +343,16 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                 className="absolute left-0 right-0 top-full mt-2 overflow-hidden z-50"
                 style={{
                   background: 'var(--card-bg)',
-                  borderRadius: '16px',
+                  borderRadius: '12px sm:rounded-2xl',
                   border: '1px solid var(--border)',
                   boxShadow: 'var(--shadow-md)',
+                  minWidth: '280px',
                 }}
               >
                 {searchQuery.trim() === '' ? (
                   <SearchHints onPick={(q) => setSearchQuery(q)} />
                 ) : results.total === 0 ? (
-                  <div className="py-10 text-center">
+                  <div className="py-8 sm:py-10 text-center px-4">
                     <div
                       className="w-12 h-12 rounded-2xl mx-auto mb-3 flex items-center justify-center"
                       style={{
@@ -368,11 +369,11 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                       </span>
                     </p>
                     <p className="text-[11px] text-slate-400 mt-1">
-                      Try searching by order #, table name, or menu item
+                      Try order #, table name, or menu item
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-[420px] overflow-y-auto scrollbar-thin py-1.5">
+                  <div className="max-h-[60vh] sm:max-h-[420px] overflow-y-auto scrollbar-thin py-1.5">
                     <ResultGroup
                       title="Tables"
                       icon={Utensils}
@@ -418,7 +419,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                           </kbd>
                           navigate
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="hidden sm:flex items-center gap-1">
                           <kbd
                             className="px-1.5 py-0.5 rounded-md text-[10px] font-mono"
                             style={{
@@ -444,7 +445,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
         </div>
 
         {/* ─── Right actions ─── */}
-        <div className="flex items-center gap-1 sm:gap-1.5 ml-auto">
+        <div className="flex items-center gap-1 sm:gap-1.5 ml-auto shrink-0">
           {/* Notifications */}
           <div className="relative">
             <GlassIconBtn
@@ -516,7 +517,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
           <div className="relative" ref={ddRef}>
             <button
               onClick={() => setOpen((v) => !v)}
-              className="flex items-center gap-2.5 pr-3 pl-1.5 py-1.5 rounded-xl transition-all duration-200"
+              className="flex items-center gap-1.5 sm:gap-2.5 pr-2 sm:pr-3 pl-1.5 py-1.5 rounded-xl transition-all duration-200"
               style={{
                 border: open
                   ? '1px solid rgba(212,160,23,0.5)'
@@ -539,7 +540,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               }}
             >
               <span
-                className="w-8 h-8 rounded-lg text-white text-sm font-bold flex items-center justify-center"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-white text-sm font-bold flex items-center justify-center shrink-0"
                 style={{
                   background: '#4F46E5',
                   boxShadow: 'var(--shadow-sm)',
@@ -556,7 +557,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                 </span>
               </span>
               <ChevronDown
-                className="w-3.5 h-3.5 transition-transform duration-200"
+                className="w-3.5 h-3.5 transition-transform duration-200 shrink-0"
                 style={{
                   color: 'var(--text-muted)',
                   transform: open ? 'rotate(180deg)' : 'rotate(0)',

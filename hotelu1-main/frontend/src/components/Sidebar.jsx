@@ -26,6 +26,7 @@ import {
   CalendarClock,
   Banknote,
   Percent,
+  ChevronRight,
 } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
 import { useNotifications } from '../contexts/NotificationsContext';
@@ -44,21 +45,24 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
   <button
     onClick={onClick}
     aria-current={active ? 'page' : undefined}
-    className="group relative flex items-center w-full gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150"
+    className="group relative flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
     style={{
-      background: active ? 'rgba(255,255,255,0.10)' : 'transparent',
-      color: active ? '#FFFFFF' : '#A9B7CE',
+      background: active ? 'linear-gradient(135deg, rgba(212,160,23,0.18) 0%, rgba(212,160,23,0.06) 100%)' : 'transparent',
+      color: active ? '#FFFFFF' : '#94A3B8',
+      boxShadow: active ? 'inset 0 0 0 1px rgba(212,160,23,0.25)' : 'none',
     }}
     onMouseEnter={(e) => {
       if (!active) {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-        e.currentTarget.style.color = '#FFFFFF';
+        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+        e.currentTarget.style.color = '#E2E8F0';
+        e.currentTarget.style.transform = 'translateX(2px)';
       }
     }}
     onMouseLeave={(e) => {
       if (!active) {
         e.currentTarget.style.background = 'transparent';
-        e.currentTarget.style.color = '#A9B7CE';
+        e.currentTarget.style.color = '#94A3B8';
+        e.currentTarget.style.transform = 'translateX(0)';
       }
     }}
   >
@@ -66,21 +70,24 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
     {active && (
       <span
         className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full"
-        style={{ background: '#F0C050' }}
+        style={{ background: '#F0C050', boxShadow: '0 0 8px rgba(240,192,80,0.6)' }}
       />
     )}
     <Icon
-      className="w-[18px] h-[18px] shrink-0 transition-colors duration-150"
-      style={{ color: active ? '#F0C050' : '#7C8DA6' }}
+      className="w-[18px] h-[18px] shrink-0 transition-colors duration-200"
+      style={{ color: active ? '#F0C050' : '#64748B' }}
     />
     <span className="truncate flex-1 text-left">{label}</span>
     {badge != null && badge > 0 && (
       <span
         className="ml-auto min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[10px] font-bold text-white"
-        style={{ background: '#D4A017' }}
+        style={{ background: '#D4A017', boxShadow: '0 2px 6px rgba(212,160,23,0.35)' }}
       >
         {badge > 99 ? '99+' : badge}
       </span>
+    )}
+    {active && (
+      <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(240,192,80,0.5)' }} />
     )}
   </button>
 );
@@ -219,11 +226,41 @@ const Sidebar = ({
   };
 
   /* ── Sidebar content ─────────────────────────────────────────── */
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+  const SidebarContent = ({ isMobile = false }) => (
+    <div className="flex flex-col h-full" style={{ position: 'relative' }}>
+      {/* Decorative gradient overlay for visual depth */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '180px',
+          background: 'radial-gradient(ellipse at top, rgba(79,70,229,0.12) 0%, transparent 70%)',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
+
       {/* ── Brand ────────────────────────────────────────────── */}
-      <div className="px-5 pt-6 pb-5">
-        <BrandMark size={44} iconSize={24} light nameClass="text-base font-bold tracking-wide" taglineClass="text-[11px]" />
+      <div className="px-5 pt-6 pb-5 relative" style={{ zIndex: 1 }}>
+        <div className="flex items-center justify-between">
+          <BrandMark size={44} iconSize={24} light nameClass="text-base font-bold tracking-wide" taglineClass="text-[11px]" />
+          {isMobile && (
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close menu"
+              className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
+              style={{
+                color: '#94A3B8',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
 
         {/* Gold divider with glow */}
         <div
@@ -234,21 +271,21 @@ const Sidebar = ({
         />
       </div>
 
-      {/* ── Branch / location glass card ─────────────────────── */}
-      <div className="px-4 mb-4">
+      {/* ── Branch / location card ──────────────────────────── */}
+      <div className="px-4 mb-3 relative" style={{ zIndex: 1 }}>
         <div
           className="flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200"
           style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)',
+            background: 'linear-gradient(135deg, rgba(79,70,229,0.10) 0%, rgba(79,70,229,0.03) 100%)',
+            border: '1px solid rgba(79,70,229,0.15)',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)',
           }}
         >
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
             style={{
-              background: 'rgba(212,160,23,0.15)',
-              border: '1px solid rgba(212,160,23,0.2)',
+              background: 'linear-gradient(135deg, rgba(212,160,23,0.20) 0%, rgba(212,160,23,0.08) 100%)',
+              border: '1px solid rgba(212,160,23,0.25)',
             }}
           >
             <Store className="w-4 h-4" style={{ color: '#F0C050' }} />
@@ -257,7 +294,7 @@ const Sidebar = ({
             <p className="text-sm font-semibold text-white leading-tight truncate">
               {getBranchLabel(currentUser)}
             </p>
-            <p className="text-[11px] leading-tight truncate" style={{ color: 'var(--text-muted)' }}>
+            <p className="text-[11px] leading-tight truncate" style={{ color: '#64748B' }}>
               {getBranchSubLabel(currentUser)}
             </p>
             <p className="text-[11px] font-semibold flex items-center gap-1 mt-0.5" style={{ color: '#34D399' }}>
@@ -274,22 +311,22 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* ── Currency glass badge ─────────────────────────────── */}
-      <div className="px-5 mb-4">
+      {/* ── Currency badge ──────────────────────────────────── */}
+      <div className="px-4 mb-3 relative" style={{ zIndex: 1 }}>
         <div
-          className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs"
+          className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs"
           style={{
-            background: 'rgba(212,160,23,0.08)',
-            border: '1px solid rgba(212,160,23,0.15)',
+            background: 'rgba(212,160,23,0.06)',
+            border: '1px solid rgba(212,160,23,0.12)',
           }}
         >
-          <span className="font-medium" style={{ color: 'var(--text-muted)' }}>Currency</span>
+          <span className="font-medium" style={{ color: '#64748B' }}>Currency</span>
           <span
             className="font-bold text-[11px] px-2.5 py-1 rounded-lg"
             style={{
               color: '#F0C050',
-              background: 'rgba(212,160,23,0.12)',
-              border: '1px solid rgba(212,160,23,0.2)',
+              background: 'rgba(212,160,23,0.10)',
+              border: '1px solid rgba(212,160,23,0.18)',
             }}
           >
             Nu. (BTN)
@@ -298,13 +335,13 @@ const Sidebar = ({
       </div>
 
       {/* ── Section label ────────────────────────────────────── */}
-      <div className="px-5 mb-2">
-        <p className="text-[10px] font-bold tracking-widest" style={{ color: '#64748B' }}>NAVIGATION</p>
+      <div className="px-5 mb-2 relative" style={{ zIndex: 1 }}>
+        <p className="text-[10px] font-bold tracking-widest" style={{ color: '#475569' }}>NAVIGATION</p>
       </div>
 
       {/* ── Navigation ───────────────────────────────────────── */}
-      <nav className="flex-1 px-3 overflow-y-auto scrollbar-thin">
-        <ul className="space-y-0.5">
+      <nav className="flex-1 px-3 overflow-y-auto scrollbar-thin relative" style={{ zIndex: 1 }}>
+        <ul className="space-y-1">
           {isFranchiseLogin && (
             <li>
               <NavItem
@@ -550,84 +587,60 @@ const Sidebar = ({
         </ul>
       </nav>
 
-      {/* ── Help card ────────────────────────────────────────── */}
-      <div className="px-4 pb-3 pt-2">
+      {/* ── User card + logout ──────────────────────────────── */}
+      <div className="px-4 pb-4 pt-3 relative" style={{ zIndex: 1 }}>
         <div
-          className="rounded-xl p-4"
+          className="rounded-2xl p-3.5"
           style={{
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'linear-gradient(135deg, rgba(79,70,229,0.10) 0%, rgba(79,70,229,0.03) 100%)',
+            border: '1px solid rgba(79,70,229,0.12)',
           }}
         >
-          <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex items-center gap-3 mb-3">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
               style={{
-                background: 'rgba(212,160,23,0.14)',
+                background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+                boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
               }}
             >
-              <HelpCircle className="w-4 h-4" style={{ color: '#F0C050' }} />
+              {(currentUser?.name || 'A').charAt(0).toUpperCase()}
             </div>
-            <div>
-              <p className="text-sm font-semibold text-white leading-tight">Need Help?</p>
-              <p className="text-[11px] leading-tight" style={{ color: '#7C8DA6' }}>We are here for you</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white leading-tight truncate">
+                {currentUser?.name || 'User'}
+              </p>
+              <p className="text-[11px] leading-tight truncate" style={{ color: '#64748B' }}>
+                {(currentUser?.role || 'user').charAt(0).toUpperCase() + (currentUser?.role || 'user').slice(1)}
+              </p>
             </div>
           </div>
           <button
-            className="w-full py-2.5 text-xs font-semibold rounded-lg transition-colors duration-150 flex items-center justify-center gap-2"
+            onClick={handleLogout}
+            className="w-full py-2.5 text-xs font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
             style={{
-              background: '#D4A017',
-              color: '#fff',
+              background: 'rgba(239,68,68,0.10)',
+              color: '#F87171',
+              border: '1px solid rgba(239,68,68,0.15)',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#B8860B';
+              e.currentTarget.style.background = 'rgba(239,68,68,0.18)';
+              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = '#D4A017';
+              e.currentTarget.style.background = 'rgba(239,68,68,0.10)';
+              e.currentTarget.style.borderColor = 'rgba(239,68,68,0.15)';
             }}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            Contact Support
-            <ArrowRight className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5" />
+            Sign Out
           </button>
         </div>
-      </div>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
-      <div
-        className="px-5 pb-5 pt-1 flex items-center justify-between text-[11px]"
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
-        <div className="pt-3">
-          <p style={{ color: 'var(--text-secondary)' }}>© {new Date().getFullYear()} {loadBranding().siteName}</p>
-          <p style={{ color: 'var(--text-secondary)' }}>All rights reserved.</p>
-        </div>
-        <button
-          onClick={handleLogout}
-          title="Logout"
-          className="mt-3 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
-          style={{
-            color: 'var(--text-muted)',
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.06)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(239,68,68,0.12)';
-            e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)';
-            e.currentTarget.style.color = '#EF4444';
-            e.currentTarget.style.transform = 'scale(1.05)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.color = 'var(--text-muted)';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        {/* Footer copyright */}
+        <p className="text-center text-[10px] mt-3" style={{ color: '#334155' }}>
+          © {new Date().getFullYear()} {loadBranding().siteName}
+        </p>
       </div>
     </div>
   );
@@ -665,7 +678,9 @@ const Sidebar = ({
             position: 'fixed',
             inset: 0,
             zIndex: 40,
-            background: 'rgba(15, 23, 42, 0.6)',
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
           }}
         />
       )}
@@ -678,52 +693,24 @@ const Sidebar = ({
           left: 0,
           bottom: 0,
           zIndex: 50,
-          width: '76vw',
-          maxWidth: '19rem',
+          width: '82vw',
+          maxWidth: '20rem',
           display: 'flex',
           flexDirection: 'column',
           background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: isMobileMenuOpen ? '4px 0 32px rgba(0,0,0,0.4)' : 'none',
+          boxShadow: isMobileMenuOpen ? '8px 0 40px rgba(0,0,0,0.5)' : 'none',
           transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-110%)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           willChange: 'transform',
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           // Completely disable interaction when closed — critical for mobile
           visibility: isMobileMenuOpen ? 'visible' : 'hidden',
           pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
         }}
       >
-        {/* Close button */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: 'calc(1rem + env(safe-area-inset-top)) 1rem 0.25rem',
-          }}
-        >
-          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>MENU</span>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Close menu"
-            style={{
-              padding: '0.625rem',
-              borderRadius: '0.5rem',
-              color: '#CBD5E1',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <SidebarContent />
+        <SidebarContent isMobile={true} />
       </aside>
     </>,
     document.body
@@ -731,4 +718,3 @@ const Sidebar = ({
 };
 
 export default Sidebar;
-

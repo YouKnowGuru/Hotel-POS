@@ -941,7 +941,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Tab Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px 26px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(14px,4vw,22px) clamp(12px,4vw,26px)' }}>
 
           {/* TAB 1: EMPLOYEE & PERIOD */}
           {activeTab === 'employee' && (
@@ -1751,7 +1751,7 @@ const PayrollSystem = ({ currentUser }) => {
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>Recent Payroll Records</h3>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{
                     borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
@@ -1804,7 +1804,7 @@ const PayrollSystem = ({ currentUser }) => {
       {/* ═══════════ RECORDS ═══════════ */}
       {tab === 'records' && isAdmin && (
         <>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center', rowGap: 8 }}>
             <button
               onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
               style={{
@@ -1829,7 +1829,7 @@ const PayrollSystem = ({ currentUser }) => {
                   border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                   borderRadius: 10,
                   color: isDark ? '#FFFFFF' : '#0F172A',
-                  fontSize: 13, outline: 'none', width: 200,
+                  fontSize: 13, outline: 'none', width: 'min(200px, calc(100vw - 48px))',
                   boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               />
