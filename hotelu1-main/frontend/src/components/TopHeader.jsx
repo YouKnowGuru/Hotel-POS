@@ -271,11 +271,21 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
         background: 'var(--card-bg)',
         borderBottom: '1px solid var(--border)',
         boxShadow: 'var(--shadow-sm)',
+        // PWA/standalone + viewport-fit=cover: keeps the single top bar
+        // clear of the iPhone notch (the old fixed dark bar used to do this).
+        paddingTop: 'env(safe-area-inset-top)',
       }}
     >
       <div className="flex items-center gap-3 px-4 sm:px-6 h-16">
-        {/* Menu toggle */}
-        <GlassIconBtn label="Menu" hide="hidden lg:flex" className="text-slate-500 dark:text-slate-400">
+        {/* Menu toggle — opens the sidebar drawer on mobile (the sole
+            top bar now; a second fixed bar used to stack above this one).
+            On lg the sidebar is already visible, so the event is a no-op. */}
+        <GlassIconBtn
+          label="Menu"
+          hide="flex"
+          onClick={() => window.dispatchEvent(new CustomEvent('open-mobile-menu'))}
+          className="text-slate-500 dark:text-slate-400 shrink-0"
+        >
           <MenuIcon className="w-5 h-5" />
         </GlassIconBtn>
 
@@ -301,7 +311,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               onBlur={() => setSearchFocused(false)}
               onKeyDown={handleSearchKeyDown}
               placeholder="Search orders, tables, menu items..."
-              className="w-full pl-11 pr-20 py-2.5 rounded-xl text-sm font-body transition-all duration-200"
+              className="w-full pl-11 pr-4 sm:pr-20 py-2.5 rounded-xl text-sm font-body transition-all duration-200"
               style={{
                 background: searchFocused
                   ? 'var(--card-bg)'
@@ -461,8 +471,12 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
             )}
           </div>
 
-          {/* Install PWA button */}
-          <PwaInstallButton />
+          {/* Install PWA button — desktop/tablet only; on phones the
+              sidebar drawer still offers the install action, and hiding it
+              here keeps the single mobile bar uncrowded. */}
+          <span className="hidden sm:flex">
+            <PwaInstallButton />
+          </span>
 
           {/* Theme toggle */}
           <ThemeToggle />

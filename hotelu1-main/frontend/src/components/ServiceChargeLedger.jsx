@@ -92,13 +92,16 @@ const calcServiceCharge = (order, taxPercent) => {
 
 /* ── StatCard ────────────────────────────────────────────────── */
 const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
- <div className="rounded-2xl p-4 sm:p-5 flex items-start gap-3 bg-white border border-gray-200/80 shadow-sm hover:shadow-md transition">
+ // Mobile: icon stacks above the text so money values get the full card
+ // width ("Nu. 15,855.55" used to break mid-number in the side-by-side
+ // layout). sm+: back to the horizontal icon + text arrangement.
+ <div className="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-3 bg-white border border-gray-200/80 shadow-sm hover:shadow-md transition">
  <div
  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
  style={{ background: color + '15', border: `1px solid ${color}30` }}
  >
  <Icon className="w-5 h-5" style={{ color }} />
- </div>  <div className="min-w-0 flex-1">
+ </div>  <div className="min-w-0 flex-1 w-full sm:w-auto">
   <div className="flex items-start justify-between gap-1">
   <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-gray-400 leading-snug">{label}</p>
   {badge && (

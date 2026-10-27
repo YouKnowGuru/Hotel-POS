@@ -306,10 +306,10 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        {/* pt tracks the fixed mobile hamburger bar, which grows by the
-            iOS safe-area inset (notch) — otherwise its “first” row hides
-            beneath the system status bar in standalone/PWA mode. */}
-        <div className="flex-1 flex flex-col min-w-0 pt-[calc(3.875rem_+_env(safe-area-inset-top))] lg:pt-0">
+        {/* Single unified top bar (TopHeader) now handles the notch
+            safe-area itself — the separate fixed mobile hamburger bar was
+            removed because it stacked two nav rows on small screens. */}
+        <div className="flex-1 flex flex-col min-w-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{children}</main>
         </div>
@@ -340,10 +340,10 @@ const App = () => {
           handleLocationChange={handleLocationChange}
           handleLogout={handleLogout}
         />
-        {/* pt tracks the fixed mobile hamburger bar, which grows by the
-            iOS safe-area inset (notch) — otherwise its “first” row hides
-            beneath the system status bar in standalone/PWA mode. */}
-        <div className="flex-1 flex flex-col min-w-0 pt-[calc(3.875rem_+_env(safe-area-inset-top))] lg:pt-0">
+        {/* Single unified top bar (TopHeader) now handles the notch
+            safe-area itself — the separate fixed mobile hamburger bar was
+            removed because it stacked two nav rows on small screens. */}
+        <div className="flex-1 flex flex-col min-w-0">
           <TopHeader currentUser={currentUser} handleLogout={handleLogout} setActiveTab={setActiveTab} />
           <main className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain bg-[#F8FAFC] dark:bg-[#0B1220] scrollbar-thin">{renderContent()}</main>
         </div>

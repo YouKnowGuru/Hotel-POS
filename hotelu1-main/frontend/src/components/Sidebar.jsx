@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -95,6 +95,15 @@ const Sidebar = ({
 }) => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // The mobile hamburger now lives in TopHeader (single unified top bar —
+  // the old separate dark bar stacked two nav rows on small screens).
+  // TopHeader opens the drawer via this event; no prop-drilling needed.
+  useEffect(() => {
+    const openMenu = () => setIsMobileMenuOpen(true);
+    window.addEventListener('open-mobile-menu', openMenu);
+    return () => window.removeEventListener('open-mobile-menu', openMenu);
+  }, []);
   const [userPermissions, setUserPermissions] = useState([]);
   const [loadingPermissions, setLoadingPermissions] = useState(true);
   const [matrix, setMatrix] = useState(() => loadPermissionsMatrix());
@@ -606,46 +615,6 @@ const Sidebar = ({
 
   return (
     <>
-      {/* ── Mobile top bar ────────────────────────────────────── */}
-      <div
-        className="lg:hidden fixed top-0 left-0 right-0 z-50 px-4 py-3"
-        style={{
-          background: 'rgba(15, 23, 42, 0.95)',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.15)',
-          // PWA/standalone + viewport-fit=cover: without the safe-area inset
-          // the hamburger sits under the iPhone notch — the whole admin UI
-          // then appears dead because nothing can open the menu.
-          paddingTop: 'calc(0.75rem + env(safe-area-inset-top))',
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 rounded-xl transition-all duration-200"
-            style={{
-              color: '#CBD5E1',
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <MenuIcon size={22} />
-          </button>
-          <BrandMark size={32} iconSize={16} light nameClass="text-sm font-bold" showTagline={false} style={{ gap: '10px' }} />
-          {currentUser && (
-            <div
-              className="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs text-white"
-              style={{
-                background: '#D4A017',
-                boxShadow: '0 2px 8px rgba(212, 160, 23, 0.25)',
-              }}
-            >
-              {currentUser.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* ── Mobile overlay ────────────────────────────────────── */}
       {isMobileMenuOpen && (
         <div
