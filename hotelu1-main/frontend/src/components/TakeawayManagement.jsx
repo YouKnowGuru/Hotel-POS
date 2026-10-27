@@ -355,7 +355,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 	<div
 		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 overflow-x-hidden transition-opacity duration-500 ${
 			isLoaded ? 'opacity-100' : 'opacity-0'
-		} ${isDark ? 'dark:bg-[#0B1220] dark:text-gray-100' : 'bg-[#F7F7F8] text-gray-900'}`}
+		} bg-[#F7F7F8] dark:bg-[#0B1220] text-gray-900 dark:text-gray-100`}
 	>
  <style dangerouslySetInnerHTML={{ __html: thermalPrintStyles }} />
 
@@ -606,11 +606,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
 
 const SummaryCard = ({ label, value, Icon, color, delay, isLoaded, isDark }) => (
 	<div
-		className={`rounded-2xl border shadow-sm p-4 sm:p-5 transition-colors ${
-			isDark
-				? 'bg-[#141C2E] border-gray-800'
-				: 'bg-white border-gray-100'
-		}`}
+		className={`rounded-2xl border shadow-sm p-4 sm:p-5 transition-colors bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800`}
 		style={{
 			animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none',
 		}}
@@ -619,9 +615,7 @@ const SummaryCard = ({ label, value, Icon, color, delay, isLoaded, isDark }) => 
 			<p className={`text-[10px] font-bold tracking-wider ${
 				isDark ? 'text-gray-500' : 'text-gray-400'
 			}`}>{label}</p>
-			<div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-				isDark ? 'bg-white/10' : 'bg-gray-50'
-			} ${color}`}>
+			<div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-white/10 ${color}`}>
 				<Icon className="w-3.5 h-3.5" />
 			</div>
 		</div>
@@ -649,11 +643,7 @@ const OrderCard = ({
 
  return (
 	<div
-		className={`rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col ${
-			isDark
-				? 'bg-[#141C2E] border-gray-800'
-				: 'bg-white border-gray-100'
-		}`}
+		className={`rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800`}
 		style={{
 			animation: isLoaded
 				? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
@@ -741,11 +731,7 @@ const OrderCard = ({
 
  {/* Total + money breakdown — the card used to show only a bare
      total, so staff couldn't see the recorded service charge / GST. */}
- <div className={`px-4 py-3 border-t ${
-  isDark
-   ? 'border-gray-800 bg-[#1A2336]'
-   : 'border-gray-50 bg-gray-50'
- }`}>
+ <div className="px-4 py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336]">
   {(() => {
     const t = enrichOrderWithTotals(order);
     return (
@@ -842,7 +828,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  const t = enrichOrderWithTotals(order);
  return (
 	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[88vh] overflow-hidden flex flex-col animate-scale-in">
+ <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[88vh] overflow-hidden flex flex-col animate-scale-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Header */}
  <div className="bg-indigo-600 p-5 text-center text-white relative">
  <button
@@ -864,35 +850,35 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  {/* Body */}
  <div className="p-5 overflow-y-auto flex-1 space-y-4">
  {/* Token */}
- <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
- <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+ <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center dark:bg-amber-950/40 dark:border-amber-800/60">
+ <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
  Order Token
  </p>
- <p className="text-4xl font-extrabold text-amber-700 tracking-widest my-1">
+ <p className="text-4xl font-extrabold text-amber-700 tracking-widest my-1 dark:text-amber-300">
  {order.token}
  </p>
- <p className="text-[11px] text-amber-600">
+ <p className="text-[11px] text-amber-600 dark:text-amber-400">
  Show this token to collect your order
  </p>
  </div>
 
  {/* Meta */}
  <div className="grid grid-cols-2 gap-3 text-xs">
- <div className="bg-gray-50 rounded-xl p-3">
- <p className="text-gray-400 font-semibold">Order ID</p>
- <p className="text-sm font-bold text-gray-900 mt-0.5">#{order.id}</p>
+ <div className="bg-gray-50 rounded-xl p-3 dark:bg-[#1A2336]">
+ <p className="text-gray-400 font-semibold dark:text-slate-500">Order ID</p>
+ <p className="text-sm font-bold text-gray-900 mt-0.5 dark:text-gray-100">#{order.id}</p>
  </div>
- <div className="bg-gray-50 rounded-xl p-3">
- <p className="text-gray-400 font-semibold">Status</p>
+ <div className="bg-gray-50 rounded-xl p-3 dark:bg-[#1A2336]">
+ <p className="text-gray-400 font-semibold dark:text-slate-500">Status</p>
  <p className="mt-0.5">
  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
  Pending
  </span>
  </p>
  </div>
- <div className="bg-gray-50 rounded-xl p-3 col-span-2">
- <p className="text-gray-400 font-semibold">Date &amp; Time</p>
- <p className="text-sm font-semibold text-gray-900 mt-0.5">
+ <div className="bg-gray-50 rounded-xl p-3 col-span-2 dark:bg-[#1A2336]">
+ <p className="text-gray-400 font-semibold dark:text-slate-500">Date &amp; Time</p>
+ <p className="text-sm font-semibold text-gray-900 mt-0.5 dark:text-gray-100">
  {new Date(order.timestamp).toLocaleString()}
  </p>
  </div>
@@ -951,14 +937,14 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  </div>
 
  {/* Info note */}
- <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700">
+ <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300">
  <strong>Important:</strong> Please show token{' '}
  <strong>{order.token}</strong> at the counter to collect your order.
  </div>
  </div>
 
  {/* Footer actions */}
- <div className="flex gap-2 p-4 border-t border-gray-100 bg-white">
+ <div className="flex gap-2 p-4 border-t border-gray-100 bg-white dark:bg-[#141C2E] dark:border-slate-700/60">
  <button
  onClick={() => {
  const printWindow = window.open('', '_blank', 'width=300,height=400');
@@ -1038,7 +1024,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  printWindow.close();
  }, 250);
  }}
- className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold transition"
+ className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold transition dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
  >
  <Printer className="w-4 h-4" />
  Print

@@ -1398,7 +1398,7 @@ const GSTLedger = ({ locationSettings }) => {
  {monthSummaries.map((m) => (
  <tr
  key={m.key}
- className="bg-white dark:bg-[#141C2E] even:bg-slate-50/50 dark:even:bg-[#19222F] hover:bg-emerald-50/30 dark:hover:bg-[#1A2336]/40 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/50 dark:even:bg-[#141C2E] hover:bg-emerald-50/30 dark:hover:bg-[#1A2336]/40 transition"
  >
  <td className="px-5 py-3 font-semibold text-gray-800 dark:text-slate-100 whitespace-nowrap">{m.label}</td>
  <td className="px-5 py-3 text-gray-500 dark:text-slate-400 whitespace-nowrap">{m.orders}</td>
@@ -1455,7 +1455,7 @@ const GSTLedger = ({ locationSettings }) => {
  return (
  <tr
  key={o.id}
- className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#19222F] hover:bg-emerald-50/20 dark:hover:bg-[#1A2336]/30 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#141C2E] hover:bg-emerald-50/20 dark:hover:bg-[#1A2336]/30 transition"
  >
  <td className="px-4 py-3 font-bold text-gray-800 dark:text-slate-100 whitespace-nowrap">#{o.id}</td>
  <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">
@@ -1631,7 +1631,7 @@ const GSTLedger = ({ locationSettings }) => {
  {filteredInventory.map((item) => (
  <tr
  key={item.id}
- className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#19222F] hover:bg-violet-50/20 dark:hover:bg-[#1A2336]/30 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#141C2E] hover:bg-violet-50/20 dark:hover:bg-[#1A2336]/30 transition"
  >
  <td className="px-4 py-3 whitespace-nowrap">
  <p className="font-bold text-gray-800 dark:text-white">{item._name}</p>

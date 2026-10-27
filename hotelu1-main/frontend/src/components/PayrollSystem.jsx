@@ -204,7 +204,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 780, maxHeight: '90vh', overflow: 'auto', borderRadius: 24,
-        background: isDark ? '#0B1838' : '#FFFFFF',
+        background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
         boxShadow: isDark ? '0 25px 60px rgba(0,0,0,0.8)' : '0 20px 40px rgba(0,0,0,0.12)',
         color: isDark ? '#FFFFFF' : '#0F172A',
@@ -215,7 +215,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           position: 'sticky', top: 0,
-          background: isDark ? '#0B1838' : '#FFFFFF',
+          background: isDark ? '#141C2E' : '#FFFFFF',
           zIndex: 10,
         }}>
           <div>
@@ -368,7 +368,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end' }}>
       <div style={{
         width: '100%', maxWidth: 720,
-        background: isDark ? '#0B1838' : '#FFFFFF',
+        background: isDark ? '#141C2E' : '#FFFFFF',
         borderLeft: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
         color: isDark ? '#FFFFFF' : '#0F172A',
@@ -416,7 +416,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
 
           {/* Form */}
           {selUser && local[selUser] && (
-            <div style={{ flex: 1, overflow: 'auto', padding: 24, background: isDark ? '#0B1838' : '#FFFFFF' }}>
+            <div style={{ flex: 1, overflow: 'auto', padding: 24, background: isDark ? '#141C2E' : '#FFFFFF' }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', marginBottom: 16 }}>
                 {users.find((u) => u.id === selUser)?.name}
               </div>
@@ -498,7 +498,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 440,
-        background: isDark ? '#0B1838' : '#FFFFFF',
+        background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
         borderRadius: 20, padding: 28,
         boxShadow: isDark ? '0 25px 50px rgba(0,0,0,0.8)' : '0 20px 40px rgba(0,0,0,0.15)',
@@ -554,7 +554,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{
         width: '100%', maxWidth: 440,
-        background: isDark ? '#0B1838' : '#FFFFFF',
+        background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
         borderRadius: 20, padding: 28,
         boxShadow: isDark ? '0 25px 50px rgba(0,0,0,0.8)' : '0 20px 40px rgba(0,0,0,0.15)',
@@ -864,7 +864,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div style={{
         width: '100%', maxWidth: 840, maxHeight: '92vh',
-        background: isDark ? '#0B1838' : '#FFFFFF',
+        background: isDark ? '#141C2E' : '#FFFFFF',
         borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: isDark ? '0 25px 60px -15px rgba(0,0,0,0.7)' : '0 20px 45px rgba(0,0,0,0.12)',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',

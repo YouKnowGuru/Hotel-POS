@@ -385,7 +385,7 @@ const SettingsPage = () => {
 
 const Field = ({ label, children }) => (
  <div>
- <label className="block text-[11px] font-bold tracking-widest text-gray-500 uppercase mb-2">
+ <label className="block text-[11px] font-bold tracking-widest text-gray-500 dark:text-slate-400 uppercase mb-2">
  {label}
  </label>
  {children}
@@ -393,17 +393,17 @@ const Field = ({ label, children }) => (
 );
 
 const inputCls =
- 'w-full px-4 py-2.5 rounded-xl border border-indigo-100 bg-indigo-50/40 focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-500 text-sm text-gray-800 placeholder-gray-400 transition';
+ 'w-full px-4 py-2.5 rounded-xl border border-indigo-100 dark:border-slate-600 bg-indigo-50/40 dark:bg-[#1A2336] focus:bg-white dark:focus:bg-[#0B1220] focus:border-indigo-300 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-sm text-gray-800 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 transition';
 
 const SaveBar = ({ onSave, disabled = false, hint = 'Press save to sync changes across system nodes' }) => (
- <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3">
- <p className="text-xs text-gray-500">{hint}</p>
+ <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-between flex-wrap gap-3 dark:border-slate-700/60">
+ <p className="text-xs text-gray-500 dark:text-slate-400">{hint}</p>
  <button
  onClick={onSave}
  disabled={disabled}
  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm ${
  disabled
- ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+ ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-[#1E293B] dark:text-slate-500'
  : 'bg-indigo-600 text-white hover:shadow-md hover:shadow-indigo-600/50 hover:-translate-y-0.5'
  }`}
  >
@@ -448,7 +448,7 @@ const GeneralForm = ({ value, onChange, onSave }) => {
  className={`${inputCls} min-h-[68px] resize-y`}
  placeholder="Opp. Samatha College, Sector-6, MVP Colony, Visakhapatnam"
  />
- <p className="text-[11px] text-gray-400 mt-1.5">
+ <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5">
  Prints at the top of every customer bill
  </p>
  </Field>
@@ -515,7 +515,7 @@ const BillingForm = ({ draft, setDraft, billing, dirty, setDirty, onSave }) => {
  className={`${inputCls} pl-9`}
  />
  </div>
- <p className="text-[11px] text-gray-400 mt-1.5">
+ <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5">
  Applied to subtotals across all order types
  </p>
  </Field>
@@ -534,19 +534,19 @@ const BillingForm = ({ draft, setDraft, billing, dirty, setDirty, onSave }) => {
  className={`${inputCls} pl-9`}
  />
  </div>
- <p className="text-[11px] text-gray-400 mt-1.5">
+ <p className="text-[11px] text-gray-400 dark:text-slate-500 mt-1.5">
  Applies before tax on every new bill
  </p>
  </Field>
  </div>
 
  {/* Current preview */}
- <div className="mt-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 grid grid-cols-2 gap-4">
+ <div className="mt-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 grid grid-cols-2 gap-4 dark:bg-indigo-950/30 dark:border-indigo-800/40">
  <div>
  <p className="text-[10px] font-bold tracking-widest text-indigo-600">
  CURRENTLY APPLIED TAX
  </p>
- <p className="text-2xl font-bold text-gray-900 mt-1">
+ <p className="text-2xl font-bold text-gray-900 mt-1 dark:text-gray-100">
  {billing.taxPercent}%
  </p>
  </div>
@@ -554,7 +554,7 @@ const BillingForm = ({ draft, setDraft, billing, dirty, setDirty, onSave }) => {
  <p className="text-[10px] font-bold tracking-widest text-indigo-600">
  CURRENTLY APPLIED DISCOUNT
  </p>
- <p className="text-2xl font-bold text-gray-900 mt-1">
+ <p className="text-2xl font-bold text-gray-900 mt-1 dark:text-gray-100">
  {billing.discountPercent}%
  </p>
  </div>
@@ -820,7 +820,7 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
  value.logoShape === id
  ? 'bg-indigo-600 text-white shadow-sm'
- : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+ : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-[#1E293B] dark:text-slate-300 dark:hover:bg-slate-600'
  }`}
  >
  {label}
@@ -832,13 +832,13 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
 
  {/* ── Logo upload ── */}
  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
- <div className="rounded-2xl border border-gray-100 p-4">
- <p className="text-sm font-bold text-gray-900">Site logo</p>
- <p className="text-[11px] text-gray-500 mt-0.5">
+ <div className="rounded-2xl border border-gray-100 p-4 dark:border-slate-700/60">
+ <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Site logo</p>
+ <p className="text-[11px] text-gray-500 mt-0.5 dark:text-slate-400">
  Sidebar, mobile bar & login. PNG/JPG/WebP/SVG up to {MAX_LOGO_KB} KB.
  </p>
  <div className="mt-3 flex items-center gap-4">
- <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+ <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 dark:border-slate-600 dark:bg-[#1A2336]">
  {value.logo ? (
  <img src={value.logo} alt="Logo" className="w-full h-full object-contain p-1" />
  ) : (
@@ -875,13 +875,13 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  </div>
 
  {/* ── Favicon upload ── */}
- <div className="rounded-2xl border border-gray-100 p-4">
- <p className="text-sm font-bold text-gray-900">Browser tab icon (favicon)</p>
- <p className="text-[11px] text-gray-500 mt-0.5">
+ <div className="rounded-2xl border border-gray-100 p-4 dark:border-slate-700/60">
+ <p className="text-sm font-bold text-gray-900 dark:text-gray-100">Browser tab icon (favicon)</p>
+ <p className="text-[11px] text-gray-500 mt-0.5 dark:text-slate-400">
  Square image, 64×64+ recommended. Up to 64 KB.
  </p>
  <div className="mt-3 flex items-center gap-4">
- <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+ <div className="w-16 h-16 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 dark:border-slate-600 dark:bg-[#1A2336]">
  {value.favicon ? (
  <img src={value.favicon} alt="Favicon" className="w-full h-full object-contain" />
  ) : (
@@ -942,7 +942,7 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  type="button"
  onClick={handleReset}
  disabled={resetting || saving}
- className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition disabled:opacity-60"
+ className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-xs font-semibold hover:bg-gray-50 transition disabled:opacity-60 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
  >
  <RefreshCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
  {resetting ? 'Resetting…' : 'Reset to defaults'}
@@ -1050,7 +1050,7 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
  active
  ? 'bg-indigo-600 text-white shadow-sm'
- : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+ : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-[#1A2336] dark:text-slate-300 dark:hover:bg-[#1E293B]'
  }`}
  >
  {d.charAt(0).toUpperCase() + d.slice(1)}

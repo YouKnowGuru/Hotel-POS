@@ -465,7 +465,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  return (
  <>
  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
- <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
  <div className="flex justify-between items-center p-4 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
  <h3 className="text-lg sm:text-2xl font-bold text-white">
@@ -486,7 +486,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
  <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 max-h-[calc(100vh-120px)] lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
- <h4 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center">
+ <h4 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
  <span className="mr-1 sm:mr-2 text-lg sm:text-2xl">🍽️</span> Menu Items
  </h4>
  <div className="flex items-center space-x-2">
@@ -496,7 +496,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  placeholder="Search items"
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
- className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 bg-white shadow-sm dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
+ className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#1A2336] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 bg-white shadow-sm dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
  />
  {searchTerm && (
  <button
@@ -570,7 +570,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  }
  
  return (
- <div key={item.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Food Image - Circular like MenuManagement */}
  <div className="w-full h-24 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
@@ -594,7 +594,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </span>
  </div>
  {/* Item Name */}
- <h5 className="font-bold text-gray-800 text-xs sm:text-sm mb-1 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-1">
+ <h5 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm mb-1 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-1">
  {highlightText(item.name, searchTerm)}
  </h5>
  {/* Category */}
@@ -622,9 +622,9 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  {/* Right Panel - Current Order - Hidden on mobile, visible on tablet+ */}
- <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white flex-col rounded-xl border border-indigo-100 shadow-sm dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white dark:bg-[#141C2E] flex-col rounded-xl border border-indigo-100 shadow-sm dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="p-3 sm:p-4 bg-indigo-50/50 border-b border-indigo-100 flex-shrink-0">
- <h4 className="text-base sm:text-lg font-bold text-gray-800 flex items-center">
+ <h4 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white flex items-center">
  <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
@@ -648,11 +648,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="h-full flex flex-col">
  <div className="space-y-1.5 sm:space-y-2 flex-grow overflow-y-auto pr-1 sm:pr-2">
  {Object.values(cart).map(item => (
- <div key={item.id} className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-indigo-200 hover:shadow-md transition-shadow dark:bg-[#1A2336] dark:border-slate-600">
+ <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-xl p-2 sm:p-3 shadow-sm border border-indigo-200 dark:border-indigo-800/50 hover:shadow-md transition-shadow dark:bg-[#1A2336] dark:border-slate-600">
  <div className="flex items-center justify-between">
  <div className="flex-1 min-w-0">
- <h6 className="font-bold text-gray-800 text-xs sm:text-sm truncate">{item.name}</h6>
- <p className="text-xs text-gray-500">
+ <h6 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm truncate">{item.name}</h6>
+ <p className="text-xs text-gray-500 dark:text-slate-400">
  {fmt(item.price)} × {item.qty}
  </p>
  </div>
@@ -663,7 +663,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  >
  -
  </button>
- <span className="font-bold text-gray-900 w-6 sm:w-7 text-center text-sm sm:text-base bg-indigo-50 rounded-lg dark:text-gray-100 dark:bg-indigo-500/15">{item.qty}</span>
+ <span className="font-bold text-gray-900 dark:text-white w-6 sm:w-7 text-center text-sm sm:text-base bg-indigo-50 dark:bg-indigo-900/30 rounded-lg dark:text-gray-100 dark:bg-indigo-500/15">{item.qty}</span>
  <button
  onClick={() => updateCartQty(item.id, 1)}
  className="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-sm sm:text-base font-bold transition-colors shadow-sm"
@@ -697,7 +697,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  )}
  <div className="flex justify-between items-center pt-1">
- <span className="text-sm sm:text-base font-bold text-gray-800">Total:</span>
+ <span className="text-sm sm:text-base font-bold text-gray-800 dark:text-white">Total:</span>
  <span className="text-lg sm:text-xl font-bold text-green-600">{fmt(totalAmount)}</span>
  </div>
  </div>
@@ -759,7 +759,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {showReceipt && confirmedOrder && (
  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
  {/* BUGFIX: constrain the card to the viewport so it's scrollable on small phones instead of clipping */}
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Header - Orange */}
  <div className="bg-indigo-600 p-6 text-center">
  <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -784,11 +784,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="space-y-3 mb-6">
  <div className="flex justify-between text-sm">
  <span className="text-gray-500">Order ID</span>
- <span className="font-semibold text-gray-900">#{confirmedOrder.id}</span>
+ <span className="font-semibold text-gray-900 dark:text-white">#{confirmedOrder.id}</span>
  </div>
  <div className="flex justify-between text-sm">
  <span className="text-gray-500">Date & Time</span>
- <span className="font-semibold text-gray-900">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
+ <span className="font-semibold text-gray-900 dark:text-white">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
  </div>
  <div className="flex justify-between text-sm">                        <span className="text-gray-500">Status</span>
                         {/* REAL payment state — a paid takeaway used to read
@@ -806,22 +806,22 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
 
  {/* Items */}
- <div className="border-t border-gray-200 pt-4 mb-4">
- <h3 className="text-sm font-semibold text-gray-900 mb-3">Order Items</h3>
+ <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mb-4">
+ <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Order Items</h3>
  <div className="space-y-2 max-h-32 overflow-y-auto">
  {(confirmedOrder.items || []).map((item, idx) => (
  <div key={idx} className="flex justify-between text-sm">
- <span className="text-gray-700">{item.qty || item.quantity}x {item.name}</span>
- <span className="font-medium text-gray-900">{fmt(item.price * (item.qty || item.quantity || 1))}</span>
+ <span className="text-gray-700 dark:text-slate-300">{item.qty || item.quantity}x {item.name}</span>
+ <span className="font-medium text-gray-900 dark:text-slate-200">{fmt(item.price * (item.qty || item.quantity || 1))}</span>
  </div>
  ))}
  </div>
  </div>
 
  {/* Total */}
- <div className="border-t-2 border-gray-200 pt-4 mb-6">
+ <div className="border-t-2 border-gray-200 dark:border-slate-700 pt-4 mb-6">
  <div className="flex justify-between items-center">
- <span className="text-lg font-bold text-gray-900">Total Amount</span>
+ <span className="text-lg font-bold text-gray-900 dark:text-white">Total Amount</span>
  <span className="text-2xl font-bold text-blue-600">{fmt(confirmedOrder.total)}</span>
  </div>
  </div>
@@ -881,11 +881,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {showMobileCart && (
  <div className="md:hidden fixed inset-0 z-[100] flex items-end pointer-events-none">
  <div className="absolute inset-0 bg-black/50 pointer-events-auto" onClick={() => setShowMobileCart(false)} />
- <div className="relative bg-white w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto dark:bg-[#141C2E]">
+ <div className="relative bg-white dark:bg-[#141C2E] w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto dark:bg-[#141C2E]">
  <div className="flex flex-col flex-1 overflow-hidden">
  <div className="p-4 overflow-y-auto h-full">
  <div className="flex items-center justify-between mb-4">
- <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+ <h3 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
  <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
@@ -928,7 +928,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {Object.values(cart).map(item => (
  <div key={item.id} className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl gap-2">
  <div className="flex-1 min-w-0">
- <p className="font-semibold text-gray-800 truncate">{item.name}</p>
+ <p className="font-semibold text-gray-800 dark:text-slate-200 truncate">{item.name}</p>
  <p className="text-sm text-indigo-600 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
  </div>
  <div className="flex items-center gap-2">
@@ -951,7 +951,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  <div className="border-t-2 border-indigo-100 pt-4 mt-4">
  <div className="flex justify-between items-center mb-4">
- <span className="text-lg font-semibold text-gray-700">Order Summary</span>
+ <span className="text-lg font-semibold text-gray-700 dark:text-slate-300">Order Summary</span>
  <span className="text-2xl font-bold text-indigo-600">
  {fmt(Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0))}
  </span>
@@ -985,7 +985,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <button
  type="button"
  onClick={() => setGuests(g => Math.max(1, Number(g) - 1))}
- className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
+ className="w-8 h-8 rounded-full bg-white dark:bg-[#1A2336] border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
  disabled={Number(guests) <= 1}
  aria-label="Fewer guests"
  >
@@ -999,12 +999,12 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onChange={(e) =>
  setGuests(e.target.value === '' ? '' : Math.max(1, Math.min(50, Math.round(Number(e.target.value) || 1))))
  }
- className="w-14 text-center font-bold text-gray-800 bg-white border border-blue-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-slate-100"
+ className="w-14 text-center font-bold text-gray-800 dark:text-slate-200 bg-white dark:bg-[#1A2336] border border-blue-200 dark:border-blue-800 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-slate-100"
  />
  <button
  type="button"
  onClick={() => setGuests(g => Math.min(50, Number(g) + 1))}
- className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
+ className="w-8 h-8 rounded-full bg-white dark:bg-[#1A2336] border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
  disabled={Number(guests) >= 50}
  aria-label="More guests"
  >
@@ -1049,7 +1049,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Payment Modal for Takeaway Orders - z-[100] to stay above Notification toasts */}
  {showPaymentModal && pendingOrder && (
  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Header */}
  <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-center">
  <h2 className="text-xl font-bold text-white">Payment</h2>
@@ -1058,18 +1058,18 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
 
  <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
  {/* Order Summary */}
- <div className="bg-gray-50 rounded-xl p-4">
- <h3 className="font-semibold text-gray-800 mb-2">Order Summary</h3>
+ <div className="bg-gray-50 dark:bg-[#0B1220] rounded-xl p-4 dark:bg-[#1A2336]">
+ <h3 className="font-semibold text-gray-800 dark:text-slate-200 mb-2">Order Summary</h3>
  <div className="flex justify-between text-sm mb-1">
  <span className="text-gray-600">Order ID</span>
  <span className="font-medium">#{pendingOrder.id}</span>
  </div>
  
  {/* Item Details */}
- <div className="my-3 space-y-2 border-t border-b border-gray-200 py-3">
+ <div className="my-3 space-y-2 border-t border-b border-gray-200 dark:border-slate-700 py-3">
  {pendingOrder.items?.map((item, idx) => (
  <div key={idx} className="flex justify-between text-sm">
- <span className="text-gray-700">{item.qty || item.quantity}x {item.name}</span>
+ <span className="text-gray-700 dark:text-slate-300">{item.qty || item.quantity}x {item.name}</span>
  <span className="font-medium text-gray-800">{fmt((item.price || 0) * (item.qty || item.quantity || 1))}</span>
  </div>
  ))}
@@ -1174,7 +1174,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  setShowPaymentModal(false);
  setPendingOrder(null);
  }}
- className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+ className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors dark:bg-[#141C2E] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
  >
  Cancel
  </button>

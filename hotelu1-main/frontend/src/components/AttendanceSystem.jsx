@@ -121,7 +121,7 @@ const SHIFT_OPTIONS = [
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || {
     label: status,
-    bgLight: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#141C2E] dark:text-slate-300 dark:border-slate-700',
+    bgLight: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#1A2336] dark:text-slate-300 dark:border-slate-600',
     Icon: null,
   };
   const Icon = cfg.Icon;
@@ -1457,7 +1457,7 @@ const AttendanceSystem = ({ currentUser }) => {
               label="Total Records"
               value={summary.total || 0}
               color="#64748B"
-              bgLight="bg-slate-100 dark:bg-[#141C2E]"
+              bgLight="bg-slate-100 dark:bg-[#1A2336]"
             />
           </div>
         </div>

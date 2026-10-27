@@ -24,39 +24,39 @@ import { getAPI_URL, getSocketUrl } from '../utils/api';
 const ROLE_META = {
  admin: {
  label: 'Admin',
- color: 'text-purple-700',
- bg: 'bg-purple-50',
+ color: 'text-purple-700 dark:text-purple-300',
+ bg: 'bg-purple-50 dark:bg-purple-900/30',
  Icon: ShieldCheck,
  },
  manager: {
  label: 'Manager',
- color: 'text-blue-700',
- bg: 'bg-blue-50',
+ color: 'text-blue-700 dark:text-blue-300',
+ bg: 'bg-blue-50 dark:bg-blue-900/30',
  Icon: UserCog,
  },
  waiter: {
  label: 'Waiter',
- color: 'text-emerald-700',
- bg: 'bg-emerald-50',
+ color: 'text-emerald-700 dark:text-emerald-300',
+ bg: 'bg-emerald-50 dark:bg-emerald-900/30',
  Icon: Coffee,
  },
 
  cashier: {
  label: 'Cashier',
- color: 'text-amber-700',
- bg: 'bg-amber-50',
+ color: 'text-amber-700 dark:text-amber-300',
+ bg: 'bg-amber-50 dark:bg-amber-900/30',
  Icon: Wallet,
  },
  franchise: {
  label: 'Franchise',
- color: 'text-rose-700',
- bg: 'bg-rose-50',
+ color: 'text-rose-700 dark:text-rose-300',
+ bg: 'bg-rose-50 dark:bg-rose-900/30',
  Icon: Building2,
  },
  subfranchise: {
  label: 'Branch Owner',
- color: 'text-indigo-700',
- bg: 'bg-indigo-50',
+ color: 'text-indigo-700 dark:text-indigo-300',
+ bg: 'bg-indigo-50 dark:bg-indigo-900/30',
  Icon: Building2,
  },
 };
@@ -64,8 +64,8 @@ const ROLE_META = {
 const roleMeta = (role) =>
  ROLE_META[role] || {
  label: role,
- color: 'text-gray-700',
- bg: 'bg-gray-50',
+ color: 'text-gray-700 dark:text-slate-300',
+ bg: 'bg-gray-50 dark:bg-slate-700/40',
  Icon: Users,
  };
 
@@ -349,7 +349,7 @@ const StaffByBranch = ({ token }) => {
  /* --------------------------- render ---------------------------- */
 
  return (
- <div className="min-h-0 bg-[#F7F7F8] p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+ <div className="min-h-0 bg-[#F7F7F8] dark:bg-[#0B1220] p-4 sm:p-6 lg:p-8 overflow-x-hidden">
  {/* Header */}
  <header
  className={`mb-6 transition-all duration-700 ${
@@ -359,7 +359,7 @@ const StaffByBranch = ({ token }) => {
  <div className="flex items-start justify-between flex-wrap gap-3">
  <div>
  <div className="flex items-center gap-2 flex-wrap">
- <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
+ <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
  Staff Directory
  </h1>
  <span
@@ -378,7 +378,7 @@ const StaffByBranch = ({ token }) => {
  {liveConnected ? 'Live' : 'Auto'}
  </span>
  </div>
- <p className="mt-1 text-sm text-gray-500">
+ <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">
  Everyone who works across your branches — grouped by location,
  filtered by role.
  {lastUpdatedAt && (
@@ -395,7 +395,7 @@ const StaffByBranch = ({ token }) => {
  <button
  onClick={fetchStaff}
  disabled={loading}
- className="px-4 py-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold flex items-center gap-2 shadow-sm disabled:opacity-60"
+ className="px-4 py-2 rounded-xl bg-white dark:bg-[#1A2336] border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-[#1E293B] text-gray-700 dark:text-slate-300 text-sm font-semibold flex items-center gap-2 shadow-sm disabled:opacity-60"
  >
  <RefreshCcw
  className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`}
@@ -433,7 +433,7 @@ const StaffByBranch = ({ token }) => {
  </section>
 
  {/* Controls */}
- <section className="mb-5 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+ <section className="mb-5 bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-700/60 p-4 shadow-sm">
  <div className="flex flex-wrap items-center gap-3">
  {/* Search */}
  <div className="relative flex-1 min-w-[220px]">
@@ -443,7 +443,7 @@ const StaffByBranch = ({ token }) => {
  value={search}
  onChange={(e) => setSearch(e.target.value)}
  placeholder="Search staff by name, username or role..."
- className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+ className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0B1220] border border-gray-100 dark:border-slate-700 text-sm text-gray-800 dark:text-slate-200 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-[#0B1220]"
  />
  </div>
 
@@ -452,7 +452,7 @@ const StaffByBranch = ({ token }) => {
  <select
  value={activeBranch}
  onChange={(e) => setActiveBranch(e.target.value)}
- className="appearance-none pl-3 pr-9 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+ className="appearance-none pl-3 pr-9 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0B1220] border border-gray-100 dark:border-slate-700 text-sm font-semibold text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
  >
  <option value="all">All branches</option>
  <option value="unassigned">Main / HQ only</option>
@@ -470,7 +470,7 @@ const StaffByBranch = ({ token }) => {
  <select
  value={roleFilter}
  onChange={(e) => setRoleFilter(e.target.value)}
- className="appearance-none pl-3 pr-9 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+ className="appearance-none pl-3 pr-9 py-2.5 rounded-xl bg-gray-50 dark:bg-[#0B1220] border border-gray-100 dark:border-slate-700 text-sm font-semibold text-gray-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
  >
  <option value="all">All roles</option>
  <option value="admin">Admin</option>
@@ -509,12 +509,12 @@ const StaffByBranch = ({ token }) => {
  ))}
 
  {!loading && branchGroups.every((g) => g.staff.length === 0) && (
- <div className="bg-white rounded-2xl border border-gray-100 p-10 text-center">
- <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
- <p className="text-sm font-semibold text-gray-700">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-700/60 p-10 text-center">
+ <Users className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+ <p className="text-sm font-semibold text-gray-700 dark:text-slate-300">
  No staff members match your filters
  </p>
- <p className="text-xs text-gray-500 mt-1">
+ <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">
  Try changing the branch / role filter or clearing the search.
  </p>
  </div>
@@ -529,9 +529,9 @@ const StaffByBranch = ({ token }) => {
 /* ------------------------------------------------------------------ */
 
 const KpiCard = ({ label, value, Icon, tint }) => (
- <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-700/60 p-4 shadow-sm">
  <div className="flex items-center justify-between mb-3">
- <span className="text-[11px] font-bold tracking-wider text-gray-400 uppercase">
+ <span className="text-[11px] font-bold tracking-wider text-gray-400 dark:text-slate-500 uppercase">
  {label}
  </span>
  <span
@@ -540,7 +540,7 @@ const KpiCard = ({ label, value, Icon, tint }) => (
  <Icon className="w-4 h-4 text-white" />
  </span>
  </div>
- <p className="text-2xl font-extrabold tracking-tight text-gray-900">
+ <p className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
  {value}
  </p>
  </div>
@@ -554,25 +554,25 @@ const BranchGroup = ({ group, visible, delay = 0 }) => {
 
  return (
  <div
- className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden transition-all duration-500 ${
+ className={`bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-700/60 shadow-sm overflow-hidden transition-all duration-500 ${
  visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
  }`}
  style={{ transitionDelay: `${delay}ms` }}
  >
  {/* Header */}
- <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+ <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700/60 bg-gradient-to-r from-gray-50 to-white dark:from-[#1A2336] dark:to-[#141C2E]">
  <div className="flex items-start justify-between flex-wrap gap-2">
  <div className="flex items-start gap-3">
  <span className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-red-500 flex items-center justify-center shadow-sm shrink-0">
  <Building2 className="w-5 h-5 text-white" />
  </span>
  <div>
- <h3 className="text-base font-bold text-gray-900">
+ <h3 className="text-base font-bold text-gray-900 dark:text-white">
  {group.name}
  </h3>
- <div className="mt-0.5 flex items-center gap-3 text-[12px] text-gray-500 flex-wrap">
+ <div className="mt-0.5 flex items-center gap-3 text-[12px] text-gray-500 dark:text-slate-400 flex-wrap">
  {group.meta?.code && (
- <span className="font-mono font-semibold text-gray-600">
+ <span className="font-mono font-semibold text-gray-600 dark:text-slate-300">
  {group.meta.code}
  </span>
  )}
@@ -594,7 +594,7 @@ const BranchGroup = ({ group, visible, delay = 0 }) => {
 
  {/* Role counters */}
  <div className="flex items-center gap-2 flex-wrap">
- <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px] font-bold tracking-wider uppercase">
+ <span className="px-3 py-1 rounded-full bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 text-[11px] font-bold tracking-wider uppercase">
  {group.staff.length} member{group.staff.length === 1 ? '' : 's'}
  </span>
  {Object.entries(byRole).map(([role, count]) => {
@@ -616,7 +616,7 @@ const BranchGroup = ({ group, visible, delay = 0 }) => {
  {/* Staff cards */}
  <div className="p-4 sm:p-5">
  {group.staff.length === 0 ? (
- <p className="text-xs text-gray-400 italic text-center py-6">
+ <p className="text-xs text-gray-400 dark:text-slate-500 italic text-center py-6">
  No staff assigned to this branch yet.
  </p>
  ) : (
@@ -634,7 +634,7 @@ const BranchGroup = ({ group, visible, delay = 0 }) => {
 const StaffCard = ({ user }) => {
  const meta = roleMeta(user.role);
  return (
- <div className="group p-4 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all bg-white">
+ <div className="group p-4 rounded-2xl border border-gray-100 dark:border-slate-700/60 hover:border-indigo-200 dark:hover:border-indigo-700 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-all bg-white dark:bg-[#1A2336]">
  <div className="flex items-start gap-3">
  <span
  className={`w-11 h-11 rounded-xl bg-gradient-to-br ${avatarColor(
@@ -644,10 +644,10 @@ const StaffCard = ({ user }) => {
  {initials(user.name || user.username)}
  </span>
  <div className="min-w-0 flex-1">
- <p className="text-sm font-bold text-gray-900 truncate">
+ <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
  {user.name || user.username}
  </p>
- <p className="text-[11px] text-gray-500 truncate">
+ <p className="text-[11px] text-gray-500 dark:text-slate-400 truncate">
  @{user.username}
  </p>
  <span

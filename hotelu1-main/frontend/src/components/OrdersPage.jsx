@@ -807,10 +807,10 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <div className="flex items-center justify-between">
  <div>
  <div className="flex items-center gap-2 flex-wrap">
- <p className="text-base font-bold text-gray-900">{formatId(order.id)}</p>
+ <p className="text-base font-bold text-gray-900 dark:text-white">{formatId(order.id)}</p>
  <SourceBadge source={order.source} />
  </div>
- <p className="text-xs text-gray-500 mt-0.5">
+ <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
  {created.toLocaleDateString('en-US', {
  month: 'short',
  day: '2-digit',
@@ -838,10 +838,10 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
 
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
  <div>
- <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
+ <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 font-semibold">
  Table / Customer
  </p>
- <p className="text-sm font-semibold text-gray-800">
+ <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {order.table_name || order.customer_name || 'Counter'}
  </p>
  {typeKey === 'DELIVERY' && order.customer_phone && (
@@ -852,26 +852,26 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
  </div>
  <div>
- <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
+ <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 font-semibold">
  Order Type
  </p>
- <p className="text-sm font-semibold text-gray-800">
+ <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {TYPE_LABEL[typeKey] || 'Dine-In'}
  </p>
  </div>
   <div>
- <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
+ <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 font-semibold">
  Token
  </p>
- <p className="text-sm font-semibold text-gray-800">
+ <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {order.token || `${formatId(order.id)}`}
  </p>
  </div>
  <div>
- <p className="text-[11px] uppercase tracking-wide text-gray-400 font-semibold">
+ <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 font-semibold">
  Payment
  </p>
- <p className="text-sm font-semibold text-gray-800">
+ <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {order.payment_method === 'cash'
  ? 'Cash'
  : order.payment_method
@@ -882,13 +882,13 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
 
  {typeKey === 'DELIVERY' && order.delivery_address && (
- <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+ <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 dark:bg-indigo-950/40 dark:border-indigo-800/60">
  <p className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-500">Delivery address</p>
- <p className="mt-1 text-sm text-gray-800 break-words leading-snug">
+ <p className="mt-1 text-sm text-gray-800 break-words leading-snug dark:text-slate-200">
  {order.delivery_address}
  </p>
  {order.customer_email && (
- <p className="mt-1 text-xs text-gray-500 break-words flex items-center gap-1">
+ <p className="mt-1 text-xs text-gray-500 break-words flex items-center gap-1 dark:text-slate-400">
  <Mail size={12} className="shrink-0" aria-hidden="true" /> {order.customer_email}
  </p>
  )}
@@ -907,7 +907,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  className="mt-3 block w-full text-left"
  title="View full-screen"
  >
- <img src={proofImage} alt="Customer payment proof" className="max-h-56 w-full rounded-xl border border-amber-200 object-contain bg-white cursor-zoom-in" />
+ <img src={proofImage} alt="Customer payment proof" className="max-h-56 w-full rounded-xl border border-amber-200 object-contain bg-white cursor-zoom-in dark:bg-[#141C2E] dark:border-amber-800/60" />
  <span className="mt-1 block text-xs font-semibold text-indigo-600">Tap to view full-screen</span>
  </button>
  ) : (
@@ -1110,7 +1110,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )}
  </div>
  </div>
- <p className="text-sm font-semibold text-gray-800">
+ <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {fmt((Number(it.price) || 0) * qty)}
  </p>
  </li>
@@ -1163,7 +1163,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <div className="grid grid-cols-2 gap-2 mt-4">
  <button
  onClick={handlePrint}
- className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50"
+ className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
  >
  <Printer className="w-4 h-4" /> Print Bill
  </button>
@@ -1279,7 +1279,7 @@ const BillPreviewModal = ({ order, buildPrintableHtml, onClose, onPrint }) => {
  </div>
  <button
  onClick={onClose}
- className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100"
+ className="w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:text-slate-400 dark:hover:bg-[#1A2336]"
  aria-label="Close"
  >
  <XIcon className="w-4 h-4" />
