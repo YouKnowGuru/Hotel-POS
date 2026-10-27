@@ -465,7 +465,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  return (
  <>
  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
- <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+ <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
  <div className="flex justify-between items-center p-4 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
  <h3 className="text-lg sm:text-2xl font-bold text-white">
@@ -484,7 +484,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="p-3 sm:p-6 flex-grow overflow-hidden flex flex-col">
  <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-grow min-h-0">
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
- <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 max-h-[calc(100vh-120px)] lg:max-h-none">
+ <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 max-h-[calc(100vh-120px)] lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
  <h4 className="text-lg sm:text-2xl font-bold text-gray-800 flex items-center">
  <span className="mr-1 sm:mr-2 text-lg sm:text-2xl">🍽️</span> Menu Items
@@ -496,7 +496,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  placeholder="Search items"
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
- className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 bg-white shadow-sm"
+ className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 bg-white shadow-sm dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
  />
  {searchTerm && (
  <button
@@ -519,7 +519,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm ${
  selectedCategory === category
  ? 'bg-gradient-to-r from-indigo-600 to-red-400 text-white shadow-lg transform scale-105'
- : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400 hover:shadow-md'
+ : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400 hover:shadow-md dark:bg-[#1A2336] dark:text-slate-300 dark:border-slate-600 dark:hover:border-indigo-500'
  }`}
  >
  <span className="mr-0.5 sm:mr-1 text-xs sm:text-sm">{getCategoryIcon(category)}</span>
@@ -570,10 +570,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  }
  
  return (
- <div key={item.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100">
+ <div key={item.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Food Image - Circular like MenuManagement */}
- <div className="w-full h-24 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200">
- <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center">
+ <div className="w-full h-24 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
+ <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
  {item.image ? (
  <img 
  src={item.image} 
@@ -622,7 +622,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  {/* Right Panel - Current Order - Hidden on mobile, visible on tablet+ */}
- <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white flex-col rounded-xl border border-indigo-100 shadow-sm">
+ <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white flex-col rounded-xl border border-indigo-100 shadow-sm dark:bg-[#141C2E] dark:border-slate-700/60">
  <div className="p-3 sm:p-4 bg-indigo-50/50 border-b border-indigo-100 flex-shrink-0">
  <h4 className="text-base sm:text-lg font-bold text-gray-800 flex items-center">
  <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -648,7 +648,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="h-full flex flex-col">
  <div className="space-y-1.5 sm:space-y-2 flex-grow overflow-y-auto pr-1 sm:pr-2">
  {Object.values(cart).map(item => (
- <div key={item.id} className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-indigo-200 hover:shadow-md transition-shadow">
+ <div key={item.id} className="bg-white rounded-xl p-2 sm:p-3 shadow-sm border border-indigo-200 hover:shadow-md transition-shadow dark:bg-[#1A2336] dark:border-slate-600">
  <div className="flex items-center justify-between">
  <div className="flex-1 min-w-0">
  <h6 className="font-bold text-gray-800 text-xs sm:text-sm truncate">{item.name}</h6>
@@ -663,7 +663,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  >
  -
  </button>
- <span className="font-bold text-gray-900 w-6 sm:w-7 text-center text-sm sm:text-base bg-indigo-50 rounded-lg">{item.qty}</span>
+ <span className="font-bold text-gray-900 w-6 sm:w-7 text-center text-sm sm:text-base bg-indigo-50 rounded-lg dark:text-gray-100 dark:bg-indigo-500/15">{item.qty}</span>
  <button
  onClick={() => updateCartQty(item.id, 1)}
  className="bg-green-500 hover:bg-green-600 text-white rounded-full w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-sm sm:text-base font-bold transition-colors shadow-sm"
@@ -728,7 +728,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center ${
  Object.keys(cart).length === 0
  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
- : 'bg-white text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 shadow-sm'
+ : 'bg-white text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 shadow-sm dark:bg-[#1A2336] dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-950/40'
  }`}
  >
  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -759,7 +759,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {showReceipt && confirmedOrder && (
  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
  {/* BUGFIX: constrain the card to the viewport so it's scrollable on small phones instead of clipping */}
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100">
+ <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Header - Orange */}
  <div className="bg-indigo-600 p-6 text-center">
  <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -881,7 +881,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {showMobileCart && (
  <div className="md:hidden fixed inset-0 z-[100] flex items-end pointer-events-none">
  <div className="absolute inset-0 bg-black/50 pointer-events-auto" onClick={() => setShowMobileCart(false)} />
- <div className="relative bg-white w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto">
+ <div className="relative bg-white w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto dark:bg-[#141C2E]">
  <div className="flex flex-col flex-1 overflow-hidden">
  <div className="p-4 overflow-y-auto h-full">
  <div className="flex items-center justify-between mb-4">
@@ -905,7 +905,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  )}
  <button
  onClick={() => setShowMobileCart(false)}
- className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+ className="p-2 hover:bg-gray-100 rounded-full transition-colors dark:hover:bg-[#1A2336]"
  >
  <svg className="w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -966,7 +966,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  className={`p-3 rounded-xl font-bold text-sm transition-all ${
  paymentMethod === method
  ? 'bg-indigo-600 text-white shadow-lg'
- : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+ : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#1E293B] dark:text-slate-300 dark:hover:bg-slate-600'
  }`}
  >
  {method === 'cash' ? '💵 Cash' : '💳 Card'}
@@ -976,8 +976,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
 
  {/* Guests seated at this table (dine-in only) */}
  {orderType !== 'TAKEAWAY' && (
- <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-4">
- <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+ <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-4 dark:bg-blue-950/40">
+ <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300">
  <Users className="w-4 h-4 text-blue-500" />
  Guests
  </span>
@@ -985,7 +985,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <button
  type="button"
  onClick={() => setGuests(g => Math.max(1, Number(g) - 1))}
- className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40"
+ className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
  disabled={Number(guests) <= 1}
  aria-label="Fewer guests"
  >
@@ -999,12 +999,12 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onChange={(e) =>
  setGuests(e.target.value === '' ? '' : Math.max(1, Math.min(50, Math.round(Number(e.target.value) || 1))))
  }
- className="w-14 text-center font-bold text-gray-800 bg-white border border-blue-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-300"
+ className="w-14 text-center font-bold text-gray-800 bg-white border border-blue-200 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-slate-100"
  />
  <button
  type="button"
  onClick={() => setGuests(g => Math.min(50, Number(g) + 1))}
- className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40"
+ className="w-8 h-8 rounded-full bg-white border border-blue-200 text-blue-600 font-bold text-lg leading-none hover:bg-blue-100 transition-colors disabled:opacity-40 dark:bg-[#1A2336] dark:border-blue-800/60 dark:text-blue-400"
  disabled={Number(guests) >= 50}
  aria-label="More guests"
  >

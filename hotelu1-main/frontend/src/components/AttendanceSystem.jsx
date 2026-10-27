@@ -121,7 +121,7 @@ const SHIFT_OPTIONS = [
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || {
     label: status,
-    bgLight: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700',
+    bgLight: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-[#141C2E] dark:text-slate-300 dark:border-slate-700',
     Icon: null,
   };
   const Icon = cfg.Icon;
@@ -365,7 +365,7 @@ function LiveClockWidget({
 /* ── Modern Stat Card ──────────────────────────── */
 function StatCard({ icon: Icon, label, value, color, bgLight, subtitle }) {
   return (
-    <div className="bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all overflow-hidden">
+    <div className="bg-white dark:bg-[#141C2E] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-5 shadow-sm hover:shadow-md transition-all overflow-hidden">
       <div className="flex items-center gap-2.5 sm:gap-3.5">
         <div
           className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 ${bgLight}`}
@@ -410,7 +410,7 @@ function AttendanceTable({ records, isAdmin, onApprove, onEdit, onDelete }) {
     <div className="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0">
       <table className="w-full min-w-[700px] text-left text-xs sm:text-sm">
         <thead>
-          <tr className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-gray-200/80 dark:border-slate-800">
+          <tr className="bg-gray-50 dark:bg-[#0B1220] text-gray-500 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold border-b border-gray-200/80 dark:border-slate-800">
             <th className="py-3 px-4">Date</th>
             <th className="py-3 px-4">Staff Member</th>
             <th className="py-3 px-4">Shift</th>
@@ -428,7 +428,7 @@ function AttendanceTable({ records, isAdmin, onApprove, onEdit, onDelete }) {
             return (
               <tr
                 key={r.id}
-                className="hover:bg-gray-50 dark:hover:bg-slate-800/40 transition-colors"
+                className="hover:bg-gray-50 dark:hover:bg-[#1A2336]/40 transition-colors"
               >
                 <td className="py-3.5 px-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                   {fmt.date(r.date)}
@@ -570,7 +570,7 @@ function RecordModal({ record, staff, onClose, onSave }) {
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#111C35] border border-gray-200 dark:border-slate-800 rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto my-auto"
+        className="bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-800 rounded-3xl shadow-2xl p-4 sm:p-6 lg:p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-slate-800 mb-5">
@@ -579,7 +579,7 @@ function RecordModal({ record, staff, onClose, onSave }) {
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition"
+            className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-[#1A2336] dark:hover:text-slate-200 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -717,7 +717,7 @@ function RecordModal({ record, staff, onClose, onSave }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-semibold text-xs sm:text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-semibold text-xs sm:text-sm hover:bg-gray-50 dark:hover:bg-[#1A2336] transition cursor-pointer"
             >
               Cancel
             </button>
@@ -1296,7 +1296,7 @@ const AttendanceSystem = ({ currentUser }) => {
               <button
                 onClick={handleExportExcel}
                 title="Export Formatted Excel (.xlsx)"
-                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/60 text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#141C2E] text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/60 text-xs sm:text-sm font-semibold shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
               >
                 <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span className="hidden sm:inline">Export Excel</span>
@@ -1305,7 +1305,7 @@ const AttendanceSystem = ({ currentUser }) => {
               <button
                 onClick={exportCSV}
                 title="Export Clean CSV"
-                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#111C35] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-white dark:bg-[#141C2E] text-gray-700 dark:text-slate-300 border border-gray-200 dark:border-slate-700 text-xs sm:text-sm font-semibold shadow-sm hover:bg-gray-50 dark:hover:bg-[#1A2336] transition cursor-pointer"
               >
                 <Download className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                 <span className="hidden sm:inline">Export CSV</span>
@@ -1330,7 +1330,7 @@ const AttendanceSystem = ({ currentUser }) => {
           className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             tab === 'dashboard'
               ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
-              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#1A2336]'
           }`}
         >
           <Timer className="w-4 h-4" />
@@ -1343,7 +1343,7 @@ const AttendanceSystem = ({ currentUser }) => {
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
               tab === 'today'
                 ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
-                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+                : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#1A2336]'
             }`}
           >
             <UserCheck className="w-4 h-4" />
@@ -1356,7 +1356,7 @@ const AttendanceSystem = ({ currentUser }) => {
           className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
             tab === 'records'
               ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-sm'
-              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-800'
+              : 'text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-[#1A2336]'
           }`}
         >
           <CalendarDays className="w-4 h-4" />
@@ -1378,11 +1378,11 @@ const AttendanceSystem = ({ currentUser }) => {
           />
 
           {/* Month Selector Bar */}
-          <div className="flex items-center justify-between bg-white dark:bg-[#111C35] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-3.5 px-3 sm:px-4 shadow-sm">
+          <div className="flex items-center justify-between bg-white dark:bg-[#141C2E] border border-gray-200/80 dark:border-slate-800/80 rounded-2xl p-3 sm:p-3.5 px-3 sm:px-4 shadow-sm">
             <div className="flex items-center gap-2">
               <button
                 onClick={prevMonth}
-                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-[#1A2336] text-gray-700 dark:text-slate-300 transition cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -1391,7 +1391,7 @@ const AttendanceSystem = ({ currentUser }) => {
               </span>
               <button
                 onClick={nextMonth}
-                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-slate-300 transition cursor-pointer"
+                className="p-1.5 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-[#1A2336] text-gray-700 dark:text-slate-300 transition cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -1457,7 +1457,7 @@ const AttendanceSystem = ({ currentUser }) => {
               label="Total Records"
               value={summary.total || 0}
               color="#64748B"
-              bgLight="bg-slate-100 dark:bg-slate-800"
+              bgLight="bg-slate-100 dark:bg-[#141C2E]"
             />
           </div>
         </div>
@@ -1465,7 +1465,7 @@ const AttendanceSystem = ({ currentUser }) => {
 
       {/* ── TAB 2: TODAY'S LIVE ROSTER (ADMIN) ── */}
       {tab === 'today' && isAdmin && (
-        <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm animate-fade-in">
+        <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm animate-fade-in">
           <div className="p-3 sm:p-5 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2 sm:gap-3">
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white text-base">
@@ -1477,7 +1477,7 @@ const AttendanceSystem = ({ currentUser }) => {
             </div>
             <button
               onClick={fetchTodayRecords}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-slate-700 text-xs font-semibold text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#1A2336] transition cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               Refresh Roster
@@ -1498,7 +1498,7 @@ const AttendanceSystem = ({ currentUser }) => {
       {tab === 'records' && (
         <div className="space-y-4 animate-fade-in">
           {/* Filters Bar */}
-          <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-sm">
+          <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 p-3 sm:p-4 shadow-sm">
             <div className="flex flex-col sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
               {/* Search */}
               <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
@@ -1513,10 +1513,10 @@ const AttendanceSystem = ({ currentUser }) => {
               </div>
 
               {/* Month Navigation */}
-              <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-1 w-full sm:w-auto justify-center">
+              <div className="flex items-center gap-1 bg-gray-50 dark:bg-[#0B1220] border border-gray-200 dark:border-slate-700 rounded-xl p-1 w-full sm:w-auto justify-center">
                 <button
                   onClick={prevMonth}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#1A2336] transition cursor-pointer shrink-0"
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                 </button>
@@ -1525,7 +1525,7 @@ const AttendanceSystem = ({ currentUser }) => {
                 </span>
                 <button
                   onClick={nextMonth}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#1A2336] transition cursor-pointer shrink-0"
                 >
                   <ChevronRight className="w-4 h-4 text-gray-600 dark:text-slate-400" />
                 </button>
@@ -1572,7 +1572,7 @@ const AttendanceSystem = ({ currentUser }) => {
           </div>
 
           {/* Records Table Card */}
-          <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
+          <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
             <div className="p-3 sm:p-4 border-b border-gray-200/80 dark:border-slate-800 flex items-center justify-between">
               <span className="font-bold text-gray-900 dark:text-white text-sm">
                 {records.length} Attendance Records Found

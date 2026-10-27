@@ -323,7 +323,7 @@ const InventoryManagement = () => {
  value={search}
  onChange={(e) => setSearch(e.target.value)}
  placeholder="Search material or supplier..."
- className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition shadow-sm"
+ className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 text-sm text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400 transition shadow-sm"
  />
  {search && (
  <button
@@ -346,7 +346,7 @@ const InventoryManagement = () => {
  className={`text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap transition-all ${
  active
  ? 'bg-indigo-600 text-white shadow-sm'
- : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700'
+ : 'bg-white dark:bg-[#141C2E] text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-[#1A2336]'
  }`}
  >
  {cat}
@@ -358,7 +358,7 @@ const InventoryManagement = () => {
 
  {/* Items Grid */}
  {filtered.length === 0 ? (
- <div className="rounded-3xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
+ <div className="rounded-3xl bg-white dark:bg-[#141C2E] border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
  <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 dark:text-indigo-400 flex items-center justify-center mx-auto mb-3 shadow-sm">
  <Package className="w-7 h-7" />
  </div>
@@ -396,8 +396,8 @@ const InventoryManagement = () => {
  {/* Add Material Modal */}
  {showAddModal && (
  <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
- <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-2xl w-full max-w-lg my-auto max-h-[92vh] overflow-y-auto">
- <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800/95 z-10">
+ <div className="bg-white dark:bg-[#141C2E] rounded-3xl border border-gray-100 dark:border-slate-700 shadow-2xl w-full max-w-lg my-auto max-h-[92vh] overflow-y-auto">
+ <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-slate-700 sticky top-0 bg-white dark:bg-[#141C2E]/95 z-10">
  <div>
  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Add Material</h3>
  <p className="text-xs text-gray-400 dark:text-slate-400 mt-0.5">
@@ -406,7 +406,7 @@ const InventoryManagement = () => {
  </div>
  <button
  onClick={() => setShowAddModal(false)}
- className="w-8 h-8 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white flex items-center justify-center transition"
+ className="w-8 h-8 rounded-xl hover:bg-gray-100 dark:hover:bg-[#1A2336] text-gray-400 dark:text-slate-400 hover:text-gray-700 dark:hover:text-white flex items-center justify-center transition"
  >
  <X className="w-4 h-4" />
  </button>
@@ -423,7 +423,7 @@ const InventoryManagement = () => {
  value={newItem.material_name}
  onChange={(e) => setNewItem((p) => ({ ...p, material_name: e.target.value }))}
  placeholder="e.g., Basmati Rice, Dairy Cheese"
- className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  required
  />
  </div>
@@ -441,7 +441,7 @@ const InventoryManagement = () => {
  value={newItem.current_stock}
  onChange={(e) => setNewItem((p) => ({ ...p, current_stock: e.target.value }))}
  placeholder="0"
- className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  required
  />
  </div>
@@ -456,7 +456,7 @@ const InventoryManagement = () => {
  value={newItem.min_stock}
  onChange={(e) => setNewItem((p) => ({ ...p, min_stock: e.target.value }))}
  placeholder="0"
- className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  required
  />
  </div>
@@ -467,7 +467,7 @@ const InventoryManagement = () => {
  <select
  value={newItem.unit}
  onChange={(e) => setNewItem((p) => ({ ...p, unit: e.target.value }))}
- className="w-full px-2.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-2.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  >
  {['kg', 'g', 'L', 'ml', 'pcs', 'dozen', 'box', 'bag', 'litre'].map((u) => (
  <option key={u} value={u}>
@@ -488,7 +488,7 @@ const InventoryManagement = () => {
  value={newItem.supplier}
  onChange={(e) => setNewItem((p) => ({ ...p, supplier: e.target.value }))}
  placeholder="e.g., Apex Wholesale Mart"
- className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  />
  </div>
 
@@ -505,7 +505,7 @@ const InventoryManagement = () => {
  value={newItem.unit_price}
  onChange={(e) => setNewItem((p) => ({ ...p, unit_price: e.target.value }))}
  placeholder="0.00"
- className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  />
  </div>
  <div>
@@ -519,7 +519,7 @@ const InventoryManagement = () => {
  value={newItem.purchase_price}
  onChange={(e) => setNewItem((p) => ({ ...p, purchase_price: e.target.value }))}
  placeholder="0.00"
- className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700/80 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+ className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
  />
  </div>
  </div>
@@ -545,7 +545,7 @@ const InventoryManagement = () => {
  value={newItem.gst_rate}
  onChange={(e) => setNewItem((p) => ({ ...p, gst_rate: e.target.value }))}
  placeholder="e.g., 5 or 12"
- className="w-full px-3 py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/60 bg-white dark:bg-slate-700/90 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
+ className="w-full px-3 py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/60 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
  />
  <p className="text-[10px] text-gray-400 dark:text-slate-400 mt-1">GST paid to supplier</p>
  </div>
@@ -557,7 +557,7 @@ const InventoryManagement = () => {
  type="date"
  value={newItem.last_purchase_date}
  onChange={(e) => setNewItem((p) => ({ ...p, last_purchase_date: e.target.value }))}
- className="w-full px-3 py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/60 bg-white dark:bg-slate-700/90 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
+ className="w-full px-3 py-2.5 rounded-xl border border-violet-200 dark:border-violet-700/60 bg-white dark:bg-[#1A2336] text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-400/30 focus:border-violet-400"
  />
  </div>
  </div>
@@ -580,7 +580,7 @@ const InventoryManagement = () => {
  <button
  type="button"
  onClick={() => setShowAddModal(false)}
- className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 text-sm font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition"
+ className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-slate-600 text-sm font-semibold text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#1A2336] transition"
  >
  Cancel
  </button>
@@ -602,7 +602,7 @@ const InventoryManagement = () => {
 /* ─── SummaryCard ─── */
 const SummaryCard = ({ icon: Icon, iconBg, iconColor, label, value, valueClass = '', highlight = false, sub }) => (
  <div
- className={`rounded-2xl bg-white dark:bg-slate-800/90 border p-3 sm:p-4 shadow-sm hover:shadow-md transition flex items-start gap-2.5 sm:gap-3.5 overflow-hidden ${
+ className={`rounded-2xl bg-white dark:bg-[#141C2E]/90 border p-3 sm:p-4 shadow-sm hover:shadow-md transition flex items-start gap-2.5 sm:gap-3.5 overflow-hidden ${
  highlight
  ? 'border-rose-200 dark:border-rose-800/60 bg-rose-50/20 dark:bg-rose-950/20'
  : 'border-gray-100 dark:border-slate-700/80'
@@ -665,7 +665,7 @@ const InventoryCard = ({
  const totalItemGst = gstPerUnit * current;
 
  return (
- <div className="bg-white dark:bg-slate-800/90 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm hover:shadow-md transition p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
+ <div className="bg-white dark:bg-[#141C2E]/90 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm hover:shadow-md transition p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
  <div>
  {/* Top title & badge */}
  <div className="flex items-start justify-between gap-2 mb-3">
@@ -674,12 +674,12 @@ const InventoryCard = ({
  {item.material_name}
  </h3>
  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
- <span className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700/80 px-2 py-0.5 rounded-full">
+ <span className="text-[10px] font-semibold text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-[#1A2336] px-2 py-0.5 rounded-full">
  {category}
  </span>
  {supplier && (
  <span
- className="text-[10px] text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-slate-700/60 px-2 py-0.5 rounded-full border border-gray-100 dark:border-slate-600 truncate max-w-[100px] sm:max-w-[130px]"
+ className="text-[10px] text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-[#1E293B]/60 px-2 py-0.5 rounded-full border border-gray-100 dark:border-slate-600 truncate max-w-[100px] sm:max-w-[130px]"
  title={`Supplier: ${supplier}`}
  >
  {supplier}
@@ -696,7 +696,7 @@ const InventoryCard = ({
  <button
  onClick={() => onDelete(item.id, item.material_name)}
  title="Delete material"
- className="w-7 h-7 rounded-xl bg-gray-50 dark:bg-slate-700 text-gray-400 dark:text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 flex items-center justify-center transition"
+ className="w-7 h-7 rounded-xl bg-gray-50 dark:bg-[#1E293B] text-gray-400 dark:text-slate-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 flex items-center justify-center transition"
  >
  <Trash2 className="w-3.5 h-3.5" />
  </button>
@@ -710,7 +710,7 @@ const InventoryCard = ({
  {formatStock(current)} {unit}
  </p>
  </div>
- <div className="h-2 rounded-full bg-gray-100 dark:bg-slate-700 overflow-hidden">
+ <div className="h-2 rounded-full bg-gray-100 dark:bg-[#1E293B] overflow-hidden">
  <div className={`h-full ${barColor} transition-all duration-300`} style={{ width: `${ratio}%` }} />
  </div>
 
@@ -724,7 +724,7 @@ const InventoryCard = ({
  step="0.01"
  value={editMinStock}
  onChange={(e) => setEditMinStock(e.target.value)}
- className="flex-1 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+ className="flex-1 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-[#1E293B] text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
  autoFocus
  />
  <button
@@ -736,7 +736,7 @@ const InventoryCard = ({
  </button>
  <button
  onClick={onCancelEditMin}
- className="w-6 h-6 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-400 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center transition"
+ className="w-6 h-6 rounded-lg bg-gray-50 dark:bg-[#1E293B] text-gray-400 dark:text-slate-300 hover:bg-gray-100 flex items-center justify-center transition"
  title="Cancel"
  >
  <X className="w-3 h-3" />
@@ -750,7 +750,7 @@ const InventoryCard = ({
  <button
  onClick={() => onStartEditMin(item.id, min)}
  title="Edit min stock alert"
- className="w-6 h-6 rounded-lg hover:bg-indigo-50 dark:hover:bg-slate-700 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center justify-center transition"
+ className="w-6 h-6 rounded-lg hover:bg-indigo-50 dark:hover:bg-[#1A2336] text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center justify-center transition"
  >
  <Edit2 className="w-3 h-3" />
  </button>
@@ -784,14 +784,14 @@ const InventoryCard = ({
  <div className="flex items-center gap-1.5">
  <button
  onClick={() => onRemoveStock(item.id)}
- className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 flex items-center justify-center transition border border-gray-200 dark:border-slate-600"
+ className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-[#1E293B] text-gray-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/60 dark:hover:text-rose-300 flex items-center justify-center transition border border-gray-200 dark:border-slate-600"
  title="Deduct 1 unit"
  >
  <Minus className="w-3.5 h-3.5" />
  </button>
  <button
  onClick={() => onAddStock(item.id)}
- className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300 flex items-center justify-center transition border border-gray-200 dark:border-slate-600"
+ className="w-7 h-7 rounded-lg bg-gray-50 dark:bg-[#1E293B] text-gray-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/60 dark:hover:text-emerald-300 flex items-center justify-center transition border border-gray-200 dark:border-slate-600"
  title="Add 1 unit"
  >
  <Plus className="w-3.5 h-3.5" />

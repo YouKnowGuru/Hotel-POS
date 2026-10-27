@@ -276,7 +276,7 @@ const SettingsPage = () => {
  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${
  active
  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/60'
- : 'bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400'
+ : 'bg-gray-100 text-gray-500 dark:bg-[#1A2336] dark:text-gray-400'
  }`}
  >
  <Icon className="w-4 h-4" />
@@ -619,7 +619,7 @@ const PaymentsForm = () => {
  <p className="font-bold text-emerald-900 dark:text-emerald-200">Customer checkout payment QR</p>
  <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">Upload the QR image customers should scan before placing an order. This image is shown on every QR-menu checkout.</p>
  <div className="mt-3 flex flex-col sm:flex-row gap-4 sm:items-center">
- <div className="h-28 w-28 rounded-xl border border-emerald-200 bg-white flex items-center justify-center overflow-hidden dark:border-emerald-800/60 dark:bg-slate-800">
+ <div className="h-28 w-28 rounded-xl border border-emerald-200 bg-white flex items-center justify-center overflow-hidden dark:border-emerald-800/60 dark:bg-[#1A2336]">
  {uploadedQr ? <img src={uploadedQr} alt="Uploaded payment QR" className="h-full w-full object-contain p-1" /> : <span className="text-xs text-gray-400 text-center px-2 dark:text-gray-500">No QR uploaded</span>}
  </div>
  <div className="flex-1 min-w-0">

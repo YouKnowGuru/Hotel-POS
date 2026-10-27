@@ -244,7 +244,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
 
  {/* Revenue + Donut */}
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
- <div className="lg:col-span-2 bg-white dark:bg-[#111C35] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0">
+ <div className="lg:col-span-2 bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0">
  <div className="mb-3">
  <h3 className="text-base font-bold text-gray-900 dark:text-white">
  Revenue Contribution by Outlet
@@ -296,7 +296,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  </div>
  </div>
 
- <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0">
  <div className="mb-3">
  <h3 className="text-base font-bold text-gray-900 dark:text-white">Orders Share Ratio</h3>
  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">

@@ -526,7 +526,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  </div>
  <button
  onClick={handleExport}
- className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-[0.98] text-sm font-medium shadow-sm transition dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-300 dark:hover:bg-slate-800"
+ className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-[0.98] text-sm font-medium shadow-sm transition dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-300 dark:hover:bg-[#1A2336]"
  >
  <Download className="w-4 h-4" />
  Export
@@ -578,7 +578,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1 custom-scroll">
  {filteredOrders.length === 0 ? (
  <div className="text-center py-12">
- <div className="w-12 h-12 mx-auto rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3 dark:bg-slate-800 dark:text-gray-600">
+ <div className="w-12 h-12 mx-auto rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3 dark:bg-[#141C2E] dark:text-gray-600">
  <Receipt className="w-6 h-6" />
  </div>
  <p className="text-sm text-gray-400 dark:text-gray-500">No orders in this category</p>
@@ -763,7 +763,7 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex items-center gap-3">
  <button
  onClick={handlePrintBill}
- className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-300"
+ className="flex-1 inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition active:scale-[0.98] dark:bg-[#141C2E] dark:hover:bg-[#1A2336] dark:text-gray-300"
  >
  <Printer className="w-4 h-4" />
  Print
@@ -784,10 +784,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  }}
  className={`flex-[1.4] inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm text-white shadow-md transition active:scale-[0.98] ${
  isSelectedPaid
- ? 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-slate-700'
+ ? 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-[#1E293B]'
  : canProcessPayment
  ? 'bg-indigo-600 hover:shadow-lg hover:shadow-indigo-600/60'
- : 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-slate-700'
+ : 'bg-gray-300 cursor-not-allowed shadow-none dark:bg-[#1E293B]'
  }`}
  title={!canProcessPayment ? 'Only Admin or Manager can process payments' : undefined}
  >
@@ -943,7 +943,7 @@ const PaymentModal = ({ order, amount, fmt, paying, onSelect, onCancel }) => {
  <button
  onClick={onCancel}
  disabled={paying}
- className="w-full mt-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 text-sm font-medium transition disabled:opacity-60 dark:bg-[#1A2336] dark:hover:bg-slate-800 dark:text-gray-400"
+ className="w-full mt-3 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-500 text-sm font-medium transition disabled:opacity-60 dark:bg-[#1A2336] dark:hover:bg-[#1A2336] dark:text-gray-400"
  >
  Cancel
  </button>

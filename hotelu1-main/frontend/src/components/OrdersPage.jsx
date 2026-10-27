@@ -1288,20 +1288,20 @@ const BillPreviewModal = ({ order, buildPrintableHtml, onClose, onPrint }) => {
 
  {/* Receipt body (rendered in an iframe to isolate the
  thermal styles from the surrounding app). */}
- <div className="flex-1 overflow-auto bg-gray-100 px-3 py-4 flex justify-center">
+ <div className="flex-1 overflow-auto bg-gray-100 px-3 py-4 flex justify-center dark:bg-[#0B1220]">
  <iframe
  title={`Bill ${order.id}`}
  srcDoc={fullDoc}
- className="bg-white rounded-md shadow-md border border-gray-200"
+ className="bg-white rounded-md shadow-md border border-gray-200 dark:bg-[#141C2E] dark:border-slate-700/60"
  style={{ width: '100%', maxWidth: '320px', height: '70vh' }}
  />
  </div>
 
  {/* Footer actions */}
- <div className="grid grid-cols-2 gap-2 p-3 border-t border-gray-100 bg-white">
+ <div className="grid grid-cols-2 gap-2 p-3 border-t border-gray-100 bg-white dark:bg-[#141C2E] dark:border-slate-700/60">
  <button
  onClick={onClose}
- className="px-3 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50"
+ className="px-3 py-2.5 rounded-xl border border-gray-200 text-gray-700 text-sm font-semibold hover:bg-gray-50 dark:border-slate-700/60 dark:text-gray-300 dark:hover:bg-[#1A2336]"
  >
  Close
  </button>

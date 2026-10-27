@@ -146,7 +146,7 @@ const getItemNames = (order) => {
 /* ─── stat card ──────────────────────────────────────────────────────── */
 
 const StatCard = ({ icon: Icon, label, value, sub, color, badge }) => (
- <div className="rounded-2xl p-3.5 sm:p-5 flex items-start gap-3 sm:gap-4 transition hover:shadow-md bg-white dark:bg-slate-800 border border-gray-200/80 dark:border-slate-700/80 shadow-sm min-w-0">
+ <div className="rounded-2xl p-3.5 sm:p-5 flex items-start gap-3 sm:gap-4 transition hover:shadow-md bg-white dark:bg-[#141C2E] border border-gray-200/80 dark:border-slate-700/80 shadow-sm min-w-0">
  <div
  className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
  style={{ background: color + '15', border: `1px solid ${color}30` }}
@@ -944,7 +944,7 @@ const GSTLedger = ({ locationSettings }) => {
  <button
  onClick={refreshAll}
  title="Refresh All Data"
- className="p-2 sm:p-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 shadow-sm active:scale-95"
+ className="p-2 sm:p-2.5 rounded-xl border border-gray-200 bg-white text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition dark:bg-[#141C2E] dark:border-slate-700 dark:text-slate-300 shadow-sm active:scale-95"
  >
  <RefreshCw className={`w-4 h-4 ${loading || invLoading ? 'animate-spin' : ''}`} />
  </button>
@@ -959,7 +959,7 @@ const GSTLedger = ({ locationSettings }) => {
  <button
  id="gst-export-csv"
  onClick={activeTab === 'input' ? handleExportInventoryCSV : handleExportCSV}
- className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 transition shadow-sm active:scale-95"
+ className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-gray-300 dark:border-slate-700 bg-white dark:bg-[#141C2E] hover:bg-gray-50 dark:hover:bg-[#1A2336] text-gray-700 dark:text-slate-200 transition shadow-sm active:scale-95"
  title="Download CSV"
  >
  <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -968,7 +968,7 @@ const GSTLedger = ({ locationSettings }) => {
  <button
  id="gst-print-report"
  onClick={handlePrint}
- className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#131B33] hover:bg-[#4338CA] text-white shadow-sm hover:shadow-md transition active:scale-95 dark:bg-slate-700 dark:hover:bg-slate-600"
+ className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#131B33] hover:bg-[#4338CA] text-white shadow-sm hover:shadow-md transition active:scale-95 dark:bg-[#1A2336] dark:hover:bg-[#2563EB]"
  >
  <Printer className="w-4 h-4" /> Print Tax Report
  </button>
@@ -983,13 +983,13 @@ const GSTLedger = ({ locationSettings }) => {
  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
  activeTab === 'overview'
  ? 'bg-blue-600 text-white shadow-sm'
- : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700'
+ : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-[#141C2E] dark:text-slate-300 dark:border-slate-700 dark:hover:bg-[#1A2336]'
  }`}
  >
  <Scale className="w-4 h-4" />
  Overview &amp; Net Tax
  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
- activeTab === 'overview' ? 'bg-blue-700 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
+ activeTab === 'overview' ? 'bg-blue-700 text-white' : 'bg-gray-100 dark:bg-[#1E293B] text-gray-600 dark:text-slate-300'
  }`}>
  Reconciliation
  </span>
@@ -1000,13 +1000,13 @@ const GSTLedger = ({ locationSettings }) => {
  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
  activeTab === 'output'
  ? 'bg-emerald-600 text-white shadow-sm'
- : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700'
+ : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-[#141C2E] dark:text-slate-300 dark:border-slate-700 dark:hover:bg-[#1A2336]'
  }`}
  >
  <ShoppingBag className="w-4 h-4" />
  GST Output (Sales)
  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
- activeTab === 'output' ? 'bg-emerald-700 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
+ activeTab === 'output' ? 'bg-emerald-700 text-white' : 'bg-gray-100 dark:bg-[#1E293B] text-gray-600 dark:text-slate-300'
  }`}>
  {filteredOrders.length}
  </span>
@@ -1017,13 +1017,13 @@ const GSTLedger = ({ locationSettings }) => {
  className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
  activeTab === 'input'
  ? 'bg-violet-600 text-white shadow-sm'
- : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700'
+ : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200 dark:bg-[#141C2E] dark:text-slate-300 dark:border-slate-700 dark:hover:bg-[#1A2336]'
  }`}
  >
  <Boxes className="w-4 h-4" />
  GST Input (Purchases &amp; Stock)
  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
- activeTab === 'input' ? 'bg-violet-700 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
+ activeTab === 'input' ? 'bg-violet-700 text-white' : 'bg-gray-100 dark:bg-[#1E293B] text-gray-600 dark:text-slate-300'
  }`}>
  {enrichedInventory.length}
  </span>
@@ -1093,7 +1093,7 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
 
  {/* Visual Net Reconciliation Card */}
- <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl p-5 sm:p-6 bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
  <div>
  <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1113,7 +1113,7 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
 
  {/* Formula Breakdown Cards */}
- <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch bg-gray-50 dark:bg-slate-900 p-3 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-700/60 min-w-0">
+ <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-stretch bg-gray-50 dark:bg-[#0B1220] p-3 sm:p-5 rounded-2xl border border-gray-100 dark:border-slate-700/60 min-w-0">
  <div className="p-4 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/50 flex flex-col justify-between">
  <div>
  <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
@@ -1173,7 +1173,7 @@ const GSTLedger = ({ locationSettings }) => {
  <span className="truncate">Input Tax Credit Applied: {fmt(totalGSTInput)}</span>
  <span className="truncate sm:text-right">Total Output Liability: {fmt(totalGSTOutput)}</span>
  </div>
- <div className="h-3 rounded-full bg-gray-200 dark:bg-slate-700 overflow-hidden flex">
+ <div className="h-3 rounded-full bg-gray-200 dark:bg-[#1E293B] overflow-hidden flex">
  <div
  className="bg-violet-500 h-full transition-all duration-300"
  style={{ width: `${Math.min(100, itcCoverageRatio)}%` }}
@@ -1199,7 +1199,7 @@ const GSTLedger = ({ locationSettings }) => {
  {/* Rate-Wise ITC Slab Table & Quick Jump Cards */}
  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
  {/* Slab Table */}
- <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+ <div className="lg:col-span-2 rounded-2xl bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
  <div className="px-5 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between">
  <div className="flex items-center gap-2">
  <Layers className="w-4 h-4 text-violet-600 dark:text-violet-400" />
@@ -1212,7 +1212,7 @@ const GSTLedger = ({ locationSettings }) => {
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-gray-50 dark:bg-slate-900 text-gray-500 dark:text-slate-400 text-xs font-semibold uppercase">
+ <tr className="bg-gray-50 dark:bg-[#0B1220] text-gray-500 dark:text-slate-400 text-xs font-semibold uppercase">
  <th className="px-5 py-3 text-left">GST Rate Slab</th>
  <th className="px-5 py-3 text-center">Items Count</th>
  <th className="px-5 py-3 text-right">Purchase Value</th>
@@ -1222,7 +1222,7 @@ const GSTLedger = ({ locationSettings }) => {
  </thead>
  <tbody className="divide-y divide-gray-100 dark:divide-slate-700/60">
  {rateWiseITC.map((slab) => (
- <tr key={slab.rate} className="hover:bg-gray-50 dark:hover:bg-slate-700/30 transition">
+ <tr key={slab.rate} className="hover:bg-gray-50 dark:hover:bg-[#1A2336]/30 transition">
  <td className="px-5 py-3 font-bold text-gray-800 dark:text-slate-100">
  <span className="inline-block px-2.5 py-0.5 rounded-lg bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 font-bold text-xs border border-violet-200 dark:border-violet-800/60">
  {slab.rate}% GST
@@ -1241,7 +1241,7 @@ const GSTLedger = ({ locationSettings }) => {
  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
  slab.rate > 0
  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300'
- : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
+ : 'bg-gray-100 dark:bg-[#1E293B] text-gray-500 dark:text-slate-400'
  }`}>
  {slab.rate > 0 ? 'Eligible ITC' : 'Exempt / 0%'}
  </span>
@@ -1250,7 +1250,7 @@ const GSTLedger = ({ locationSettings }) => {
  ))}
  </tbody>
  <tfoot>
- <tr className="bg-violet-50/60 dark:bg-slate-900 font-bold border-t border-violet-200 dark:border-slate-700 text-gray-800 dark:text-white">
+ <tr className="bg-violet-50/60 dark:bg-[#0B1220] font-bold border-t border-violet-200 dark:border-slate-700 text-gray-800 dark:text-white">
  <td className="px-5 py-3.5">Total ITC Pool</td>
  <td className="px-5 py-3.5 text-center">{enrichedInventory.length} materials</td>
  <td className="px-5 py-3.5 text-right">{fmt(totalInventoryPurchaseCost)}</td>
@@ -1270,7 +1270,7 @@ const GSTLedger = ({ locationSettings }) => {
  <div className="space-y-4">
  <div
  onClick={() => setActiveTab('output')}
- className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition cursor-pointer"
+ className="p-5 rounded-2xl bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm hover:border-emerald-400 dark:hover:border-emerald-500 hover:shadow-md transition cursor-pointer"
  >
  <div className="flex items-center justify-between mb-3">
  <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1290,7 +1290,7 @@ const GSTLedger = ({ locationSettings }) => {
 
  <div
  onClick={() => setActiveTab('input')}
- className="p-5 rounded-2xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm hover:border-violet-400 dark:hover:border-violet-500 hover:shadow-md transition cursor-pointer"
+ className="p-5 rounded-2xl bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm hover:border-violet-400 dark:hover:border-violet-500 hover:shadow-md transition cursor-pointer"
  >
  <div className="flex items-center justify-between mb-3">
  <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-950/60 flex items-center justify-center text-violet-600 dark:text-violet-400">
@@ -1318,7 +1318,7 @@ const GSTLedger = ({ locationSettings }) => {
  {activeTab === 'output' && (
  <div className="space-y-6">
  {/* Filters row */}
- <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3 bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="flex items-center gap-2 text-gray-500 dark:text-slate-400 text-sm font-semibold">
  <Filter className="w-4 h-4" /> Filters:
  </div>
@@ -1328,7 +1328,7 @@ const GSTLedger = ({ locationSettings }) => {
  <select
  value={selectedYear}
  onChange={(e) => { setSelectedYear(e.target.value); setSelectedMonth('all'); }}
- className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+ className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
  >
  <option value="all">All Years</option>
  {availableYears.map((y) => <option key={y} value={y}>{y}</option>)}
@@ -1341,7 +1341,7 @@ const GSTLedger = ({ locationSettings }) => {
  <select
  value={selectedMonth}
  onChange={(e) => setSelectedMonth(e.target.value)}
- className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+ className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
  >
  <option value="all">All Months</option>
  {availableMonths.map((k) => <option key={k} value={k}>{monthLabel(k)}</option>)}
@@ -1354,7 +1354,7 @@ const GSTLedger = ({ locationSettings }) => {
  <select
  value={orderType}
  onChange={(e) => setOrderType(e.target.value)}
- className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
+ className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer"
  >
  <option value="all">All Types</option>
  <option value="dine-in">Dine-In</option>
@@ -1371,7 +1371,7 @@ const GSTLedger = ({ locationSettings }) => {
 
  {/* Monthly Summary Table */}
  {monthSummaries.length > 0 && (
- <div className="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100 dark:border-slate-700 flex-wrap gap-2">
  <div className="flex items-center gap-2">
  <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -1379,7 +1379,7 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
  <button
  onClick={handleExportMonthlyCSV}
- className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg transition"
+ className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 bg-gray-50 dark:bg-[#1E293B] border border-gray-200 dark:border-slate-600 rounded-lg transition"
  title="Export monthly summary as CSV"
  >
  <Download className="w-3.5 h-3.5" /> Export Monthly CSV
@@ -1388,7 +1388,7 @@ const GSTLedger = ({ locationSettings }) => {
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-[#131B33] dark:bg-slate-900 text-slate-300 text-xs font-semibold uppercase tracking-wider">
+ <tr className="bg-[#131B33] dark:bg-[#0B1220] text-slate-300 text-xs font-semibold uppercase tracking-wider">
  {['Month', 'Orders', 'Taxable Subtotal', `GST Output (${taxPercent}%)`, 'Grand Total'].map((h) => (
  <th key={h} className="px-5 py-3 text-left whitespace-nowrap">{h}</th>
  ))}
@@ -1398,7 +1398,7 @@ const GSTLedger = ({ locationSettings }) => {
  {monthSummaries.map((m) => (
  <tr
  key={m.key}
- className="bg-white dark:bg-slate-800 even:bg-slate-50/50 dark:even:bg-slate-800/50 hover:bg-emerald-50/30 dark:hover:bg-slate-700/40 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/50 dark:even:bg-[#19222F] hover:bg-emerald-50/30 dark:hover:bg-[#1A2336]/40 transition"
  >
  <td className="px-5 py-3 font-semibold text-gray-800 dark:text-slate-100 whitespace-nowrap">{m.label}</td>
  <td className="px-5 py-3 text-gray-500 dark:text-slate-400 whitespace-nowrap">{m.orders}</td>
@@ -1409,7 +1409,7 @@ const GSTLedger = ({ locationSettings }) => {
  ))}
  </tbody>
  <tfoot>
- <tr className="bg-emerald-50/80 dark:bg-slate-900 border-t-2 border-emerald-300 dark:border-emerald-800 font-bold text-gray-900 dark:text-white">
+ <tr className="bg-emerald-50/80 dark:bg-[#0B1220] border-t-2 border-emerald-300 dark:border-emerald-800 font-bold text-gray-900 dark:text-white">
  <td className="px-5 py-3.5">Total</td>
  <td className="px-5 py-3.5">{filteredOrders.length}</td>
  <td className="px-5 py-3.5">{fmt(totalSalesSubtotal)}</td>
@@ -1423,7 +1423,7 @@ const GSTLedger = ({ locationSettings }) => {
  )}
 
  {/* Order-wise details table */}
- <div className="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-slate-700">
  <div className="flex items-center gap-2">
  <Receipt className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
@@ -1442,7 +1442,7 @@ const GSTLedger = ({ locationSettings }) => {
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-gray-50 dark:bg-slate-900 border-b-2 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+ <tr className="bg-gray-50 dark:bg-[#0B1220] border-b-2 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
  {['Order #', 'Date & Time', 'Type', 'Table / Token', 'Payment', 'Items Ordered', 'Subtotal', `GST (${taxPercent}%)`, 'Total'].map((h) => (
  <th key={h} className="px-4 py-3 text-left whitespace-nowrap">{h}</th>
  ))}
@@ -1455,7 +1455,7 @@ const GSTLedger = ({ locationSettings }) => {
  return (
  <tr
  key={o.id}
- className="bg-white dark:bg-slate-800 even:bg-slate-50/40 dark:even:bg-slate-800/40 hover:bg-emerald-50/20 dark:hover:bg-slate-700/30 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#19222F] hover:bg-emerald-50/20 dark:hover:bg-[#1A2336]/30 transition"
  >
  <td className="px-4 py-3 font-bold text-gray-800 dark:text-slate-100 whitespace-nowrap">#{o.id}</td>
  <td className="px-4 py-3 text-gray-500 dark:text-slate-400 text-xs whitespace-nowrap">
@@ -1494,7 +1494,7 @@ const GSTLedger = ({ locationSettings }) => {
  })}
  </tbody>
  <tfoot>
- <tr className="bg-emerald-50/80 dark:bg-slate-900 border-t-2 border-emerald-300 dark:border-emerald-800 font-bold text-gray-900 dark:text-white">
+ <tr className="bg-emerald-50/80 dark:bg-[#0B1220] border-t-2 border-emerald-300 dark:border-emerald-800 font-bold text-gray-900 dark:text-white">
  <td colSpan={6} className="px-4 py-3.5">
  Total ({filteredOrders.length} orders)
  </td>
@@ -1542,7 +1542,7 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
 
  {/* Filters */}
- <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl p-4 flex flex-wrap items-center gap-3 bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="relative flex-1 min-w-[200px]">
  <Search className="w-4 h-4 text-gray-400 dark:text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
  <input
@@ -1550,7 +1550,7 @@ const GSTLedger = ({ locationSettings }) => {
  value={invSearch}
  onChange={(e) => setInvSearch(e.target.value)}
  placeholder="Search material or supplier..."
- className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
+ className="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-800 dark:text-white placeholder-gray-400 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400"
  />
  {invSearch && (
  <button
@@ -1566,7 +1566,7 @@ const GSTLedger = ({ locationSettings }) => {
  <select
  value={invCategoryFilter}
  onChange={(e) => setInvCategoryFilter(e.target.value)}
- className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
+ className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
  >
  <option value="all">All Categories</option>
  {inventoryCategories.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -1578,7 +1578,7 @@ const GSTLedger = ({ locationSettings }) => {
  <select
  value={invRateFilter}
  onChange={(e) => setInvRateFilter(e.target.value)}
- className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
+ className="appearance-none pl-3 pr-8 py-2 text-sm rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-[#1E293B] text-gray-700 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-violet-400 cursor-pointer"
  >
  <option value="all">All GST Rates</option>
  {inventoryGstRates.map((r) => <option key={r} value={r}>{r}% GST</option>)}
@@ -1595,7 +1595,7 @@ const GSTLedger = ({ locationSettings }) => {
  </div>
 
  {/* Table */}
- <div className="rounded-2xl overflow-hidden bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shadow-sm">
+ <div className="rounded-2xl overflow-hidden bg-white dark:bg-[#141C2E] border border-gray-200 dark:border-slate-700 shadow-sm">
  <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 dark:border-slate-700">
  <div className="flex items-center gap-2">
  <Boxes className="w-4 h-4 text-violet-600 dark:text-violet-400" />
@@ -1615,7 +1615,7 @@ const GSTLedger = ({ locationSettings }) => {
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
  <thead>
- <tr className="bg-gray-50 dark:bg-slate-900 border-b-2 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+ <tr className="bg-gray-50 dark:bg-[#0B1220] border-b-2 border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
  <th className="px-4 py-3 text-left whitespace-nowrap">Material &amp; Category</th>
  <th className="px-4 py-3 text-left whitespace-nowrap">Supplier</th>
  <th className="px-4 py-3 text-center whitespace-nowrap">Stock on Hand</th>
@@ -1631,11 +1631,11 @@ const GSTLedger = ({ locationSettings }) => {
  {filteredInventory.map((item) => (
  <tr
  key={item.id}
- className="bg-white dark:bg-slate-800 even:bg-slate-50/40 dark:even:bg-slate-800/40 hover:bg-violet-50/20 dark:hover:bg-slate-700/30 transition"
+ className="bg-white dark:bg-[#141C2E] even:bg-slate-50/40 dark:even:bg-[#19222F] hover:bg-violet-50/20 dark:hover:bg-[#1A2336]/30 transition"
  >
  <td className="px-4 py-3 whitespace-nowrap">
  <p className="font-bold text-gray-800 dark:text-white">{item._name}</p>
- <span className="text-[10px] text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
+ <span className="text-[10px] text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-[#1E293B] px-2 py-0.5 rounded-full">
  {item._category}
  </span>
  </td>
@@ -1652,7 +1652,7 @@ const GSTLedger = ({ locationSettings }) => {
  <span className={`inline-block px-2 py-0.5 rounded font-bold text-xs ${
  item._gstRate > 0
  ? 'bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300'
- : 'bg-gray-100 text-gray-400 dark:bg-slate-700 dark:text-slate-400'
+ : 'bg-gray-100 text-gray-400 dark:bg-[#1E293B] dark:text-slate-400'
  }`}>
  {item._gstRate}%
  </span>
@@ -1673,7 +1673,7 @@ const GSTLedger = ({ locationSettings }) => {
  ))}
  </tbody>
  <tfoot>
- <tr className="bg-violet-50/80 dark:bg-slate-900 border-t-2 border-violet-300 dark:border-violet-800 font-bold text-gray-900 dark:text-white">
+ <tr className="bg-violet-50/80 dark:bg-[#0B1220] border-t-2 border-violet-300 dark:border-violet-800 font-bold text-gray-900 dark:text-white">
  <td colSpan={6} className="px-4 py-3.5">
  Total ({filteredInventory.length} materials)
  </td>

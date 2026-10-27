@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
@@ -631,43 +632,89 @@ const Sidebar = ({
     </div>
   );
 
-  return (
-    <>
-      {/* ── Mobile backdrop overlay ───────────────────────────── */}
-      <div
-        className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
+  // On desktop: render as a normal static flex child (in flow)
+  if (isDesktop) {
+    return (
+      <aside
         style={{
+          width: '16rem',
+          minWidth: '16rem',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#0F172A',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+          flexShrink: 0,
+          overflowY: 'auto',
+        }}
+      >
+        <SidebarContent />
+      </aside>
+    );
+  }
+
+  // On mobile: render the drawer and backdrop as portals (attached to body)
+  // so they are completely outside the flex layout container
+  return createPortal(
+    <>
+      {/* ── Backdrop ──────────────────────────────────────────── */}
+      <div
+        onClick={() => setIsMobileMenuOpen(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 40,
           background: 'rgba(15, 23, 42, 0.6)',
           opacity: isMobileMenuOpen ? 1 : 0,
           pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease',
         }}
-        onClick={() => setIsMobileMenuOpen(false)}
       />
 
-      {/* ── Sidebar drawer ────────────────────────────────────── */}
+      {/* ── Drawer ────────────────────────────────────────────── */}
       <aside
-        className="fixed lg:static inset-y-0 left-0 z-50 w-[76vw] max-w-[19rem] lg:w-64 flex flex-col h-screen lg:h-auto lg:min-h-screen flex-shrink-0"
         style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 50,
+          width: '76vw',
+          maxWidth: '19rem',
+          display: 'flex',
+          flexDirection: 'column',
           background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: (!isDesktop && isMobileMenuOpen) ? '4px 0 24px rgba(0,0,0,0.15)' : 'none',
-          // On desktop: always show (no transform). On mobile: slide in/out.
-          transform: isDesktop ? 'none' : (isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          boxShadow: isMobileMenuOpen ? '4px 0 32px rgba(0,0,0,0.4)' : 'none',
+          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           willChange: 'transform',
+          overflowY: 'auto',
         }}
       >
-        {/* Close button (mobile) */}
-        <div className="lg:hidden flex justify-between items-center px-4 pb-1" style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}>
-          <span className="text-[10px] font-bold tracking-widest" style={{ color: '#64748B' }}>MENU</span>
+        {/* Close button */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 'calc(1rem + env(safe-area-inset-top)) 1rem 0.25rem',
+          }}
+        >
+          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', color: '#64748B' }}>MENU</span>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             aria-label="Close menu"
-            className="p-2.5 rounded-lg transition-colors duration-150"
             style={{
+              padding: '0.625rem',
+              borderRadius: '0.5rem',
               color: '#CBD5E1',
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <X size={18} />
@@ -676,7 +723,8 @@ const Sidebar = ({
 
         <SidebarContent />
       </aside>
-    </>
+    </>,
+    document.body
   );
 };
 

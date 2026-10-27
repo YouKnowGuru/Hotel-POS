@@ -785,7 +785,7 @@ const Reports = ({ locationSettings }) => {
  {fmt(it.revenue)}
  </p>
  </div>
- <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden dark:bg-slate-700">
+ <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden dark:bg-[#1E293B]">
  <div
  className="h-full bg-indigo-500 transition-all duration-500"
  style={{ width: `${Math.min(100, Math.max(8, pct))}%` }}
@@ -957,7 +957,7 @@ const KpiCard = ({ label, value, delta, color, Icon, delay, isLoaded }) => {
 };
 
 const ChartCard = ({ title, children }) => (
- <div className="bg-white dark:bg-[#111C35] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0 overflow-hidden">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5 min-w-0 overflow-hidden">
  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-3">{title}</h3>
  {children}
  </div>
