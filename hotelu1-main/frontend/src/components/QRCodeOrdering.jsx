@@ -404,11 +404,9 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
 
  const handleOrderPlaced = (order) => {
  setCurrentOrderId(order.id);
- setNotification({
- message: `Order #${order.id} placed! ${fmt(order.total)} — you can add more items below.`,
- type: 'success',
- duration: 6000,
- });
+ // NOTE: SimpleMenu shows its own context-specific toast (cash order /
+ // QR proof submitted) — showing a second notification here stacked
+ // two popups on every order, so we only track the id now.
  if (onOrderPlacedWithId) onOrderPlacedWithId(order.id);
  };
 
