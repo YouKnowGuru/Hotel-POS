@@ -386,7 +386,7 @@ const OrdersPage = ({ locationSettings }) => {
  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm transition ${
  typeFilter !== 'all'
  ? 'border-indigo-200 text-indigo-600 bg-indigo-50 dark:border-indigo-800/60 dark:text-indigo-400 dark:bg-indigo-950/40'
- : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50 dark:border-slate-700/60 dark:text-gray-300 dark:bg-[#141C2E] dark:hover:bg-slate-800'
+ : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50 dark:border-slate-700/60 dark:text-gray-300 dark:bg-[#141C2E] dark:hover:bg-[#1A2336]'
  }`}
  >
  <Filter className="w-4 h-4" />
@@ -456,7 +456,7 @@ const OrdersPage = ({ locationSettings }) => {
  className={`flex items-center justify-between gap-1.5 sm:gap-3 px-2.5 sm:px-3 py-2.5 sm:py-3 rounded-2xl border transition min-w-0 ${
  active
  ? `${colorMap[t.color]} shadow-sm`
- : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200'
+ : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200 dark:bg-[#141C2E] dark:border-slate-700/60 dark:text-gray-300'
  }`}
  >
  <div className="flex items-center gap-1.5 min-w-0">
@@ -465,7 +465,7 @@ const OrdersPage = ({ locationSettings }) => {
  </div>
  <span
  className={`text-xs font-bold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
- active ? 'bg-white text-current' : 'bg-gray-100 text-gray-500'
+ active ? 'bg-white text-current' : 'bg-gray-100 text-gray-500 dark:bg-[#1E293B] dark:text-gray-400'
  }`}
  >
  {count}
@@ -915,10 +915,10 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  )
  )}
  <textarea value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)}
- placeholder="Reason if rejecting (required only for reject)" className="mt-3 min-h-20 w-full rounded-xl border border-amber-200 bg-white p-2.5 text-sm" />
+ placeholder="Reason if rejecting (required only for reject)" className="mt-3 min-h-20 w-full rounded-xl border border-amber-200 bg-white p-2.5 text-sm dark:bg-[#1A2336] dark:border-amber-800/60 dark:text-gray-200" />
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
- <button disabled={reviewing} onClick={() => reviewPayment('reject')} className="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-bold text-rose-600 disabled:opacity-50">Deny payment</button>
+ <button disabled={reviewing} onClick={() => reviewPayment('reject')} className="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-bold text-rose-600 disabled:opacity-50 dark:bg-[#1A2336] dark:border-rose-800/60 dark:text-rose-400">Deny payment</button>
  <button disabled={reviewing} onClick={() => reviewPayment('approve')} className="rounded-xl bg-emerald-600 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50">{reviewing ? 'Saving…' : 'Approve & send'}</button>
  </div>
  </div>
@@ -1262,16 +1262,16 @@ const BillPreviewModal = ({ order, buildPrintableHtml, onClose, onPrint }) => {
  onClick={onClose}
 >
  <div
- className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh]"
+ className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh] dark:bg-[#141C2E] dark:border dark:border-slate-700/60"
  onClick={(e) => e.stopPropagation()}
  >
  {/* Header */}
- <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+ <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-slate-700/60">
  <div>
- <p className="text-base font-bold text-gray-900">
+ <p className="text-base font-bold text-gray-900 dark:text-gray-100">
  Bill Preview · {formatId(order.id)}
  </p>
- <p className="text-xs text-gray-500">
+ <p className="text-xs text-gray-500 dark:text-gray-400">
  {isTakeaway
  ? 'Takeaway · Kitchen token + customer bill'
  : 'Dine-In · Customer bill'}

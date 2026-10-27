@@ -95,6 +95,24 @@ const Sidebar = ({
 }) => {
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Track if we're on desktop (lg = 1024px) to skip the transform on desktop
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const handler = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Lock body scroll when mobile drawer is open to prevent background scrolling
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isMobileMenuOpen]);
 
   // The mobile hamburger now lives in TopHeader (single unified top bar —
   // the old separate dark bar stacked two nav rows on small screens).
@@ -615,26 +633,28 @@ const Sidebar = ({
 
   return (
     <>
-      {/* ── Mobile overlay ────────────────────────────────────── */}
-      {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
-          style={{
-            background: 'rgba(15, 23, 42, 0.6)',
-          }}
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      {/* ── Mobile backdrop overlay ───────────────────────────── */}
+      <div
+        className="lg:hidden fixed inset-0 z-40 transition-opacity duration-300"
+        style={{
+          background: 'rgba(15, 23, 42, 0.6)',
+          opacity: isMobileMenuOpen ? 1 : 0,
+          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
+        }}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
 
-      {/* ── Sidebar ───────────────────────────────────────────── */}
+      {/* ── Sidebar drawer ────────────────────────────────────── */}
       <aside
-        className={`fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 w-[76vw] max-w-[19rem] lg:w-64 flex flex-col h-screen
-        transform transition-transform duration-300
-        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className="fixed lg:static inset-y-0 left-0 z-50 w-[76vw] max-w-[19rem] lg:w-64 flex flex-col h-screen lg:h-auto lg:min-h-screen flex-shrink-0"
         style={{
           background: '#0F172A',
           borderRight: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '4px 0 24px rgba(0,0,0,0.15)',
+          boxShadow: (!isDesktop && isMobileMenuOpen) ? '4px 0 24px rgba(0,0,0,0.15)' : 'none',
+          // On desktop: always show (no transform). On mobile: slide in/out.
+          transform: isDesktop ? 'none' : (isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'transform',
         }}
       >
         {/* Close button (mobile) */}

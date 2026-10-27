@@ -355,7 +355,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 	<div
 		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 overflow-x-hidden transition-opacity duration-500 ${
 			isLoaded ? 'opacity-100' : 'opacity-0'
-		} ${isDark ? 'dark:bg-[#0F141F] dark:text-gray-100' : 'bg-[#F7F7F8] text-gray-900'}`}
+		} ${isDark ? 'dark:bg-[#0B1220] dark:text-gray-100' : 'bg-[#F7F7F8] text-gray-900'}`}
 	>
  <style dangerouslySetInnerHTML={{ __html: thermalPrintStyles }} />
 
@@ -430,7 +430,7 @@ Takeaway Orders
  </div>
 
  {/* Status filter pills */}
- <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin dark:bg-[#121A29] dark:border-gray-800">
+ <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin dark:bg-[#141C2E] dark:border-gray-800">
  {STATUS_TABS.map((tab) => {
  const isActive = activeFilter === tab.id;
  const count = counts[tab.id] ?? 0;
@@ -447,7 +447,7 @@ Takeaway Orders
  {tab.label}
  <span
 className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293B] dark:text-gray-300'
 }`}
  >
  {count}
@@ -459,7 +459,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-70
 
  {/* Orders grid */}
  {filteredOrders.length === 0 ? (
-<div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center dark:bg-[#121A29] dark:border-gray-800">
+<div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center dark:bg-[#141C2E] dark:border-gray-800">
 <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto mb-3 flex items-center justify-center dark:bg-indigo-500/10 dark:text-indigo-500">
 <ShoppingBag className="w-7 h-7" />
 </div>
@@ -608,7 +608,7 @@ const SummaryCard = ({ label, value, Icon, color, delay, isLoaded, isDark }) => 
 	<div
 		className={`rounded-2xl border shadow-sm p-4 sm:p-5 transition-colors ${
 			isDark
-				? 'bg-[#121A29] border-gray-800'
+				? 'bg-[#141C2E] border-gray-800'
 				: 'bg-white border-gray-100'
 		}`}
 		style={{
@@ -651,7 +651,7 @@ const OrderCard = ({
 	<div
 		className={`rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col ${
 			isDark
-				? 'bg-[#121A29] border-gray-800'
+				? 'bg-[#141C2E] border-gray-800'
 				: 'bg-white border-gray-100'
 		}`}
 		style={{
@@ -743,7 +743,7 @@ const OrderCard = ({
      total, so staff couldn't see the recorded service charge / GST. */}
  <div className={`px-4 py-3 border-t ${
   isDark
-   ? 'border-gray-800 bg-[#0D141F]'
+   ? 'border-gray-800 bg-[#1A2336]'
    : 'border-gray-50 bg-gray-50'
  }`}>
   {(() => {
@@ -817,7 +817,7 @@ const OrderCard = ({
  <div className="grid grid-cols-2 gap-2">
 	<button
 		onClick={onAddItems}
-		className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+		className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
 	>
 		<Plus className="w-3.5 h-3.5" />
 		Add items
@@ -825,7 +825,7 @@ const OrderCard = ({
 	{isEmpty && (
 		<button
 			onClick={onDeleteEmpty}
-			className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-gray-800 dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50"
+			className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50"
 		>
 			<Trash2 className="w-3.5 h-3.5" />
 			Remove

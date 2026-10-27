@@ -12,7 +12,7 @@
  * Visual system comes from PublicShell (.pw-* tokens). Static blocks carry
  * `pw-reveal` for scroll-in animation; dynamic grids use staggered CSS.
  */
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ChevronRight, Flame, ShoppingBag, Star, Clock,
@@ -110,21 +110,42 @@ const HomeLanding = () => {
     return food.length ? food : withPhoto;
   }, [dishes]);
 
-  /* Auto-rotate hero feature card every 4.5 s */
+  /* Auto-rotate hero feature card every 4.5 s — pause on hover */
   const [heroIdx, setHeroIdx] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
   useEffect(() => {
     if (heroPool.length < 2) return undefined;
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (reduced) return undefined;
+    if (heroPaused) return undefined;
     const t = setInterval(() => setHeroIdx(v => v + 1), 4500);
     return () => clearInterval(t);
-  }, [heroPool.length]);
+  }, [heroPool.length, heroPaused]);
 
   const heroFeature = heroPool.length ? heroPool[heroIdx % heroPool.length] : null;
-  const heroSides   = useMemo(
-    () => heroPool.filter(d => d.id !== heroFeature?.id).slice(0, 2),
-    [heroPool, heroFeature],
-  );
+
+  /* Side dishes — stable slice that excludes the current hero feature.
+     Derive from heroIdx (a primitive) instead of heroFeature (an object
+     reference that changes each render) to avoid needless re-filtering. */
+  const heroSides = useMemo(() => {
+    if (heroPool.length < 2) return [];
+    const idx = heroIdx % heroPool.length;
+    const after = heroPool.slice(idx + 1);
+    const before = heroPool.slice(0, idx);
+    return [...after, ...before].slice(0, 2);
+  }, [heroPool, heroIdx]);
+
+  /* Track broken images so we can show a gradient fallback */
+  const [brokenImgs, setBrokenImgs] = useState(new Set());
+  const markImgBroken = useCallback((id) => {
+    setBrokenImgs(prev => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+  }, []);
+  const isImgBroken = useCallback((id) => brokenImgs.has(id), [brokenImgs]);
 
   /* Decorative ticker names (up to 12 dishes) */
   const dishTicker = useMemo(
@@ -132,11 +153,19 @@ const HomeLanding = () => {
     [dishes],
   );
 
-  /* Kitchen hours: 10 AM – 9 PM (single render-time check is enough —
-     the hero is rebuilt on every menu poll anyway) */
-  const kitchenOpen = useMemo(() => {
+  /* Kitchen hours: 10 AM – 9 PM — re-check every 60 s so the status
+     stays correct if the tab stays open across the boundary. */
+  const [kitchenOpen, setKitchenOpen] = useState(() => {
     const h = new Date().getHours();
     return h >= 10 && h < 21;
+  });
+  useEffect(() => {
+    const check = () => {
+      const h = new Date().getHours();
+      setKitchenOpen(h >= 10 && h < 21);
+    };
+    const t = setInterval(check, 60_000);
+    return () => clearInterval(t);
   }, []);
 
   /* Top menu preview (up to 8 items, food first) */
@@ -149,7 +178,13 @@ const HomeLanding = () => {
 
   const scrollToMenu = (e) => {
     e.preventDefault();
-    document.getElementById('menu')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById('menu');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      // Fallback: navigate to the menu route if the section isn't in the DOM
+      window.location.hash = '#menu';
+    }
   };
 
   return (
@@ -254,12 +289,29 @@ const HomeLanding = () => {
             {/* Right — live dish collage on a warm stage tile */}
             <div className="relative pw-reveal" style={{ transitionDelay: '120ms' }}>
               <div className="hl-stage relative rounded-[2rem] p-4 sm:p-6"
+                   onMouseEnter={() => setHeroPaused(true)}
+                   onMouseLeave={() => setHeroPaused(false)}
                    style={{ background: '#FFF1DD', border: '1px solid rgba(245,158,11,0.32)' }}>
                 <span className="hl-stage-dots" aria-hidden="true" />
                 <span className="hl-clock absolute -top-3.5 right-5 sm:right-7 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-extrabold"
                       style={{ background: '#FFFFFF', border: '1px solid rgba(245,158,11,0.4)', color: '#C2410C' }}>
                   <Clock size={13} aria-hidden="true" /> Delivering in ~20 min
                 </span>
+
+              {/* Loading skeleton — shown while fetching and no cache yet */}
+              {loading && heroPool.length === 0 && (
+                <div className="flex flex-col gap-3 sm:gap-4 animate-pulse" aria-hidden="true">
+                  <div className="rounded-3xl"
+                       style={{ height: 'clamp(210px,34vw,320px)', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)' }} />
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div className="rounded-2xl"
+                         style={{ height: 'clamp(110px,20vw,150px)', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.15)' }} />
+                    <div className="rounded-2xl"
+                         style={{ height: 'clamp(110px,20vw,150px)', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.15)' }} />
+                  </div>
+                </div>
+              )}
+
               {heroPool.length === 0 && !loading && (
                 <div className="flex items-center justify-center h-64 sm:h-72 rounded-3xl px-6 text-center"
                      style={{ background: 'var(--pw-panel)', border: '1px dashed var(--pw-line)' }}>
@@ -268,7 +320,9 @@ const HomeLanding = () => {
               )}
 
               {heroFeature && (
-                <div className="grid gap-3 sm:gap-4">
+                <div className="grid gap-3 sm:gap-4"
+                     aria-live="polite"
+                     aria-atomic="true">
                   {/* Main feature card */}
                   <Link
                     key={heroFeature.id}
@@ -276,8 +330,10 @@ const HomeLanding = () => {
                     className="hl-feature group block rounded-3xl overflow-hidden relative"
                     style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)', animation: 'hlCross 0.6s cubic-bezier(0.22,1,0.36,1) both' }}
                   >
-                    {heroFeature.image
+                    {heroFeature.image && !isImgBroken(heroFeature.id)
                       ? <img src={heroFeature.image} alt={heroFeature.name}
+                             fetchpriority="high"
+                             onError={() => markImgBroken(heroFeature.id)}
                              className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
                              style={{ height: 'clamp(210px,34vw,320px)' }} />
                       : <div style={{ height: 'clamp(210px,34vw,320px)', background: `linear-gradient(135deg,${grad(heroFeature.category)[0]}22,${grad(heroFeature.category)[1]}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -299,6 +355,16 @@ const HomeLanding = () => {
                         {CURRENCY}{Number(heroFeature.price).toFixed(2)}
                       </span>
                     </span>
+
+                    {/* Rotation indicator dots */}
+                    {heroPool.length > 1 && (
+                      <span className="absolute bottom-3 right-4 flex items-center gap-1.5 z-10" aria-hidden="true">
+                        {heroPool.slice(0, Math.min(heroPool.length, 5)).map((_, i) => (
+                          <span key={i} className="hl-rot-dot"
+                                style={i === (heroIdx % Math.min(heroPool.length, 5)) ? { background: '#FBBF24', opacity: 1 } : {}} />
+                        ))}
+                      </span>
+                    )}
                   </Link>
 
                   {/* Side cards */}
@@ -308,8 +374,9 @@ const HomeLanding = () => {
                         <Link key={d.id} to="/order"
                               className="group block rounded-2xl overflow-hidden relative"
                               style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)' }}>
-                          {d.image
+                          {d.image && !isImgBroken(d.id)
                             ? <img src={d.image} alt={d.name} loading="lazy"
+                                   onError={() => markImgBroken(d.id)}
                                    className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                                    style={{ height: 'clamp(110px,20vw,150px)' }} />
                             : <div style={{ height: 'clamp(110px,20vw,150px)', background: `linear-gradient(135deg,${grad(d.category)[0]}22,${grad(d.category)[1]}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -372,6 +439,11 @@ const HomeLanding = () => {
           .hl-feature{ transition:box-shadow .35s var(--pw-ease, ease), transform .35s var(--pw-ease, ease); }
           .hl-feature:hover{ box-shadow:0 30px 70px -28px rgba(245,158,11,0.55); transform:translateY(-4px); }
 
+          /* Rotation indicator dots */
+          .hl-rot-dot{ width:6px;height:6px;border-radius:50%;
+            background:rgba(255,255,255,0.45);
+            transition:background .25s ease,opacity .25s ease,transform .25s ease; }
+
           /* Live open-status dot */
           .hl-dot{ width:7px;height:7px;border-radius:50%;flex-shrink:0;
             background:#64748B; box-shadow:0 0 0 0 rgba(100,116,139,0.4);
@@ -391,7 +463,7 @@ const HomeLanding = () => {
             display:inline-flex;align-items:center;justify-content:center;
             background:rgba(245,158,11,0.13);border:1px solid rgba(245,158,11,0.4);
             color:#C2410C;font-size:11px;font-weight:900; }
-          .hl-step-sep{ color:#F59E0B;opacity:.6;margin:0 2px;padding-right:6px; }
+          .hl-step-sep{ color:#F59E0B;opacity:.6;margin:0 4px;padding:0 2px; }
 
           /* Rotating glow ring — removed: hero should feel calm, not gimmicky */
 
