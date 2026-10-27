@@ -375,9 +375,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  } else {
  // For dine-in, use original flow
  onOrderPlaced(placedOrder);
- setNotification({ message: 'Order placed successfully!', type: 'success' });
+ // The parent page (DineInManagement) already fires its own
+ // "Order for T5 placed! (#X)" toast for this callback — showing a
+ // second one here stacked duplicate popups on every order. Keep the
+ // brief beat so the parent toast is readable, then close the modal.
  setTimeout(() => {
- setNotification(null);
  onClose();
  }, 1500);
  }
