@@ -688,22 +688,8 @@ const Dashboard = ({ locationSettings }) => {
           <DatePickerButton value={selectedDate} onChange={setSelectedDate} />
           <button
             onClick={() => navigate('/dinein')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 20px',
-              borderRadius: 12,
-              background: NAVY,
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 600,
-              fontFamily: "Inter, system-ui, sans-serif",
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: `0 4px 12px rgba(79,70,229,0.25)`,
-              transition: 'all 0.2s ease',
-            }}
+            className="btn-primary flex items-center gap-2"
+            style={{ background: 'var(--accent)' }}
           >
             <Plus style={{ width: 16, height: 16 }} /> New Order
           </button>

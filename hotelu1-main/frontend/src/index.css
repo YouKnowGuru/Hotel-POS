@@ -45,6 +45,15 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 4px;
 }
 
+/* Custom input fields: replace outline:none with a visible
+   colored ring on keyboard focus, matching the inline ring color. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring, #3B82F6);
+}
+
 /* ── Accessibility: reduced motion (skill §7 reduced-motion) ─────── */
 @media (prefers-reduced-motion: reduce) {
   *,

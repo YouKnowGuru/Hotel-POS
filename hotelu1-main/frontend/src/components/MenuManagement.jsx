@@ -4,6 +4,7 @@ import { authFetch } from '../utils/api';
 import Notification from './Notification';
 import MenuItemForm from './MenuItemForm';
 import { useTheme } from '../contexts/ThemeContext';
+import EmptyState from '../ui/EmptyState';
 import {
   Plus, Edit2, Trash2, Search, Package, Eye, EyeOff, X, Soup, Flame,
   Utensils, Pizza, Coffee, Cookie, IceCream, Sparkles, LayoutGrid,
@@ -258,7 +259,7 @@ const MenuManagement = ({ locationSettings }) => {
 
         {/* Categories */}
         <div style={css.catSection}>
-          <button onClick={() => scroll(-1)} style={{ ...css.catArrow, left: 0 }}>‹</button>
+          <button onClick={() => scroll(-1)} style={{ ...css.catArrow, left: 0 }} aria-label="Scroll categories left">‹</button>
           <div ref={scrollRef} style={css.catScroll}>
             {categories.map(c => {
               const active = catFilter === c;
@@ -287,7 +288,7 @@ const MenuManagement = ({ locationSettings }) => {
               );
             })}
           </div>
-          <button onClick={() => scroll(1)} style={{ ...css.catArrow, right: 0 }}>›</button>
+          <button onClick={() => scroll(1)} style={{ ...css.catArrow, right: 0 }} aria-label="Scroll categories right">›</button>
         </div>
 
         {/* Content */}
@@ -305,16 +306,13 @@ const MenuManagement = ({ locationSettings }) => {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={css.empty}>
-            <div style={css.emptyIcon}>🍽️</div>
-            <h3 style={css.emptyTitle}>No items found</h3>
-            <p style={css.emptyDesc}>
-              {search ? `No results for "${search}"` : 'No items in this category yet'}
-            </p>
-            <button onClick={() => { setSearch(''); setCatFilter('All'); }} style={css.emptyBtn}>
-              Clear Filters
-            </button>
-          </div>
+          <EmptyState
+            illustration="🍽️"
+            title={search ? 'No items found' : 'No menu items yet'}
+            description={search ? `No results for "${search}". Try a different keyword.` : 'Add your first dish to start selling.'}
+            actionLabel="Clear Filters"
+            onAction={() => { setSearch(''); setCatFilter('All'); }}
+          />
         ) : view === 'grid' ? (
           <div className="menu-grid">
             {filtered.map((item, i) => (
@@ -418,14 +416,14 @@ const Card = ({ item, fmt, i, onEdit, onDelete, onToggle, css }) => {
         <div style={css.cardFoot}>
           <span style={css.cardPrice}>{fmt(item.price)}</span>
           <div style={css.cardActions}>
-            <button onClick={onToggle} title={ok ? 'Mark as unavailable' : 'Mark as available'}
+            <button onClick={onToggle} title={ok ? 'Mark as unavailable' : 'Mark as available'} aria-label={ok ? 'Mark unavailable' : 'Mark available'}
               style={{ ...css.actionBtn, background: ok ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)', color: ok ? '#059669' : '#e11d48' }}>
               {ok ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
             </button>
-            <button onClick={onEdit} title="Edit this item" style={{ ...css.actionBtn, ...css.editAction }}>
+            <button onClick={onEdit} title="Edit this item" aria-label="Edit item" style={{ ...css.actionBtn, ...css.editAction }}>
               <Edit2 className="w-3.5 h-3.5" />
             </button>
-            <button onClick={onDelete} title="Delete this item" style={{ ...css.actionBtn, ...css.deleteAction }}>
+            <button onClick={onDelete} title="Delete this item" aria-label="Delete item" style={{ ...css.actionBtn, ...css.deleteAction }}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -477,14 +475,14 @@ const Row = ({ item, fmt, i, onEdit, onDelete, onToggle, css }) => {
 
       {/* Actions */}
       <div style={css.rowActions}>
-        <button onClick={onToggle} title={ok ? 'Mark unavailable' : 'Mark available'}
+        <button onClick={onToggle} title={ok ? 'Mark unavailable' : 'Mark available'} aria-label={ok ? 'Mark unavailable' : 'Mark available'}
           style={{ ...css.actionBtn, background: ok ? 'rgba(16,185,129,0.08)' : 'rgba(244,63,94,0.08)', color: ok ? '#059669' : '#e11d48' }}>
           {ok ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
         </button>
-        <button onClick={onEdit} title="Edit" style={{ ...css.actionBtn, ...css.editAction }}>
+        <button onClick={onEdit} title="Edit" aria-label="Edit item" style={{ ...css.actionBtn, ...css.editAction }}>
           <Edit2 className="w-3.5 h-3.5" />
         </button>
-        <button onClick={onDelete} title="Delete" style={{ ...css.actionBtn, ...css.deleteAction }}>
+        <button onClick={onDelete} title="Delete" aria-label="Delete item" style={{ ...css.actionBtn, ...css.deleteAction }}>
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>

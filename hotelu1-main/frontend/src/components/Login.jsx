@@ -282,6 +282,7 @@ const Login = ({ onLogin }) => {
                     border: '1px solid var(--border)',
                     color: 'var(--text-primary)',
                     '--tw-ring-color': 'rgba(59, 130, 246, 0.2)',
+                    '--focus-ring': '#3B82F6',
                   }}
                   onFocus={(e) => {
                     e.target.style.background = 'var(--card-bg)';
@@ -313,6 +314,7 @@ const Login = ({ onLogin }) => {
                     border: '1px solid var(--border)',
                     color: 'var(--text-primary)',
                     '--tw-ring-color': 'rgba(59, 130, 246, 0.2)',
+                    '--focus-ring': '#3B82F6',
                   }}
                   onFocus={(e) => {
                     e.target.style.background = 'var(--card-bg)';
@@ -380,7 +382,7 @@ const Login = ({ onLogin }) => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl text-white font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-lg hover:scale-[1.01] active:scale-[0.99]"
                 style={{
-                  background: '#4F46E5',
+                  background: 'var(--accent)',
                   boxShadow: '0 4px 16px rgba(30, 58, 138, 0.2)',
                 }}
               >

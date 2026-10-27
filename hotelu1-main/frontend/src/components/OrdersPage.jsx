@@ -342,23 +342,25 @@ const OrdersPage = ({ locationSettings }) => {
  <div className="flex items-center gap-3">
  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders</h1>
  <span
- className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
- liveConnected
- ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
- : 'bg-amber-50 text-amber-600 border-amber-200'
- }`}
- title={
- liveConnected
- ? 'Live socket connected'
- : 'Auto-refresh every 6s'
- }
+   role="status"
+   aria-live="polite"
+   className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+     liveConnected
+     ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+     : 'bg-amber-50 text-amber-600 border-amber-200'
+   }`}
+   title={
+     liveConnected
+     ? 'Live socket connected'
+     : 'Auto-refresh every 6s'
+   }
  >
- <span
- className={`w-1.5 h-1.5 rounded-full ${
- liveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
- }`}
- />
- {liveConnected ? 'Live' : 'Auto'}
+   <span
+     className={`w-1.5 h-1.5 rounded-full ${
+       liveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+     }`}
+   />
+   {liveConnected ? 'Live' : 'Auto'}
  </span>
  </div>
  <p className="text-sm text-gray-500 mt-1">
