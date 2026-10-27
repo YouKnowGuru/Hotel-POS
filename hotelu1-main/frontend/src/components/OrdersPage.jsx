@@ -337,7 +337,7 @@ const OrdersPage = ({ locationSettings }) => {
  return (
  <div className="px-4 sm:px-6 lg:px-8 py-6 min-w-0 min-h-0 overflow-x-hidden">
  {/* Page header */}
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+ <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
  <div className="min-w-0">
  <div className="flex items-center gap-3 flex-wrap">
  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
@@ -379,11 +379,11 @@ const OrdersPage = ({ locationSettings }) => {
  )}
  </p>
  </div>
- <div className="flex flex-wrap items-center gap-2 relative">
- <div className="relative" ref={typeMenuRef}>
+ <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+ <div className="relative w-full sm:w-auto" ref={typeMenuRef}>
  <button
  onClick={() => setShowTypeMenu((v) => !v)}
- className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm transition ${
+ className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm transition w-full sm:w-auto justify-between sm:justify-start ${
  typeFilter !== 'all'
  ? 'border-indigo-200 text-indigo-600 bg-indigo-50 dark:border-indigo-800/60 dark:text-indigo-400 dark:bg-indigo-950/40'
  : 'border-gray-200 text-gray-700 bg-white hover:bg-gray-50 dark:border-slate-700/60 dark:text-gray-300 dark:bg-[#141C2E] dark:hover:bg-[#1A2336]'
@@ -393,7 +393,7 @@ const OrdersPage = ({ locationSettings }) => {
  {activeTypeLabel}
  </button>
  {showTypeMenu && (
- <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 dark:bg-[#141C2E] dark:border-slate-700/60">
  {TYPE_FILTER_OPTIONS.map((opt) => (
  <button
  key={opt.id}
@@ -428,7 +428,7 @@ const OrdersPage = ({ locationSettings }) => {
  })() && (
   <button
   onClick={exportCSV}
-  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md"
+  className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:shadow-md flex-1 sm:flex-none"
   >
   <Download className="w-4 h-4" /> Export
   </button>

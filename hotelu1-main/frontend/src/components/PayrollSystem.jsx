@@ -884,7 +884,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               {isEdit ? <Edit size={20} style={{ color: GOLD }} /> : <PlusCircle size={20} style={{ color: GOLD }} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {isEdit ? 'Edit Payroll Record' : 'Manual Payroll Entry'}
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'rgba(212,160,23,0.2)', color: GOLD, fontWeight: 700 }}>Admin Direct</span>
               </h2>
@@ -1561,9 +1561,9 @@ const PayrollSystem = ({ currentUser }) => {
       )}
 
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 900, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.03em' }}>
+          <h1 style={{ margin: 0, fontSize: 'clamp(18px,5vw,26px)', fontWeight: 900, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.03em' }}>
             <span style={{ background: `linear-gradient(135deg,${GOLD},#F59E0B)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {isAdmin ? 'Payroll' : 'My Salary &'}
             </span> {isAdmin ? 'Management' : 'Payslips'}
@@ -1624,7 +1624,7 @@ const PayrollSystem = ({ currentUser }) => {
         <div style={{
           display: 'flex', gap: 4, marginBottom: 24,
           background: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
-          padding: 4, borderRadius: 14, width: 'fit-content',
+          padding: 4, borderRadius: 14, width: 'fit-content', maxWidth: '100%', overflowX: 'auto',
           border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
         }}>
           {['overview', 'records', 'myslips'].map((t) => (
