@@ -335,7 +335,7 @@ const OrdersPage = ({ locationSettings }) => {
 
  /* ---------------- render ---------------- */
  return (
- <div className="px-4 sm:px-6 lg:px-8 py-6 min-w-0 overflow-x-hidden">
+ <div className="px-4 sm:px-6 lg:px-8 py-6 min-w-0 min-h-0 overflow-x-hidden">
  {/* Page header */}
  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
  <div className="min-w-0">

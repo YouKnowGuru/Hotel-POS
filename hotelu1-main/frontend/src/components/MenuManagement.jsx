@@ -520,7 +520,7 @@ const animations = `
 
 /* ─── Styles ─── */
 const getCss = (isDark) => ({
-  page: { minHeight: '100vh', position: 'relative', fontFamily: "'Inter',sans-serif", overflow: 'hidden', background: isDark ? '#0B1220' : 'transparent' },
+  page: { minHeight: 0, position: 'relative', fontFamily: "'Inter',sans-serif", overflowX: 'hidden', background: isDark ? '#0B1220' : 'transparent' },
 
   /* BG */
   bg: { position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' },

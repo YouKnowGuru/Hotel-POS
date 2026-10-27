@@ -80,19 +80,30 @@ body {
   font-family: "Inter", system-ui, sans-serif;
   background-color: var(--app-bg, #F8FAFC);
   color: var(--text-primary, #0F172A);
-  min-height: 100vh;
+  /* Do NOT set min-height: 100vh here. On mobile, 100vh includes the
+     collapsing URL bar and is taller than the visible viewport. This
+     makes body taller than the 100dvh app shell, and body becomes a
+     competing scroll context that traps touch events. The app shell
+     div handles its own height via height:100dvh. */
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* ==========================================================================
-   GLOBAL MOBILE RESPONSIVENESS � prevents horizontal overflow on all pages
+   GLOBAL MOBILE RESPONSIVENESS � prevents horizontal overflow on all pages
    ========================================================================== */
 
-/* Prevent any child from blowing out the horizontal layout */
+/* Prevent any child from blowing out the horizontal layout.
+   NOTE: setting overflow-x:hidden WITHOUT overflow-y:visible causes some
+   mobile browsers to compute overflow-y:auto, making #root a competing
+   scroll context that traps touch events before they reach <main>. The
+   app shell inside #root already has height:100dvh + overflow:hidden, so
+   #root does not need to scroll at all — we must explicitly keep
+   overflow-y:visible so touch events pass through to <main>. */
 #root {
   overflow-x: hidden;
+  overflow-y: visible;
   width: 100%;
   max-width: 100vw;
 }
@@ -1573,9 +1584,12 @@ html.dark [style*="color:#1a5c3e"] {
 }
 
 /* ── Mobile UX hardening ────────────────────────────────────────── */
-/* Prevent accidental horizontal scroll on narrow screens. */
+/* Prevent accidental horizontal scroll on narrow screens.
+   Same fix as #root: explicitly set overflow-y:visible so body does not
+   become a competing scroll context on mobile. */
 body {
   overflow-x: hidden;
+  overflow-y: visible;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1584,7 +1598,7 @@ body {
    boundary on the scroll element, not just overflow-y:auto. */
 main {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 /* Larger, more touch-friendly tap targets on phones (min 44px per WCAG). */

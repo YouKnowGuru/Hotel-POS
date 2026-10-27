@@ -629,7 +629,7 @@ const Dashboard = ({ locationSettings }) => {
 
   /* ----------------- render ----------------- */
   return (
-    <div className="px-3 sm:px-5 lg:px-8 py-4 sm:py-6 max-w-[1600px] mx-auto overflow-x-hidden">
+    <div className="px-3 sm:px-5 lg:px-8 py-4 sm:py-6 max-w-[1600px] mx-auto min-h-0 overflow-x-hidden">
       {/* ===== Page header ===== */}
       <div className="flex flex-col gap-3 mb-5">
         <div className="flex flex-col xs:flex-row xs:items-start gap-2">

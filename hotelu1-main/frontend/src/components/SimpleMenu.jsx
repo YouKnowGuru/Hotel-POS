@@ -50,8 +50,8 @@ const SectionBlock = React.memo(function SectionBlock({
  <div className="sm-section-head" style={s.sectionHead}>
  <span style={{ ...s.sectionEmoji, background: `linear-gradient(135deg,${sectionCat.g1}15,${sectionCat.g2}08)` }}>{sectionCat.emoji}</span>
  <div style={{ flex: 1 }}>
- <h2 style={s.sectionTitle}>{sectionName}</h2>
- <p style={s.sectionCount}>{sectionItems.length} item{sectionItems.length !== 1 ? 's' : ''}</p>
+ <h2 className="sm-section-title" style={s.sectionTitle}>{sectionName}</h2>
+ <p className="sm-section-count" style={s.sectionCount}>{sectionItems.length} item{sectionItems.length !== 1 ? 's' : ''}</p>
  </div>
  <div style={{ ...s.sectionLine, background: `linear-gradient(90deg,${sectionCat.g1}30,transparent)` }} />
  </div>
@@ -127,7 +127,7 @@ const SectionBlock = React.memo(function SectionBlock({
  const inCart = cart.find(c => c.id === item.id);
  const { g1, g2, emoji } = catOf(item.category);
  return (
- <div key={item.id} className="sm-card-hover" style={{ ...s.card, animationDelay: `${idx * 50}ms` }}>
+ <div key={item.id} className="sm-card sm-card-hover" style={{ ...s.card, animationDelay: `${idx * 50}ms` }}>
  <div className="sm-card-top" style={{ ...s.cardTop, background: `linear-gradient(135deg,${g1}14,${g2}08)` }}>
  {item.image ? (
  <img src={item.image} alt={item.name} className="sm-card-img" style={s.cardImg} loading="lazy" decoding="async" />
@@ -137,10 +137,10 @@ const SectionBlock = React.memo(function SectionBlock({
  <span style={{ ...s.cardCat, background: `linear-gradient(135deg,${g1},${g2})` }}>{item.category}</span>
  </div>
  <div style={s.cardBody}>
- <h4 style={s.cardName}>{item.name}</h4>
- {item.description && <p style={s.cardDesc}>{item.description}</p>}
+ <h4 className="sm-card-name" style={s.cardName}>{item.name}</h4>
+ {item.description && <p className="sm-card-desc" style={s.cardDesc}>{item.description}</p>}
  <div style={s.cardFoot}>
- <span style={{ ...s.cardPrice, color: (g1 === '#eab308' || g1 === '#f59e0b') ? '#b45309' : g1 }}>{fmt(item.price)}</span>
+ <span className="sm-card-price" style={{ ...s.cardPrice, color: (g1 === '#eab308' || g1 === '#f59e0b') ? '#b45309' : g1 }}>{fmt(item.price)}</span>
  {inCart ? (
  <div style={s.qtyRowSm}>
  <button className="sm-qty-btn" style={{ ...s.qtyBtnSm, borderColor: `${g1}44`, color: g1 }} onClick={() => updQty(item.id, inCart.qty - 1)}><Minus size={12} /></button>
@@ -564,7 +564,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  }, [firstItems.length]);
 
  if (loading) return (
- <div style={s.root}>
+ <div className="sm-root" style={s.root}>
  <style>{CSS}</style>
  <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
  <div style={{ position: 'relative', zIndex: 1 }}>
@@ -592,7 +592,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  );
 
  return (
- <div style={s.root}>
+ <div className="sm-root" style={s.root}>
  <style>{CSS}</style>
  <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
 
@@ -690,7 +690,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  <div>
  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
- <h1 style={s.brandName}>Our Menu</h1>
+ <h1 className="sm-brand-name" style={s.brandName}>Our Menu</h1>
  {tableId && (
  <span style={{
  fontSize: 10.5, fontWeight: 800, padding: '2px 8px', borderRadius: 12,
@@ -996,8 +996,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <div style={{ ...s.cartAccent, background: `linear-gradient(135deg,${g1},${g2})` }} />
  <span style={{ fontSize: 20, width: 34, height: 34, borderRadius: 10, background: `${g1}08`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{emoji}</span>
  <div style={{ flex: 1, minWidth: 0 }}>
- <p style={s.cartItemName}>{item.name}</p>
- <p style={s.cartItemPrice}>{fmt(item.price)} × {item.qty}</p>
+ <p className="sm-cart-item-name" style={s.cartItemName}>{item.name}</p>
+ <p className="sm-cart-item-price" style={s.cartItemPrice}>{fmt(item.price)} × {item.qty}</p>
  </div>
  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
  <div style={s.qtyRowSm}>
@@ -1005,7 +1005,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <span style={{ ...s.qtyNumSm, color: '#0f172a' }}>{item.qty}</span>
  <button style={{ ...s.qtyBtnSm, borderColor: 'rgba(0,0,0,0.06)', color: '#64748b' }} onClick={() => updQty(item.id, item.qty + 1)}><Plus size={12} /></button>
  </div>
- <span style={s.cartItemTotal}>{fmt(item.price * item.qty)}</span>
+ <span className="sm-cart-item-total" style={s.cartItemTotal}>{fmt(item.price * item.qty)}</span>
  <button style={s.cartRemoveBtn} onClick={() => removeItem(item.id)}><Trash2 size={12} /></button>
  </div>
  </div>
@@ -1272,6 +1272,110 @@ const CSS = `
  .sm-card-hover:hover .sm-card-img{transform:none}
  .sm-float-bar:active{transform:none}
  }
+
+  /* ── SimpleMenu Food Card Typography & High-Contrast Visibility ── */
+  .sm-card-name,
+  .sm-card-hover h4,
+  h4.sm-card-name {
+    color: #0F172A !important;
+    font-weight: 800 !important;
+  }
+  .sm-card-desc,
+  .sm-card-hover p,
+  p.sm-card-desc {
+    color: #64748B !important;
+  }
+  .sm-section-title {
+    color: #0F172A !important;
+  }
+  .sm-brand-name {
+    color: #0F172A !important;
+  }
+
+  /* ── SimpleMenu Dark Mode Overrides ── */
+  html.dark .sm-root {
+    background: #0B1220 !important;
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-header {
+    background: rgba(11, 18, 32, 0.95) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-header h1,
+  html.dark .sm-brand-name {
+    color: #F8FAFC !important;
+  }
+  html.dark .sm-cat-strip {
+    background: rgba(11, 18, 32, 0.96) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-cat-pill {
+    background: #141C2E !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #CBD5E1 !important;
+  }
+  html.dark .sm-section-title {
+    color: #F8FAFC !important;
+  }
+  html.dark .sm-section-count {
+    color: #94A3B8 !important;
+  }
+
+  /* Food Cards in Dark Mode */
+  html.dark .sm-card,
+  html.dark .sm-card-hover {
+    background: #141C2E !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+  }
+  html.dark .sm-card-name,
+  html.dark .sm-card-hover h4,
+  html.dark h4.sm-card-name {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+  }
+  html.dark .sm-card-desc,
+  html.dark .sm-card-hover p,
+  html.dark p.sm-card-desc {
+    color: #94A3B8 !important;
+  }
+
+  /* Cart Drawer in Dark Mode */
+  html.dark .sm-drawer {
+    background: #141C2E !important;
+    color: #F1F5F9 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 -8px 48px rgba(0, 0, 0, 0.6) !important;
+  }
+  html.dark .sm-drawer-head {
+    border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-drawer-title,
+  html.dark .sm-cart-item-name,
+  html.dark .sm-cart-item-total,
+  html.dark .sm-bill-total {
+    color: #FFFFFF !important;
+  }
+  html.dark .sm-cart-item-price,
+  html.dark .sm-drawer-sub,
+  html.dark .sm-bill-label {
+    color: #94A3B8 !important;
+  }
+  html.dark .sm-bill-val {
+    color: #E2E8F0 !important;
+  }
+  html.dark .sm-bill {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-tracker-card {
+    background: #141C2E !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-tracker-order {
+    color: #FFFFFF !important;
+  }
+
 `;
 
 const s = {

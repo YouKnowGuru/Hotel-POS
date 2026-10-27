@@ -298,7 +298,7 @@ const App = () => {
 
     return (
       <div
-        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]"
+        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
         style={{ height: '100dvh', overflow: 'hidden' }}
       >
         <Sidebar
@@ -318,6 +318,7 @@ const App = () => {
               overflowX: 'hidden',
               WebkitOverflowScrolling: 'touch',
               minHeight: 0,
+              touchAction: 'pan-y',
               // Ensure bottom content isn't hidden behind mobile browser chrome
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
@@ -344,7 +345,7 @@ const App = () => {
 
     return (
       <div
-        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220]"
+        className="flex font-inter relative bg-[#F8FAFC] dark:bg-[#0B1220] h-screen"
         style={{ height: '100dvh', overflow: 'hidden' }}
       >
         <Sidebar
@@ -364,6 +365,7 @@ const App = () => {
               overflowX: 'hidden',
               WebkitOverflowScrolling: 'touch',
               minHeight: 0,
+              touchAction: 'pan-y',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
           >
