@@ -467,7 +467,13 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  return (
  <>
  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
- <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ {/* BUGFIX (mobile blank menu): this card used max-h-[95vh]. With only a
+     max-height the card's height is "indefinite", so on mobile (column
+     layout) the nested flex chain — panel flex-1 (flex-basis 0%) and the
+     h-full menu list — could not resolve its sizes and the Menu Items
+     panel collapsed to 0px, leaving the popup blank below the header.
+     A definite h-[95vh] makes every nested flex/percent height resolvable. */}
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
  <div className="flex justify-between items-center p-4 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
  <h3 className="text-lg sm:text-2xl font-bold text-white">

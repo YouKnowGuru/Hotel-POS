@@ -116,6 +116,48 @@ const PAY_FORM_CSS = `
 @media (max-width: 380px) {
   .pay-kpi-grid { grid-template-columns: minmax(0,1fr) !important; }
 }
+
+/* ── Staff Config drawer: the fixed 190px employee-list column sits
+   beside the form and squeezes it to ~150px on phones — stack the
+   list as a horizontal strip above the form on small screens ── */
+@media (max-width: 640px) {
+  .pay-drawer-body { flex-direction: column !important; overflow-y: auto !important; }
+  .pay-drawer-list {
+    width: 100% !important;
+    flex: none !important;
+    flex-direction: row !important;
+    gap: 6px;
+    overflow-x: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(148,163,184,0.35) !important;
+    padding: 10px 12px !important;
+    flex-shrink: 0 !important;
+  }
+  .pay-drawer-list button {
+    width: auto !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .pay-drawer-form { padding: 16px 14px 20px !important; }
+  .pay-drawer-header, .pay-drawer-footer { padding: 14px 16px !important; }
+}
+
+/* ── Manual Payroll modal: quick-calc rows wrap so the input gets
+   full width on phones; action footer stacks instead of overflowing ── */
+@media (max-width: 600px) {
+  .pay-calc-row { flex-wrap: wrap !important; }
+  .pay-calc-row > div:first-child { flex: 1 1 100% !important; }
+}
+@media (max-width: 520px) {
+  .pay-calc-row > div:last-child { width: 100% !important; }
+  .pay-modal-footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .pay-modal-footer button { justify-content: center !important; }
+  .pay-modal-footer-actions { flex: 1 1 auto !important; }
+  .pay-modal-footer-actions button { flex: 1 1 auto !important; }
+}
 `;
 
 const fmt = (v) =>
@@ -446,7 +488,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
         color: isDark ? '#FFFFFF' : '#0F172A',
       }}>
         {/* Header */}
-        <div style={{
+        <div className="pay-drawer-header" style={{
           padding: '20px 24px',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
@@ -461,9 +503,9 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
           </button>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="pay-drawer-body" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           {/* User list */}
-          <div style={{
+          <div className="pay-drawer-list" style={{
             width: 190,
             borderRight: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
             overflow: 'auto', padding: '12px 8px', flexShrink: 0,
@@ -488,7 +530,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
 
           {/* Form */}
           {selUser && local[selUser] && (
-            <div style={{ flex: 1, overflow: 'auto', padding: 24, background: isDark ? '#141C2E' : '#FFFFFF' }}>
+            <div className="pay-drawer-form" style={{ flex: 1, overflow: 'auto', padding: 24, background: isDark ? '#141C2E' : '#FFFFFF' }}>
               <div style={{ fontSize: 16, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', marginBottom: 16 }}>
                 {users.find((u) => u.id === selUser)?.name}
               </div>
@@ -545,7 +587,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
         </div>
 
         {/* Footer */}
-        <div style={{
+        <div className="pay-drawer-footer" style={{
           padding: '16px 24px',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', justifyContent: 'flex-end', gap: 10, flexShrink: 0,
@@ -1127,7 +1169,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Overtime pay with quick calc */}
-              <div style={{
+                <div className="pay-calc-row" style={{
                 background: isDark ? 'rgba(59,130,246,0.06)' : '#EFF6FF',
                 border: isDark ? '1px solid rgba(59,130,246,0.2)' : '1px solid #BFDBFE',
                 borderRadius: 14, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap'
@@ -1221,7 +1263,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 </div>
 
                 {/* Absent deduction with quick calc */}
-                <div style={{
+                <div className="pay-calc-row" style={{
                   display: 'flex', alignItems: 'center', gap: 14,
                   background: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
                   padding: 12, borderRadius: 10,
@@ -1379,7 +1421,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Modal Actions Footer */}
-        <div style={{
+        <div className="pay-modal-footer" style={{
           padding: '14px 24px',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0,
@@ -1398,7 +1440,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           >
             <RefreshCw size={13} /> Reset Staff Defaults
           </button>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="pay-modal-footer-actions" style={{ display: 'flex', gap: 10 }}>
             <button
               type="button"
               onClick={onClose}

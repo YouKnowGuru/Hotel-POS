@@ -431,7 +431,11 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  </div>
 
  {/* Status filter pills */}
- <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-full max-w-full overflow-x-auto scrollbar-none dark:bg-[#141C2E] dark:border-gray-800">
+ {/* BUGFIX (mobile): a bare `rounded-full` container with wrapping pills
+     rendered a stretched oval with the wrapped row spilling outside it.
+     On small screens use a squarer card + flex-wrap; on sm+ keep the
+     single-row oval with horizontal scroll. */}
+ <div className="bg-white border border-gray-100 rounded-2xl sm:rounded-full shadow-sm p-1 sm:p-1.5 flex flex-wrap sm:flex-nowrap items-center gap-1 sm:gap-1.5 mb-5 w-full sm:w-auto sm:max-w-full overflow-x-auto sm:overflow-visible scrollbar-none dark:bg-[#141C2E] dark:border-gray-800">
  {STATUS_TABS.map((tab) => {
  const isActive = activeFilter === tab.id;
  const count = counts[tab.id] ?? 0;

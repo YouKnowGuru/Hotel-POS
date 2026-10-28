@@ -1704,7 +1704,14 @@ main {
 
 /* Prevent flex items from overflowing on mobile */
 @media (max-width: 640px) {
-  .flex {
+  /* Row containers wrap so items never force sideways overflow.
+     BUGFIX: `flex-col` containers are NOT wrapped — wrapping a column
+     container lays its items out in side-by-side COLUMNS (modal card →
+     body, panel → menu grid), pushing the entire "New Order" menu
+     off-screen to the right on phones (blank popup below the header).
+     The Takeaway status pills / summary rows are row containers, so
+     they still wrap. */
+  .flex:not(.flex-col) {
     flex-wrap: wrap;
   }
   /* But don't break layouts that intentionally use flex-nowrap (tabs, pills) */
