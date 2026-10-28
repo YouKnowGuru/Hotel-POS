@@ -433,7 +433,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                           open
                         </span>
                       </span>
-                      <span style={{ color: '#D4A017' }}>
+                      <span style={{ color: 'var(--theme-gold, #D4A017)' }}>
                         {results.total} result{results.total !== 1 && 's'}
                       </span>
                     </div>
@@ -462,8 +462,8 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <span
                 className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-white text-[10px] font-bold flex items-center justify-center pointer-events-none"
                 style={{
-                  background: '#D4A017',
-                  boxShadow: '0 2px 8px rgba(212,160,23,0.4), 0 0 0 2px rgba(255,255,255,0.9)',
+                  background: 'var(--theme-gold, #D4A017)',
+                  boxShadow: '0 2px 8px color-mix(in srgb, var(--theme-gold, #D4A017) 40%, transparent), 0 0 0 2px rgba(255,255,255,0.9)',
                   letterSpacing: '-0.02em',
                 }}
               >
@@ -542,7 +542,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
               <span
                 className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-white text-sm font-bold flex items-center justify-center shrink-0"
                 style={{
-                  background: '#4F46E5',
+                  background: 'var(--theme-primary, #4F46E5)',
                   boxShadow: 'var(--shadow-sm)',
                 }}
               >
@@ -591,7 +591,7 @@ const TopHeader = ({ currentUser, handleLogout, setActiveTab }) => {
                     <span
                       className="w-10 h-10 rounded-xl text-white text-base font-bold flex items-center justify-center shrink-0"
                       style={{
-                        background: '#4F46E5',
+                        background: 'var(--theme-primary, #4F46E5)',
                         boxShadow: 'var(--shadow-sm)',
                       }}
                     >
@@ -757,7 +757,7 @@ const ResultGroup = ({ title, icon: Icon, items, offset, activeIdx, onPick }) =>
                 className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 transition-all duration-150"
                 style={{
                   background: isActive ? 'var(--card-bg)' : 'transparent',
-                  borderLeft: isActive ? '2px solid #D4A017' : '2px solid transparent',
+                  borderLeft: isActive ? '2px solid var(--theme-gold, #D4A017)' : '2px solid transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) e.currentTarget.style.background = 'var(--card-bg)';
@@ -778,7 +778,7 @@ const ResultGroup = ({ title, icon: Icon, items, offset, activeIdx, onPick }) =>
                   </p>
                 </div>
                 {isActive && (
-                  <CornerDownLeft className="w-3.5 h-3.5 shrink-0" style={{ color: '#D4A017' }} />
+                  <CornerDownLeft className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--theme-gold, #D4A017)' }} />
                 )}
               </button>
             </li>

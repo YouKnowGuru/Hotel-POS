@@ -749,7 +749,7 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  background: 'linear-gradient(135deg, #0B1220 0%, #4338CA 100%)',
  }}
  >
- <p className="text-[10px] font-bold tracking-widest mb-4" style={{ color: 'rgba(212,160,23,0.7)' }}>
+ <p className="text-[10px] font-bold tracking-widest mb-4" style={{ color: 'color-mix(in srgb, var(--theme-gold, #D4A017) 70%, transparent)' }}>
  LIVE PREVIEW — SIDEBAR BRAND
  </p>
  <div className="flex items-center gap-3">
@@ -759,7 +759,7 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  ...markStyle(value.logoShape),
  background: value.logo
  ? 'rgba(255,255,255,0.95)'
- : '#D4A017',
+ : 'var(--theme-gold, #D4A017)',
  }}
  >
  {value.logo ? (
@@ -776,7 +776,7 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  {value.siteName || DEFAULT_BRANDING.siteName}
  </p>
  {value.showTagline && value.tagline ? (
- <p className="text-[11px] leading-tight tracking-widest uppercase truncate" style={{ color: '#D4A017' }}>
+ <p className="text-[11px] leading-tight tracking-widest uppercase truncate" style={{ color: 'var(--theme-gold, #D4A017)' }}>
  {value.tagline}
  </p>
  ) : null}

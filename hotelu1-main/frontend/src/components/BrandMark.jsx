@@ -58,8 +58,8 @@ const BrandMark = ({
           borderRadius: radius,
           background: branding.logo
             ? 'rgba(255,255,255,0.95)'
-            : '#D4A017',
-          boxShadow: '0 4px 16px rgba(212, 160, 23, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+            : 'var(--theme-gold, #D4A017)',
+          boxShadow: '0 4px 16px color-mix(in srgb, var(--theme-gold, #D4A017) 35%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)',
         }}
       >
         {branding.logo ? (
@@ -85,7 +85,7 @@ const BrandMark = ({
         {taglineVisible && branding.tagline ? (
           <p
             className={`${taglineClass} leading-tight tracking-widest uppercase truncate`}
-            style={{ color: light ? '#D4A017' : 'var(--accent-gold, #A16207)' }}
+            style={{ color: light ? 'var(--theme-gold, #D4A017)' : 'var(--accent-gold, #A16207)' }}
           >
             {branding.tagline}
           </p>

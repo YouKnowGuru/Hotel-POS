@@ -21,7 +21,7 @@ import PwaInstallButton from './PwaInstallButton';
 
 const FEATURE_PILLS = [
   { icon: BarChart3, label: 'Real-time Analytics', color: '#3B82F6' },
-  { icon: ShoppingBag, label: 'Smart Orders', color: '#D4A017' },
+  { icon: ShoppingBag, label: 'Smart Orders', color: 'var(--theme-gold, #D4A017)' },
   { icon: Package, label: 'Inventory Control', color: '#059669' },
   { icon: Building2, label: 'Multi-Branch', color: '#7C3AED' },
 ];
@@ -113,8 +113,8 @@ const Login = ({ onLogin }) => {
       }}
     >
       {/* ====== Ambient floating orbs (global background) ====== */}
-      <FloatingOrb size="400px" color="#4338CA" opacity="0.08" top="-10%" left="-5%" delay="0" duration="20" />
-      <FloatingOrb size="300px" color="#D4A017" opacity="0.06" top="50%" left="60%" delay="2" duration="25" />
+      <FloatingOrb size="400px" color="var(--theme-primary, #4338CA)" opacity="0.08" top="-10%" left="-5%" delay="0" duration="20" />
+      <FloatingOrb size="300px" color="var(--theme-gold, #D4A017)" opacity="0.06" top="50%" left="60%" delay="2" duration="25" />
       <FloatingOrb size="350px" color="#1E40AF" opacity="0.07" top="70%" left="10%" delay="4" duration="30" />
 
       {/* ====== LEFT PANEL — Navy hero (desktop only) ====== */}
@@ -160,10 +160,10 @@ const Login = ({ onLogin }) => {
           {/* Hero copy */}
           <div className="max-w-lg stagger-children">
             <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4" style={{ color: '#D4A017' }} />
+              <Sparkles className="w-4 h-4" style={{ color: 'var(--theme-gold, #D4A017)' }} />
               <span
                 className="text-xs font-semibold tracking-widest uppercase"
-                style={{ color: '#D4A017' }}
+                style={{ color: 'var(--theme-gold, #D4A017)' }}
               >
                 Hospitality Intelligence
               </span>
@@ -174,11 +174,11 @@ const Login = ({ onLogin }) => {
             >
               Run Your Hotel.
               <br />
-              <span style={{ background: 'linear-gradient(135deg, #D4A017 0%, #FCD34D 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ background: 'linear-gradient(135deg, var(--theme-gold, #D4A017) 0%, #FCD34D 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Smart. Simple.
               </span>
               <br />
-              <span style={{ background: 'linear-gradient(135deg, #D4A017 0%, #FCD34D 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ background: 'linear-gradient(135deg, var(--theme-gold, #D4A017) 0%, #FCD34D 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Powerful.
               </span>
             </h1>
@@ -233,7 +233,7 @@ const Login = ({ onLogin }) => {
           {/* Bottom trust line */}
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
-              {['#4338CA', '#D4A017', '#059669', '#7C3AED'].map((c, i) => (
+              {['var(--theme-primary, #4338CA)', 'var(--theme-gold, #D4A017)', '#059669', '#7C3AED'].map((c, i) => (
                 <div
                   key={i}
                   className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white"
@@ -285,7 +285,7 @@ const Login = ({ onLogin }) => {
             <div
               className="absolute top-0 left-0 right-0 h-[3px]"
               style={{
-                background: 'linear-gradient(90deg, transparent, #D4A017 30%, #4338CA 70%, transparent)',
+                background: 'linear-gradient(90deg, transparent, var(--theme-gold, #D4A017) 30%, var(--theme-primary, #4338CA) 70%, transparent)',
                 opacity: 0.6,
               }}
             />
@@ -309,7 +309,7 @@ const Login = ({ onLogin }) => {
               <div className="relative">
                 <span
                   className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center w-11 sm:w-12 transition-colors duration-200"
-                  style={{ color: focused === 'username' ? '#D4A017' : '#64748B' }}
+                  style={{ color: focused === 'username' ? 'var(--theme-gold, #D4A017)' : '#64748B' }}
                 >
                   <User className="w-[18px] h-[18px]" />
                 </span>
@@ -340,7 +340,7 @@ const Login = ({ onLogin }) => {
               <div className="relative">
                 <span
                   className="pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center w-11 sm:w-12 transition-colors duration-200"
-                  style={{ color: focused === 'password' ? '#D4A017' : '#64748B' }}
+                  style={{ color: focused === 'password' ? 'var(--theme-gold, #D4A017)' : '#64748B' }}
                 >
                   <Lock className="w-[18px] h-[18px]" />
                 </span>
@@ -388,14 +388,14 @@ const Login = ({ onLogin }) => {
                     checked={remember}
                     onChange={(e) => setRemember(e.target.checked)}
                     className="w-4 h-4 rounded"
-                    style={{ accentColor: '#D4A017' }}
+                    style={{ accentColor: 'var(--theme-gold, #D4A017)' }}
                   />
                   <span style={{ color: '#94A3B8' }}>Remember me</span>
                 </label>
                 <button
                   type="button"
                   className="font-semibold transition hover:opacity-80"
-                  style={{ color: '#D4A017' }}
+                  style={{ color: 'var(--theme-gold, #D4A017)' }}
                   onClick={() =>
                     setError('Please contact your administrator to reset your password.')
                   }
@@ -423,7 +423,7 @@ const Login = ({ onLogin }) => {
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl text-white font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-2xl hover:scale-[1.01] active:scale-[0.99] relative overflow-hidden group"
                 style={{
-                  background: 'linear-gradient(135deg, #4338CA 0%, #1E3A8A 100%)',
+                  background: 'linear-gradient(135deg, var(--theme-primary, #4338CA) 0%, var(--theme-primary-deep, #1E3A8A) 100%)',
                   boxShadow: '0 4px 24px rgba(67,56,202,0.4)',
                 }}
               >

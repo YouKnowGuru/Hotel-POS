@@ -219,9 +219,9 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  {/* Logo itself */}
  <div style={{
  position:'relative', width:110, height:110, borderRadius: logoRadius,
- background: branding.logo ? '#fff' : 'linear-gradient(135deg,#E6B800 0%,#A16207 100%)',
- border:'3px solid rgba(212,160,23,0.4)',
- boxShadow:'0 0 0 8px rgba(212,160,23,0.08), 0 24px 80px rgba(0,0,0,0.6)',
+ background: branding.logo ? '#fff' : 'linear-gradient(135deg, var(--theme-gold-light, #E6B800) 0%, var(--theme-gold-dark, #A16207) 100%)',
+ border:'3px solid color-mix(in srgb, var(--theme-gold, #D4A017) 40%, transparent)',
+ boxShadow:'0 0 0 8px color-mix(in srgb, var(--theme-gold, #D4A017) 8%, transparent), 0 24px 80px rgba(0,0,0,0.6)',
  display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden',
  animation: phase >= 1 ? 'logoEntry 0.85s cubic-bezier(0.34,1.56,0.64,1) both' : 'none',
  zIndex:1,
@@ -355,7 +355,7 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  }}>
  <div style={{
  height:'100%', width:`${progress * 100}%`,
- background:'linear-gradient(90deg,#A16207,#D4A017,#F59E0B,#FDE68A)',
+ background:'linear-gradient(90deg, var(--theme-gold-dark, #A16207), var(--theme-gold, #D4A017), #F59E0B, #FDE68A)',
  borderRadius:'0 2px 2px 0',
  position:'relative', overflow:'hidden',
  transition:'width 0.06s linear',
@@ -478,8 +478,8 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
  <div style={{
  width:34, height:34, borderRadius: logoRadius, flexShrink:0, overflow:'hidden',
- background: branding.logo ? 'rgba(255,255,255,0.95)' : 'linear-gradient(135deg,#D4A017,#A16207)',
- boxShadow:'0 4px 16px rgba(212,160,23,0.35)',
+ background: branding.logo ? 'rgba(255,255,255,0.95)' : 'linear-gradient(135deg, var(--theme-gold, #D4A017), var(--theme-gold-dark, #A16207))',
+ boxShadow:'0 4px 16px color-mix(in srgb, var(--theme-gold, #D4A017) 35%, transparent)',
  display:'flex', alignItems:'center', justifyContent:'center',
  }}>
  {branding.logo
@@ -496,7 +496,7 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  {branding.siteName}
  </p>
  {branding.showTagline && branding.tagline && (
- <p style={{ margin:'1px 0 0', fontSize:9, color:'#D4A017', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase' }}>
+ <p style={{ margin:'1px 0 0', fontSize:9, color:'var(--theme-gold, #D4A017)', fontWeight:600, letterSpacing:'0.12em', textTransform:'uppercase' }}>
  {branding.tagline}
  </p>
  )}
@@ -505,8 +505,8 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  <span
  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold shrink-0"
  style={{
- background: isTakeaway ? 'linear-gradient(135deg,#D4A017,#A16207)' : 'rgba(212,160,23,0.14)',
- border:'1px solid rgba(212,160,23,0.35)',
+ background: isTakeaway ? 'linear-gradient(135deg, var(--theme-gold, #D4A017), var(--theme-gold-dark, #A16207))' : 'color-mix(in srgb, var(--theme-gold, #D4A017) 14%, transparent)',
+ border:'1px solid color-mix(in srgb, var(--theme-gold, #D4A017) 35%, transparent)',
  color:'#FBBF24',
  }}
  >

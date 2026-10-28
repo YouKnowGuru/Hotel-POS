@@ -45,9 +45,9 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
     aria-current={active ? 'page' : undefined}
     className="group relative flex items-center w-full gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
     style={{
-      background: active ? 'linear-gradient(135deg, rgba(212,160,23,0.18) 0%, rgba(212,160,23,0.06) 100%)' : 'transparent',
+      background: active ? 'linear-gradient(135deg, color-mix(in srgb, var(--theme-gold, #D4A017) 18%, transparent) 0%, color-mix(in srgb, var(--theme-gold, #D4A017) 6%, transparent) 100%)' : 'transparent',
       color: active ? '#FFFFFF' : '#94A3B8',
-      boxShadow: active ? 'inset 0 0 0 1px rgba(212,160,23,0.25)' : 'none',
+      boxShadow: active ? 'inset 0 0 0 1px color-mix(in srgb, var(--theme-gold, #D4A017) 25%, transparent)' : 'none',
     }}
     onMouseEnter={(e) => {
       if (!active) {
@@ -68,24 +68,24 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
     {active && (
       <span
         className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-7 rounded-r-full"
-        style={{ background: '#F0C050', boxShadow: '0 0 8px rgba(240,192,80,0.6)' }}
+        style={{ background: 'var(--theme-gold-light, #F0C050)', boxShadow: '0 0 8px color-mix(in srgb, var(--theme-gold-light, #F0C050) 60%, transparent)' }}
       />
     )}
     <Icon
       className="w-[18px] h-[18px] shrink-0 transition-colors duration-200"
-      style={{ color: active ? '#F0C050' : '#64748B' }}
+      style={{ color: active ? 'var(--theme-gold-light, #F0C050)' : '#64748B' }}
     />
     <span className="truncate flex-1 text-left">{label}</span>
     {badge != null && badge > 0 && (
       <span
         className="ml-auto min-w-[20px] h-5 px-1.5 inline-flex items-center justify-center rounded-full text-[10px] font-bold text-white"
-        style={{ background: '#D4A017', boxShadow: '0 2px 6px rgba(212,160,23,0.35)' }}
+        style={{ background: 'var(--theme-gold, #D4A017)', boxShadow: '0 2px 6px color-mix(in srgb, var(--theme-gold, #D4A017) 35%, transparent)' }}
       >
         {badge > 99 ? '99+' : badge}
       </span>
     )}
     {active && (
-      <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'rgba(240,192,80,0.5)' }} />
+      <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'color-mix(in srgb, var(--theme-gold-light, #F0C050) 50%, transparent)' }} />
     )}
   </button>
 );
@@ -234,7 +234,7 @@ const Sidebar = ({
           left: 0,
           right: 0,
           height: '180px',
-          background: 'radial-gradient(ellipse at top, rgba(79,70,229,0.12) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse at top, color-mix(in srgb, var(--theme-primary, #4F46E5) 12%, transparent) 0%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 0,
         }}
@@ -264,7 +264,7 @@ const Sidebar = ({
         <div
           className="mt-5 h-px"
           style={{
-            background: 'linear-gradient(90deg, rgba(212,160,23,0.6) 0%, rgba(212,160,23,0.15) 60%, transparent 100%)',
+            background: 'linear-gradient(90deg, color-mix(in srgb, var(--theme-gold, #D4A017) 60%, transparent) 0%, color-mix(in srgb, var(--theme-gold, #D4A017) 15%, transparent) 60%, transparent 100%)',
           }}
         />
       </div>
@@ -552,16 +552,16 @@ const Sidebar = ({
         <div
           className="rounded-2xl p-3.5"
           style={{
-            background: 'linear-gradient(135deg, rgba(79,70,229,0.10) 0%, rgba(79,70,229,0.03) 100%)',
-            border: '1px solid rgba(79,70,229,0.12)',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--theme-primary, #4F46E5) 20%, transparent) 0%, color-mix(in srgb, var(--theme-primary, #4F46E5) 5%, transparent) 100%)',
+            border: '1px solid color-mix(in srgb, var(--theme-primary, #4F46E5) 12%, transparent)',
           }}
         >
           <div className="flex items-center gap-3 mb-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0"
               style={{
-                background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
-                boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
+                background: 'linear-gradient(135deg, var(--theme-primary, #4F46E5) 0%, var(--theme-primary-light, #6366F1) 100%)',
+                boxShadow: '0 2px 8px color-mix(in srgb, var(--theme-primary, #4F46E5) 30%, transparent)',
               }}
             >
               {(currentUser?.name || 'A').charAt(0).toUpperCase()}

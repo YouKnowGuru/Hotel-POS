@@ -48,13 +48,61 @@ import DatePickerButton, {
 
 /* =================================================================
    Liquid Glass — Design Tokens
+   These now reference CSS variables set by ThemeContext.applyAppearance()
+   so they respond to the user's selected theme color at runtime.
+   Fallback values ensure something reasonable before the theme injects.
    ================================================================= */
 
-const NAVY = '#4F46E5';
-const NAVY_DEEP = '#312E81';
-const GOLD = '#D4A017';
-const GOLD_LIGHT = '#F0C050';
-const GOLD_DARK = '#A16207';
+const NAVY = 'var(--theme-primary, #4F46E5)';
+const NAVY_DEEP = 'var(--theme-primary-deep, #312E81)';
+const GOLD = 'var(--theme-gold, #D4A017)';
+const GOLD_LIGHT = 'var(--theme-gold-light, #F0C050)';
+const GOLD_DARK = 'var(--theme-gold-dark, #A16207)';
+
+/**
+ * Resolve a CSS custom property to its actual computed hex/rgba value.
+ * Needed for SVG attributes (stopColor, fill, stroke on Recharts) where
+ * var(--...) is NOT supported — only inline styles support CSS variables.
+ */
+const resolveVar = (cssVar, fallback) => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+    return v || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+/** Return the current theme's solid colors as hex strings for SVG/chart use. */
+const useThemeHex = () => {
+  const [hex, setHex] = useState(() => ({
+    primary: '#4F46E5',
+    primaryDeep: '#312E81',
+    gold: '#D4A017',
+    goldLight: '#F0C050',
+    goldDark: '#A16207',
+  }));
+  useEffect(() => {
+    const update = () => {
+      setHex({
+        primary: resolveVar('--theme-primary', '#4F46E5'),
+        primaryDeep: resolveVar('--theme-primary-deep', '#312E81'),
+        gold: resolveVar('--theme-gold', '#D4A017'),
+        goldLight: resolveVar('--theme-gold-light', '#F0C050'),
+        goldDark: resolveVar('--theme-gold-dark', '#A16207'),
+      });
+    };
+    update();
+    window.addEventListener('theme-changed', update);
+    window.addEventListener('appearance-changed', update);
+    return () => {
+      window.removeEventListener('theme-changed', update);
+      window.removeEventListener('appearance-changed', update);
+    };
+  }, []);
+  return hex;
+};
 
 const glassCard = {
   background: 'var(--card-bg)',
@@ -339,6 +387,15 @@ const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', QR_CODE: 'QR Orde
 const Dashboard = ({ locationSettings }) => {
   const navigate = useNavigate();
   const { format: fmt } = useCurrency(locationSettings);
+  // Resolve theme colors to hex strings for SVG/chart usage (Recharts
+  // stopColor/fill/stroke don't support CSS var() — only inline styles do).
+  const themeHex = useThemeHex();
+  const NAVY_HEX = themeHex.primary;
+  const NAVY_DEEP_HEX = themeHex.primaryDeep;
+  const GOLD_HEX = themeHex.gold;
+  const GOLD_LIGHT_HEX = themeHex.goldLight;
+  const GOLD_DARK_HEX = themeHex.goldDark;
+  const PIE_HEX = [NAVY_HEX, GOLD_HEX, '#3B82F6'];
   const currentUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || 'null');
@@ -510,8 +567,8 @@ const Dashboard = ({ locationSettings }) => {
     return acc;
   }, {});
   const orderTypeData = [
-    { name: 'Dine-In', value: byTypeRaw.DINE_IN || 0, color: NAVY },
-    { name: 'Takeaway', value: byTypeRaw.TAKEAWAY || 0, color: GOLD },
+    { name: 'Dine-In', value: byTypeRaw.DINE_IN || 0, color: NAVY_HEX },
+    { name: 'Takeaway', value: byTypeRaw.TAKEAWAY || 0, color: GOLD_HEX },
     { name: 'QR Order', value: byTypeRaw.QR_CODE || 0, color: '#3B82F6' },
   ];
   const totalTypeCount = orderTypeData.reduce((s, t) => s + t.value, 0);
@@ -707,24 +764,24 @@ const Dashboard = ({ locationSettings }) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
         <KpiCard
           icon={ShoppingCart}
-          accentFrom={NAVY}
+          accentFrom={NAVY_HEX}
           accentTo="#6366F1"
           label="Total Orders"
           value={totalOrders}
           delta={ordersDelta}
-          sparkColor={NAVY}
+          sparkColor={NAVY_HEX}
           sparkData={ordersSpark}
           gradientId="spark-orders"
           index={0}
         />
         <KpiCard
           icon={DollarSign}
-          accentFrom={GOLD_DARK}
-          accentTo={GOLD}
+          accentFrom={GOLD_DARK_HEX}
+          accentTo={GOLD_HEX}
           label="Total Sales"
           value={fmt(totalSales)}
           delta={salesDelta}
-          sparkColor={GOLD}
+          sparkColor={GOLD_HEX}
           sparkData={salesSpark}
           gradientId="spark-sales"
           index={1}
@@ -792,8 +849,8 @@ const Dashboard = ({ locationSettings }) => {
               <AreaChart data={last7}>
                 <defs>
                   <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={NAVY} stopOpacity={0.25} />
-                    <stop offset="100%" stopColor={NAVY} stopOpacity={0} />
+                    <stop offset="0%" stopColor={NAVY_HEX} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={NAVY_HEX} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
@@ -813,7 +870,7 @@ const Dashboard = ({ locationSettings }) => {
                 <Area
                   type="monotone"
                   dataKey="sales"
-                  stroke={NAVY}
+                  stroke={NAVY_HEX}
                   strokeWidth={2.5}
                   fill="url(#salesGrad)"
                 />
@@ -1076,7 +1133,7 @@ const Dashboard = ({ locationSettings }) => {
                   {peakHours.map((p, idx) => (
                     <Cell
                       key={idx}
-                      fill={p.period === peakMax.period && peakMax.sales > 0 ? GOLD : 'var(--border)'}
+                      fill={p.period === peakMax.period && peakMax.sales > 0 ? GOLD_HEX : 'var(--border)'}
                     />
                   ))}
                 </Bar>
@@ -1171,7 +1228,7 @@ const Dashboard = ({ locationSettings }) => {
         />
         <BottomKpi
           icon={Users}
-          accentFrom={NAVY}
+          accentFrom={NAVY_HEX}
           accentTo="#3B82F6"
           label="ACTIVE TABLES"
           value={activeTables.size}
@@ -1185,7 +1242,7 @@ const Dashboard = ({ locationSettings }) => {
         />
         <BottomKpi
           icon={TrendingUpAlt}
-          accentFrom={monthDelta.positive ? NAVY : '#E11D48'}
+          accentFrom={monthDelta.positive ? NAVY_HEX : '#E11D48'}
           accentTo={monthDelta.positive ? '#3B82F6' : '#FB7185'}
           label="GROWTH THIS MONTH"
           value={`${monthDelta.positive ? '↑' : '↓'} ${monthDelta.value.replace('+', '')}`}

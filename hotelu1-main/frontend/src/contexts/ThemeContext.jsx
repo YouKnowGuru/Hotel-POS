@@ -135,6 +135,18 @@ export const applyAppearance = (customSettings) => {
     root.style.setProperty('--theme-grad-to', gradB);
     root.style.setProperty('--theme-grad', `linear-gradient(135deg, ${gradA}, ${gradB})`);
 
+    // Legacy hex-alias variables — many components (Dashboard, Sidebar,
+    // TopHeader) used hardcoded hex constants like NAVY=#4F46E5,
+    // GOLD=#D4A017, GOLD_LIGHT=#F0C050. These are now mapped to the
+    // active theme palette so the entire app re-colors on theme change.
+    root.style.setProperty('--theme-primary', c[600]);       // was #4F46E5 (indigo-600)
+    root.style.setProperty('--theme-primary-deep', c[800]);  // was #312E81 (indigo-900)
+    root.style.setProperty('--theme-primary-light', c[500]); // lighter primary
+    root.style.setProperty('--theme-gold', c[500]);          // was #D4A017 (gold/amber)
+    root.style.setProperty('--theme-gold-light', c[400]);    // was #F0C050 (gold-light)
+    root.style.setProperty('--theme-gold-dark', c[700]);     // was #A16207 (gold-dark)
+    root.style.setProperty('--theme-accent-blue', '#3B82F6'); // unchanged secondary accent
+
     // Layout density via root font-size (Tailwind uses rem-based spacing)
     const fontSizeMap = { compact: '14px', comfortable: '16px', spacious: '18px' };
     root.style.fontSize = fontSizeMap[density] || '16px';
@@ -196,6 +208,10 @@ export const applyAppearance = (customSettings) => {
 
     styleEl.textContent = `
       /* ── Dynamic colour theme: ${colorKey} (isDark: ${isDark}) ── */
+
+      /* ════════════════════════════════════════════════════════════════
+         ORANGE class overrides (original accent system)
+         ════════════════════════════════════════════════════════════════ */
 
       /* Backgrounds */
       html .bg-orange-50  { background-color: ${darkBg50}  !important; }
@@ -268,7 +284,7 @@ export const applyAppearance = (customSettings) => {
       html .hover\\:text-orange-600:hover { color: ${darkText600} !important; }
       html .hover\\:border-orange-300:hover { border-color: ${isDark ? `${bgAccent},0.45)` : 'var(--theme-300)'} !important; }
       html .hover\\:shadow-orange-200\\/50:hover {
-        --tw-shadow-color: var(--theme-200)80 !important;
+        --tw-shadow-color: color-mix(in srgb, var(--theme-200) 50%, transparent) !important;
       }
 
       /* Opacity/translucent bg variants */
@@ -282,6 +298,129 @@ export const applyAppearance = (customSettings) => {
 
       /* Accent */
       html .accent-orange-500 { accent-color: var(--theme-500) !important; }
+
+      /* ════════════════════════════════════════════════════════════════
+         INDIGO class overrides — indigo is used as the primary accent in
+         many components (buttons, active states, focus rings, badges).
+         Remap ALL indigo-* shades to the selected theme color so the
+         whole app changes when you pick a new theme.
+         ════════════════════════════════════════════════════════════════ */
+
+      /* Backgrounds */
+      html .bg-indigo-50  { background-color: ${darkBg50}  !important; }
+      html .bg-indigo-100 { background-color: ${darkBg100} !important; }
+      html .bg-indigo-200 { background-color: ${darkBg200} !important; }
+      html .bg-indigo-300 { background-color: ${darkBg300} !important; }
+      html .bg-indigo-400 { background-color: var(--theme-400) !important; }
+      html .bg-indigo-500 { background-color: var(--theme-500) !important; }
+      html .bg-indigo-600 { background-color: var(--theme-600) !important; }
+      html .bg-indigo-700 { background-color: var(--theme-700) !important; }
+      html .bg-indigo-800 { background-color: var(--theme-800) !important; }
+      html .bg-indigo-900 { background-color: var(--theme-900) !important; }
+
+      /* Text */
+      html .text-indigo-50  { color: ${darkText50}  !important; }
+      html .text-indigo-100 { color: ${darkText100} !important; }
+      html .text-indigo-200 { color: ${darkText200} !important; }
+      html .text-indigo-300 { color: ${darkText300} !important; }
+      html .text-indigo-400 { color: ${darkText400} !important; }
+      html .text-indigo-500 { color: ${darkText500} !important; }
+      html .text-indigo-600 { color: ${darkText600} !important; }
+      html .text-indigo-700 { color: ${darkText700} !important; }
+      html .text-indigo-800 { color: ${darkText800} !important; }
+      html .text-indigo-900 { color: ${darkText900} !important; }
+
+      /* Borders */
+      html .border-indigo-200 { border-color: ${isDark ? `${bgAccent},0.35)` : 'var(--theme-200)'} !important; }
+      html .border-indigo-300 { border-color: ${isDark ? `${bgAccent},0.45)` : 'var(--theme-300)'} !important; }
+      html .border-indigo-400 { border-color: var(--theme-400) !important; }
+      html .border-indigo-500 { border-color: var(--theme-500) !important; }
+      html .border-indigo-600 { border-color: var(--theme-600) !important; }
+
+      /* Rings */
+      html .ring-indigo-200 { --tw-ring-color: var(--theme-200) !important; }
+      html .ring-indigo-300 { --tw-ring-color: var(--theme-300) !important; }
+      html .ring-indigo-400 { --tw-ring-color: var(--theme-400) !important; }
+      html .ring-indigo-500 { --tw-ring-color: var(--theme-500) !important; }
+      html .focus\\:ring-indigo-200:focus { --tw-ring-color: var(--theme-200) !important; }
+      html .focus\\:ring-indigo-300:focus { --tw-ring-color: var(--theme-300) !important; }
+      html .focus\\:ring-indigo-400:focus { --tw-ring-color: var(--theme-400) !important; }
+      html .focus\\:ring-indigo-500:focus { --tw-ring-color: var(--theme-500) !important; }
+      html .focus\\:border-indigo-300:focus { border-color: var(--theme-300) !important; }
+      html .focus\\:border-indigo-500:focus { border-color: var(--theme-500) !important; }
+
+      /* Gradients */
+      html .from-indigo-400 { --tw-gradient-from: var(--theme-400) !important; --tw-gradient-stops: var(--theme-400), var(--tw-gradient-to, transparent) !important; }
+      html .from-indigo-500 { --tw-gradient-from: var(--theme-500) !important; --tw-gradient-stops: var(--theme-500), var(--tw-gradient-to, transparent) !important; }
+      html .from-indigo-600 { --tw-gradient-from: var(--theme-600) !important; --tw-gradient-stops: var(--theme-600), var(--tw-gradient-to, transparent) !important; }
+      html .to-indigo-400 { --tw-gradient-to: var(--theme-400) !important; }
+      html .to-indigo-500 { --tw-gradient-to: var(--theme-500) !important; }
+      html .to-indigo-600 { --tw-gradient-to: var(--theme-600) !important; }
+      html .to-indigo-700 { --tw-gradient-to: var(--theme-700) !important; }
+      html .via-indigo-500 { --tw-gradient-stops: var(--tw-gradient-from), var(--theme-500), var(--tw-gradient-to, transparent) !important; }
+      html .via-indigo-600 { --tw-gradient-stops: var(--tw-gradient-from), var(--theme-600), var(--tw-gradient-to, transparent) !important; }
+
+      /* Hover states */
+      html .hover\\:bg-indigo-50:hover   { background-color: ${darkBg50}  !important; }
+      html .hover\\:bg-indigo-100:hover  { background-color: ${darkBg100} !important; }
+      html .hover\\:bg-indigo-500:hover  { background-color: var(--theme-500) !important; }
+      html .hover\\:bg-indigo-600:hover  { background-color: var(--theme-600) !important; }
+      html .hover\\:bg-indigo-700:hover  { background-color: var(--theme-700) !important; }
+      html .hover\\:text-indigo-500:hover { color: var(--theme-500) !important; }
+      html .hover\\:text-indigo-600:hover { color: ${darkText600} !important; }
+      html .hover\\:border-indigo-300:hover { border-color: ${isDark ? `${bgAccent},0.45)` : 'var(--theme-300)'} !important; }
+      html .hover\\:border-indigo-500:hover { border-color: var(--theme-500) !important; }
+      html .hover\\:border-indigo-600:hover { border-color: var(--theme-600) !important; }
+
+      /* Opacity/translucent variants */
+      html [class*="bg-indigo-50\\/"]  { background-color: ${darkBg50}  !important; }
+      html [class*="bg-indigo-100\\/"] { background-color: ${darkBg100} !important; }
+      html [class*="bg-indigo-500\\/"] { background-color: ${isDark ? `${bgAccent},0.50)` : 'var(--theme-500)'} !important; }
+      html [class*="bg-indigo-600\\/"] { background-color: ${isDark ? `${bgAccent},0.60)` : 'var(--theme-600)'} !important; }
+
+      /* Shadow */
+      html [class*="shadow-indigo-200"] { --tw-shadow-color: var(--theme-200) !important; }
+      html [class*="shadow-indigo-500"] { --tw-shadow-color: var(--theme-500) !important; }
+
+      /* Accent */
+      html .accent-indigo-500 { accent-color: var(--theme-500) !important; }
+
+      /* ════════════════════════════════════════════════════════════════
+         AMBER class overrides — amber is used for gold accents in many
+         places (badges, highlights, #D4A017 gold equivalents).
+         ════════════════════════════════════════════════════════════════ */
+      html .bg-amber-50  { background-color: ${darkBg50}  !important; }
+      html .bg-amber-100 { background-color: ${darkBg100} !important; }
+      html .bg-amber-400 { background-color: var(--theme-400) !important; }
+      html .bg-amber-500 { background-color: var(--theme-500) !important; }
+      html .bg-amber-600 { background-color: var(--theme-600) !important; }
+      html .text-amber-400 { color: ${darkText400} !important; }
+      html .text-amber-500 { color: ${darkText500} !important; }
+      html .text-amber-600 { color: ${darkText600} !important; }
+      html .text-amber-700 { color: ${darkText700} !important; }
+      html .border-amber-300 { border-color: ${isDark ? `${bgAccent},0.45)` : 'var(--theme-300)'} !important; }
+      html .border-amber-400 { border-color: var(--theme-400) !important; }
+      html .border-amber-500 { border-color: var(--theme-500) !important; }
+      html .from-amber-400 { --tw-gradient-from: var(--theme-400) !important; --tw-gradient-stops: var(--theme-400), var(--tw-gradient-to, transparent) !important; }
+      html .from-amber-500 { --tw-gradient-from: var(--theme-500) !important; --tw-gradient-stops: var(--theme-500), var(--tw-gradient-to, transparent) !important; }
+      html .to-amber-400 { --tw-gradient-to: var(--theme-400) !important; }
+      html .to-amber-500 { --tw-gradient-to: var(--theme-500) !important; }
+      html .to-amber-600 { --tw-gradient-to: var(--theme-600) !important; }
+      html .hover\\:bg-amber-50:hover  { background-color: ${darkBg50}  !important; }
+      html .hover\\:bg-amber-100:hover { background-color: ${darkBg100} !important; }
+      html [class*="bg-amber-50\\/"]  { background-color: ${darkBg50}  !important; }
+      html [class*="bg-amber-100\\/"] { background-color: ${darkBg100} !important; }
+
+      /* ════════════════════════════════════════════════════════════════
+         Hardcoded hex color overrides — many components use inline styles
+         with hex values like #4F46E5 (indigo-600), #D4A017 (gold),
+         #F0C050 (gold-light). Override these via attribute selectors on
+         inline style is not possible, but we CAN override elements that
+         use these as CSS custom properties or via class-based overrides.
+         The Tailwind class overrides above handle the majority. For the
+         remaining inline hex values, we set CSS variables that components
+         can reference: --theme-primary, --theme-gold, --theme-gold-light.
+         ════════════════════════════════════════════════════════════════ */
     `;
   } catch (e) {
     console.error('[Theme] applyAppearance error:', e);

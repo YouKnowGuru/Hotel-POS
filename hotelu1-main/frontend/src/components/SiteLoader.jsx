@@ -101,7 +101,7 @@ const SiteLoader = ({ minimal = false }) => {
               borderRadius: radius,
               background: branding.logo
                 ? 'rgba(255,255,255,0.97)'
-                : 'linear-gradient(135deg, #D4A017 0%, #B8860B 100%)',
+                : 'linear-gradient(135deg, var(--theme-gold, #D4A017) 0%, var(--theme-gold-dark, #B8860B) 100%)',
             }}
           >
             {branding.logo ? (
@@ -192,8 +192,8 @@ html.dark .site-loader-minimal {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #D4A017 0%, #B8860B 100%);
-  box-shadow: 0 8px 30px rgba(212, 160, 23, 0.35);
+  background: linear-gradient(135deg, var(--theme-gold, #D4A017) 0%, var(--theme-gold-dark, #B8860B) 100%);
+  box-shadow: 0 8px 30px color-mix(in srgb, var(--theme-gold, #D4A017) 35%, transparent);
   animation: sl-breathe 1.6s ease-in-out infinite;
 }
 .site-loader-minimal .site-loader-dots {
@@ -306,7 +306,7 @@ html.dark .site-loader-card {
   inset: -6px;
   border-radius: 50%;
   border: 2px solid transparent;
-  background: conic-gradient(from 0deg, #6366f1, #D4A017, #8b5cf6, #6366f1);
+  background: conic-gradient(from 0deg, var(--theme-primary, #6366f1), var(--theme-gold, #D4A017), #8b5cf6, var(--theme-primary, #6366f1));
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -361,11 +361,11 @@ html.dark .site-loader-name {
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #D4A017;
+  color: var(--theme-gold, #D4A017);
   animation: sl-text-up 0.6s ease-out 0.5s both;
 }
 html.dark .site-loader-tagline {
-  color: #D4A017;
+  color: var(--theme-gold, #D4A017);
 }
 
 /* ===== 3-dot loading indicator ===== */
@@ -404,7 +404,7 @@ html.dark .site-loader-bar {
   width: 40%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #6366f1, #D4A017, #8b5cf6);
+  background: linear-gradient(90deg, var(--theme-primary, #6366f1), var(--theme-gold, #D4A017), #8b5cf6);
   animation: sl-bar-slide 1.8s ease-in-out infinite;
 }
 

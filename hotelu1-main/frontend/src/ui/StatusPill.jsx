@@ -13,9 +13,9 @@ const STATUS_CONFIG = {
   completed: { bg: 'rgba(5,150,105,0.10)', text: '#059669', dot: '#059669' },
 
   // Warning / pending states
-  pending: { bg: 'rgba(212,160,23,0.10)', text: '#A16207', dot: '#D4A017' },
-  preparing: { bg: 'rgba(212,160,23,0.10)', text: '#A16207', dot: '#D4A017' },
-  awaiting_payment: { bg: 'rgba(99,102,241,0.10)', text: '#4F46E5', dot: '#4F46E5' },
+  pending: { bg: 'color-mix(in srgb, var(--theme-gold, #D4A017) 10%, transparent)', text: 'var(--theme-gold-dark, #A16207)', dot: 'var(--theme-gold, #D4A017)' },
+  preparing: { bg: 'color-mix(in srgb, var(--theme-gold, #D4A017) 10%, transparent)', text: 'var(--theme-gold-dark, #A16207)', dot: 'var(--theme-gold, #D4A017)' },
+  awaiting_payment: { bg: 'color-mix(in srgb, var(--theme-primary, #4F46E5) 10%, transparent)', text: 'var(--theme-primary, #4F46E5)', dot: 'var(--theme-primary, #4F46E5)' },
   verification_pending: { bg: 'rgba(245,158,11,0.10)', text: '#D97706', dot: '#D97706' },
   cash_pending: { bg: 'rgba(34,197,94,0.10)', text: '#059669', dot: '#059669' },
   cash_pending_admin: { bg: 'rgba(245,158,11,0.10)', text: '#D97706', dot: '#D97706' },

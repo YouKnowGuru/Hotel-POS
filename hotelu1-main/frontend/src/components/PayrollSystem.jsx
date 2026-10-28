@@ -14,8 +14,8 @@ import { useTheme } from '../contexts/ThemeContext';
 import ThemeToggle from './ThemeToggle';
 
 /* ── Design tokens ──────────────────────────────────────────────── */
-const NAVY = '#4338CA';
-const GOLD = '#D4A017';
+const NAVY = 'var(--theme-primary, #4338CA)';
+const GOLD = 'var(--theme-gold, #D4A017)';
 
 const getGlass = (isDark) => ({
   background: isDark ? 'rgba(15, 29, 64, 0.70)' : '#FFFFFF',
@@ -389,7 +389,7 @@ const STATUS_STYLES = {
 };
 
 const ROLE_COLORS = {
-  admin: '#D4A017', manager: '#3B82F6', waiter: '#10B981',
+  admin: 'var(--theme-gold, #D4A017)', manager: '#3B82F6', waiter: '#10B981',
   cashier: '#8B5CF6',
 };
 
@@ -781,7 +781,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
                       {[
                         { l: 'Gross', v: e.gross, c: '#10B981', bg: isDark ? '#10B98115' : '#ECFDF5', border: isDark ? '#10B98130' : '#A7F3D0' },
                         { l: 'Deductions', v: e.ded, c: '#EF4444', bg: isDark ? '#EF444415' : '#FEF2F2', border: isDark ? '#EF444430' : '#FECACA' },
-                        { l: 'Net', v: e.net, c: GOLD, bg: isDark ? '#D4A01715' : '#FFFBEB', border: isDark ? '#D4A01730' : '#FDE68A' },
+                        { l: 'Net', v: e.net, c: GOLD, bg: isDark ? 'color-mix(in srgb, var(--theme-gold, #D4A017) 8%, transparent)' : '#FFFBEB', border: isDark ? 'color-mix(in srgb, var(--theme-gold, #D4A017) 19%, transparent)' : '#FDE68A' },
                       ].map(({ l, v, c, bg, border }) => (
                         <div key={l} style={{ textAlign: 'center', padding: 10, background: bg, border: `1px solid ${border}`, borderRadius: 10 }}>
                           <div style={{ fontSize: 16, fontWeight: 800, color: c }}>{fmtShort(v)}</div>
@@ -848,7 +848,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
               }}
             >
               {['cash','bank_transfer','cheque','upi','other'].map((m) => (
-                <option key={m} value={m} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                <option key={m} value={m} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                   {m.replace('_', ' ').toUpperCase()}
                 </option>
               ))}
@@ -859,7 +859,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
         </div>
         <div className="pay-modal-small-footer" style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#475569', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Cancel</button>
-          <button onClick={() => onPay({ payment_method: method, payment_reference: ref, payment_date: date })} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#4F46E5)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button onClick={() => onPay({ payment_method: method, payment_reference: ref, payment_date: date })} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,var(--theme-primary, #4F46E5))', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Banknote size={14} /> Confirm Payment
           </button>
         </div>
@@ -922,7 +922,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
               }}
             >
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i + 1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i + 1)} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
           </div>
@@ -1308,9 +1308,9 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       fontSize: 13, outline: 'none'
                     }}
                   >
-                    <option value="" disabled style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>-- Select Employee --</option>
+                    <option value="" disabled style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>-- Select Employee --</option>
                     {users.map((u) => (
-                      <option key={u.id} value={u.id} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                      <option key={u.id} value={u.id} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                         {u.name} ({u.role.toUpperCase()})
                       </option>
                     ))}
@@ -1340,7 +1340,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       }}
                     >
                       {MONTHS.map((m, i) => (
-                        <option key={m} value={String(i + 1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                        <option key={m} value={String(i + 1)} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
                       ))}
                     </select>
                   </div>
@@ -1415,7 +1415,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                       padding: '7px 14px', borderRadius: 8,
                       border: isDark ? '1px solid rgba(59,130,246,0.4)' : '1px solid #93C5FD',
                       background: isDark ? 'rgba(59,130,246,0.15)' : '#DBEAFE',
-                      color: isDark ? '#60A5FA' : '#4F46E5',
+                      color: isDark ? '#60A5FA' : 'var(--theme-primary, #4F46E5)',
                       cursor: 'pointer', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6
                     }}
                   >
@@ -1545,7 +1545,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                     }}
                   >
                     {['draft','pending','approved','paid','on_hold'].map((st) => (
-                      <option key={st} value={st} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
+                      <option key={st} value={st} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>
                         {STATUS_STYLES[st]?.label || st}
                       </option>
                     ))}
@@ -1566,7 +1566,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                     }}
                   >
                     {['bank_transfer','cash','cheque','upi','other'].map((m) => (
-                      <option key={m} value={m} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m.replace('_', ' ').toUpperCase()}</option>
+                      <option key={m} value={m} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m.replace('_', ' ').toUpperCase()}</option>
                     ))}
                   </select>
                 </div>
@@ -2009,7 +2009,7 @@ const PayrollSystem = ({ currentUser }) => {
           <div className="pay-filter-bar" style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', alignItems: 'center' }}>
             <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={selWrap()}>
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i+1)} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
             <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 'auto', minWidth: 80, flex: '0 0 auto' }} />
@@ -2140,7 +2140,7 @@ const PayrollSystem = ({ currentUser }) => {
                         <div style={{ display: 'flex', gap: 6 }}>
                           <ActionBtn title="View payslip" onClick={() => setPayslipRecord(r)} color={isDark ? '#94A3B8' : '#475569'} icon={Eye} isDark={isDark} />
                           {['draft','pending','on_hold'].includes(r.status) && (
-                            <ActionBtn title="Edit record" onClick={() => { setEditingPayroll(r); setShowManualCreate(true); }} color="#D4A017" icon={Edit} isDark={isDark} />
+                            <ActionBtn title="Edit record" onClick={() => { setEditingPayroll(r); setShowManualCreate(true); }} color="var(--theme-gold, #D4A017)" icon={Edit} isDark={isDark} />
                           )}
                           {r.status === 'draft'    && <ActionBtn title="Approve"  onClick={() => approve(r.id)}    color="#10B981" icon={CheckCircle} isDark={isDark} />}
                           {r.status === 'approved' && <ActionBtn title="Mark paid" onClick={() => setPayRecord(r)} color="#3B82F6" icon={Banknote}    isDark={isDark} />}
@@ -2197,14 +2197,14 @@ const PayrollSystem = ({ currentUser }) => {
             </div>
             <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={selWrap()}>
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
+                <option key={m} value={String(i+1)} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
             <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 'auto', minWidth: 80, flex: '0 0 auto' }} />
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={selWrap()}>
-              <option value="" style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>All Status</option>
+              <option value="" style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>All Status</option>
               {Object.keys(STATUS_STYLES).map((s) => (
-                <option key={s} value={s} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{STATUS_STYLES[s].label}</option>
+                <option key={s} value={s} style={{ background: isDark ? 'var(--theme-primary, #4338CA)' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{STATUS_STYLES[s].label}</option>
               ))}
             </select>
             <button
@@ -2261,7 +2261,7 @@ const PayrollSystem = ({ currentUser }) => {
                         <div style={{ display: 'flex', gap: 5 }}>
                           <ActionBtn title="View Payslip" onClick={() => setPayslipRecord(r)} color={isDark ? '#94A3B8' : '#475569'} icon={Eye} isDark={isDark} />
                           {['draft','pending','on_hold'].includes(r.status) && (
-                            <ActionBtn title="Edit record" onClick={() => { setEditingPayroll(r); setShowManualCreate(true); }} color="#D4A017" icon={Edit} isDark={isDark} />
+                            <ActionBtn title="Edit record" onClick={() => { setEditingPayroll(r); setShowManualCreate(true); }} color="var(--theme-gold, #D4A017)" icon={Edit} isDark={isDark} />
                           )}
                           {r.status === 'draft'    && <ActionBtn title="Approve"    onClick={() => approve(r.id)}    color="#10B981" icon={CheckCircle} isDark={isDark} />}
                           {r.status === 'approved' && <ActionBtn title="Mark Paid"  onClick={() => setPayRecord(r)}  color="#3B82F6" icon={Banknote}    isDark={isDark} />}

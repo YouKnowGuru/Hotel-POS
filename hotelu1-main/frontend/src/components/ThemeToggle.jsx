@@ -27,12 +27,12 @@ const ThemeToggle = ({ className = '' }) => {
         <Sun
           className={'absolute inset-0 w-5 h-5 transition-all duration-300 ' +
             (isDark ? 'opacity-0 rotate-90 scale-50' : 'opacity-100 rotate-0 scale-100')}
-          style={{ color: hovered ? '#D4A017' : '#64748B' }}
+          style={{ color: hovered ? 'var(--theme-gold, #D4A017)' : '#64748B' }}
         />
         <Moon
           className={'absolute inset-0 w-5 h-5 transition-all duration-300 ' +
             (isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50')}
-          style={{ color: hovered ? '#4338CA' : '#94A3B8' }}
+          style={{ color: hovered ? 'var(--theme-primary, #4338CA)' : '#94A3B8' }}
         />
       </span>
     </button>
