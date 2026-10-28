@@ -88,6 +88,8 @@ const PAY_FORM_CSS = `
   .pay-g4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g3x { grid-template-columns: minmax(0,1fr); }
+  /* Metric bar: only Net Pay visible on mobile, so 1 column */
+  .pay-metric-bar { grid-template-columns: minmax(0,1fr) !important; }
 }
 
 /* ── Phone landscape / small tablet (<= 720px): 2-col grids collapse ── */
@@ -160,6 +162,13 @@ const PAY_FORM_CSS = `
 
   /* Payroll page padding */
   .payroll-page { padding: 16px 12px !important; }
+
+  /* Section cards: reduce padding on mobile */
+  .pay-section-card { padding: 10px !important; }
+
+  /* Calc rows: stack vertically on mobile */
+  .pay-calc-row { flex-direction: column !important; align-items: stretch !important; }
+  .pay-calc-row > div { width: 100% !important; }
 }
 
 @media (max-width: 380px) {
@@ -1176,11 +1185,11 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
   };
 
   return (
-    <div className="pay-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+    <div className="pay-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(4px,2vw,16px)' }}>
       <div className="pay-modal-card" style={{
-        width: '100%', maxWidth: 840, maxHeight: '90dvh',
+        width: '100%', maxWidth: 840, maxHeight: '94dvh',
         background: isDark ? '#141C2E' : '#FFFFFF',
-        borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        borderRadius: 'clamp(12px,3vw,24px)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: isDark ? '0 25px 60px -15px rgba(0,0,0,0.7)' : '0 20px 45px rgba(0,0,0,0.12)',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
         color: isDark ? '#FFFFFF' : '#0F172A',
@@ -1188,30 +1197,30 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
 
         {/* Header */}
         <div className="pay-modal-header-row" style={{
-          padding: '20px 24px',
+          padding: 'clamp(10px,3vw,20px) clamp(12px,4vw,24px)',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0, position: 'relative',
           background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFC',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div className="pay-modal-header-icon">
-              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(212,160,23,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(212,160,23,0.3)' }}>
-                {isEdit ? <Edit size={20} style={{ color: GOLD }} /> : <PlusCircle size={20} style={{ color: GOLD }} />}
+              <div style={{ width: 'clamp(32px,8vw,42px)', height: 'clamp(32px,8vw,42px)', borderRadius: 10, background: 'rgba(212,160,23,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(212,160,23,0.3)', flexShrink: 0 }}>
+                {isEdit ? <Edit size={18} style={{ color: GOLD }} /> : <PlusCircle size={18} style={{ color: GOLD }} />}
               </div>
             </div>
-            <div className="pay-modal-header-text">
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {isEdit ? 'Edit Payroll Record' : 'Manual Payroll Entry'}
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'rgba(212,160,23,0.2)', color: GOLD, fontWeight: 700 }}>Admin Direct</span>
+            <div className="pay-modal-header-text" style={{ minWidth: 0, flex: 1 }}>
+              <h2 style={{ margin: 0, fontSize: 'clamp(14px,3.5vw,18px)', fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                {isEdit ? 'Edit Payroll' : 'Manual Payroll'}
+                <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: 'rgba(212,160,23,0.2)', color: GOLD, fontWeight: 700, whiteSpace: 'nowrap' }}>Admin</span>
               </h2>
-              <p style={{ margin: 0, fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>
-                {isEdit ? `Updating salary details for ${form.user_name}` : 'Create a custom salary record with custom attendance, allowances, and bonuses'}
+              <p style={{ margin: 0, fontSize: 'clamp(10px,2.5vw,12px)', color: isDark ? '#94A3B8' : '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isEdit ? form.user_name : 'Create custom salary record'}
               </p>
             </div>
           </div>
-          <button className="pay-modal-header-close" onClick={onClose} style={{ width: 34, height: 34, borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <X size={16} />
+          <button className="pay-modal-header-close" onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8, border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <X size={15} />
           </button>
         </div>
 
@@ -1220,7 +1229,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           display: 'flex',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           background: isDark ? 'rgba(0,0,0,0.25)' : '#F1F5F9',
-          padding: '6px 20px', gap: 8, overflowX: 'auto',
+          padding: '4px clamp(10px,3vw,20px)', gap: 6, overflowX: 'auto',
           scrollbarWidth: 'none',
         }}>
           {[
@@ -1236,22 +1245,22 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10,
+                  display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', borderRadius: 8,
                   border: active ? '1px solid rgba(212,160,23,0.4)' : '1px solid transparent',
                   background: active ? (isDark ? 'rgba(212,160,23,0.15)' : '#FEF3C7') : 'transparent',
                   color: active ? (isDark ? GOLD : '#B45309') : (isDark ? '#94A3B8' : '#64748B'),
-                  cursor: 'pointer', fontSize: 11, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap',
+                  cursor: 'pointer', fontSize: 10, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap',
                   flexShrink: 0,
                 }}
               >
-                <Icon size={14} />
+                <Icon size={12} />
                 <span className="hidden sm:inline">{t.label}</span>
                 <span className="sm:hidden">{t.id === 'employee' ? '1' : t.id === 'earnings' ? '2' : t.id === 'deductions' ? '3' : '4'}</span>
                 <span style={{
-                  fontSize: 10, padding: '2px 6px', borderRadius: 8,
+                  fontSize: 9, padding: '1px 5px', borderRadius: 6,
                   background: active ? (isDark ? 'rgba(212,160,23,0.25)' : '#FDE68A') : (isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0'),
                   color: active ? (isDark ? '#fff' : '#92400E') : (isDark ? '#94A3B8' : '#64748B'),
-                  fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  fontWeight: 600, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {t.badge}
                 </span>
@@ -1261,7 +1270,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Tab Body */}
-        <div className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(14px,4vw,22px) clamp(12px,4vw,26px)' }}>
+        <div className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(10px,3vw,22px) clamp(10px,3vw,26px)' }}>
 
           {/* TAB 1: EMPLOYEE & PERIOD */}
           {activeTab === 'employee' && (
@@ -1583,13 +1592,13 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           )}
         </div>
 
-        {/* Live Calculation Metric Bar */}
+        {/* Live Calculation Metric Bar — compact on mobile */}
         <div className="pay-g4 pay-metric-bar" style={{
           background: isDark ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
-          padding: '14px 24px', display: 'grid', gap: 12, flexShrink: 0
+          padding: 'clamp(8px,2vw,14px) clamp(12px,4vw,24px)', display: 'grid', gap: 'clamp(6px,2vw,12px)', flexShrink: 0
         }}>
-          <div style={{
+          <div className="hidden sm:block" style={{
             background: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
             padding: '8px 12px', borderRadius: 10,
             border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #CBD5E1'
@@ -1597,7 +1606,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
             <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', textTransform: 'uppercase' }}>Basic + Overtime</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A', marginTop: 2 }}>{fmt(parseFloat(form.basic_salary || 0) + parseFloat(form.overtime_pay || 0))}</div>
           </div>
-          <div style={{
+          <div className="hidden sm:block" style={{
             background: isDark ? 'rgba(16,185,129,0.06)' : '#ECFDF5',
             padding: '8px 12px', borderRadius: 10,
             border: isDark ? '1px solid rgba(16,185,129,0.2)' : '1px solid #A7F3D0'
@@ -1605,7 +1614,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
             <div style={{ fontSize: 10, color: '#059669', textTransform: 'uppercase' }}>Gross Salary</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#10B981', marginTop: 2 }}>{fmt(grossSalary)}</div>
           </div>
-          <div style={{
+          <div className="hidden sm:block" style={{
             background: isDark ? 'rgba(239,68,68,0.06)' : '#FEF2F2',
             padding: '8px 12px', borderRadius: 10,
             border: isDark ? '1px solid rgba(239,68,68,0.2)' : '1px solid #FECACA'
@@ -1613,46 +1622,51 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
             <div style={{ fontSize: 10, color: '#DC2626', textTransform: 'uppercase' }}>Total Deductions</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: '#EF4444', marginTop: 2 }}>-{fmt(totalDeductions)}</div>
           </div>
+          {/* Net Pay — always visible (on mobile it spans full width) */}
           <div style={{
+            gridColumn: 'span 1',
             background: isDark ? 'linear-gradient(135deg,rgba(212,160,23,0.15),rgba(212,160,23,0.05))' : '#FFFBEB',
-            padding: '8px 12px', borderRadius: 10,
+            padding: 'clamp(6px,2vw,8px) clamp(10px,3vw,12px)', borderRadius: 10,
             border: isDark ? '1px solid rgba(212,160,23,0.3)' : '1px solid #FDE68A'
           }}>
-            <div style={{ fontSize: 10, color: isDark ? GOLD : '#B45309', textTransform: 'uppercase', fontWeight: 800 }}>Net Pay Payable</div>
-            <div style={{ fontSize: 17, fontWeight: 900, color: isDark ? GOLD : '#B45309', marginTop: 2 }}>{fmt(netSalary)}</div>
+            <div style={{ fontSize: 'clamp(9px,2vw,10px)', color: isDark ? GOLD : '#B45309', textTransform: 'uppercase', fontWeight: 800 }}>Net Pay</div>
+            <div style={{ fontSize: 'clamp(15px,4vw,17px)', fontWeight: 900, color: isDark ? GOLD : '#B45309', marginTop: 2 }}>{fmt(netSalary)}</div>
           </div>
         </div>
 
         {/* Modal Actions Footer */}
         <div className="pay-modal-footer" style={{
-          padding: '14px 24px',
+          padding: 'clamp(8px,2vw,14px) clamp(12px,4vw,24px)',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexShrink: 0,
           background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFC'
         }}>
           <button
             type="button"
             onClick={applyStaffDefaults}
+            className="hidden sm:flex"
             style={{
               padding: '9px 16px', borderRadius: 10,
               border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
               background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
               color: isDark ? '#94A3B8' : '#475569',
-              cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6
+              cursor: 'pointer', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6,
+              whiteSpace: 'nowrap',
             }}
           >
-            <RefreshCw size={13} /> Reset Staff Defaults
+            <RefreshCw size={13} /> Reset Defaults
           </button>
-          <div className="pay-modal-footer-actions" style={{ display: 'flex', gap: 10 }}>
+          <div className="pay-modal-footer-actions" style={{ display: 'flex', gap: 8, flex: 1, justifyContent: 'flex-end' }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: '9px 18px', borderRadius: 10,
+                padding: 'clamp(7px,2vw,9px) clamp(12px,3vw,18px)', borderRadius: 10,
                 border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                 background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
                 color: isDark ? '#94A3B8' : '#475569',
-                cursor: 'pointer', fontSize: 13, fontWeight: 600
+                cursor: 'pointer', fontSize: 'clamp(11px,3vw,13px)', fontWeight: 600,
+                whiteSpace: 'nowrap', minHeight: 40,
               }}
             >
               Cancel
@@ -1661,9 +1675,9 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               type="button"
               disabled={busy}
               onClick={handleSubmit}
-              style={{ padding: '9px 24px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${GOLD},#A16207)`, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 14px rgba(212,160,23,0.3)', opacity: busy ? 0.7 : 1 }}
+              style={{ padding: 'clamp(7px,2vw,9px) clamp(16px,4vw,24px)', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${GOLD},#A16207)`, color: '#fff', fontSize: 'clamp(11px,3vw,13px)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 14px rgba(212,160,23,0.3)', opacity: busy ? 0.7 : 1, whiteSpace: 'nowrap', minHeight: 40 }}
             >
-              <Save size={14} /> {busy ? 'Saving…' : (isEdit ? 'Save Changes' : 'Create Payroll')}
+              <Save size={14} /> {busy ? 'Saving…' : (isEdit ? 'Save' : 'Create')}
             </button>
           </div>
         </div>
