@@ -484,9 +484,9 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
      A definite h-[95vh] makes every nested flex/percent height resolvable. */}
  <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[90dvh] sm:h-[95vh] overflow-hidden overflow-x-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
- <div className="flex justify-between items-center p-3 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
- <h3 className="text-sm sm:text-2xl font-bold text-white truncate pr-2">
- New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order for {table && table.id === 'Takeaway' ? 'Takeaway' : table && table.id ? `Table ${table.id}` : ''}
+ <div className="flex justify-between items-center px-3 py-2 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
+ <h3 className="text-xs sm:text-2xl font-bold text-white truncate pr-2">
+ New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order{table && table.id === 'Takeaway' ? '' : table && table.id ? ` — Table ${table.id}` : ''}
  </h3>
  <button 
  onClick={onClose} 
@@ -498,27 +498,30 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </button>
  </div>
  {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
- <div className="p-2 sm:p-6 flex-grow overflow-hidden flex flex-col overflow-x-hidden">
+ <div className="p-1.5 sm:p-6 flex-grow overflow-hidden flex flex-col overflow-x-hidden">
  <div className="flex flex-col lg:flex-row gap-3 sm:gap-6 flex-grow min-h-0">
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
  <div className="flex-1 lg:flex-[3] min-w-0 bg-indigo-50 p-2 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
- <h4 className="text-base sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
- <span className="mr-1 sm:mr-2 text-base sm:text-2xl">🍽️</span> Menu Items
+ {/* Compact header on mobile: title + search in one row */}
+ <div className="flex flex-row items-center justify-between mb-1.5 sm:mb-4 flex-shrink-0 gap-2">
+ <h4 className="font-bold text-gray-800 dark:text-white flex items-center text-xs sm:text-2xl shrink-0">
+ <span className="mr-1 text-xs sm:text-2xl">🍽️</span>
+ <span className="hidden sm:inline">Menu Items</span>
+ <span className="sm:hidden">Menu</span>
  </h4>
- <div className="flex items-center space-x-2">
- <div className="relative">
+ <div className="flex items-center space-x-2 min-w-0 flex-1 justify-end">
+ <div className="relative w-full max-w-[180px] sm:max-w-none sm:w-56">
  <input
  type="text"
- placeholder="Search items"
+ placeholder="Search..."
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
- className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#0B1220] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm dark:shadow-none dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
+ className="pl-3 sm:pl-4 pr-7 sm:pr-10 py-1 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-lg sm:rounded-xl bg-white dark:bg-[#0B1220] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm dark:shadow-none dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
  />
  {searchTerm && (
  <button
  onClick={() => setSearchTerm('')}
- className="absolute right-2 sm:right-3 top-1.5 sm:top-2.5 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors text-xs sm:text-sm"
+ className="absolute right-1.5 sm:right-3 top-1.5 sm:top-2.5 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors text-xs sm:text-sm"
  >
  ✕
  </button>
@@ -527,21 +530,21 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  
- {/* Category Tabs — horizontal scroll with snap on all sizes (food-app style) */}
- <div className="flex gap-2 mb-3 sm:mb-4 flex-shrink-0 overflow-x-auto scrollbar-none pb-1" style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
+ {/* Category Tabs — compact horizontal scroll (food-app style) */}
+ <div className="flex gap-1.5 sm:gap-2 mb-2 sm:mb-4 flex-shrink-0 overflow-x-auto scrollbar-none pb-0.5" style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
  {categories.map(category => (
  <button
  key={category}
  onClick={() => setSelectedCategory(category)}
  style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
- className={`px-3 py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
+ className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium transition-all duration-200 text-[11px] sm:text-sm whitespace-nowrap ${
  selectedCategory === category
  ? 'bg-gradient-to-r from-indigo-600 to-red-400 text-white shadow-lg transform scale-105'
  : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400 hover:shadow-md dark:bg-[#1A2336] dark:text-slate-300 dark:border-slate-600 dark:hover:border-indigo-500'
  }`}
  >
- <span className="mr-1 text-xs sm:text-sm">{getCategoryIcon(category)}</span>
- <span className="text-xs sm:text-sm">{category}</span>
+ <span className="mr-0.5 sm:mr-1 text-[11px] sm:text-sm">{getCategoryIcon(category)}</span>
+ <span className="text-[11px] sm:text-sm">{category}</span>
  </button>
  ))}
  </div>
@@ -569,7 +572,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  ) : (
  <div className="h-full overflow-y-auto overflow-x-hidden pr-1 sm:pr-2">
- <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+ <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-1.5 sm:gap-4">
  {filteredMenu.map(item => {
  // Smart categorization for display with consistent casing
  let displayCategory = item.category || 'Other';
@@ -588,10 +591,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  }
  
  return (
- <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Food Image - Circular like MenuManagement */}
- <div className="w-full h-20 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
- <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
+ <div className="w-full h-14 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
+ <div className="w-10 h-10 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
  {item.image ? (
  <img 
  src={item.image} 
@@ -599,34 +602,34 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  className="w-full h-full object-cover"
  />
  ) : (
- <span className="text-2xl sm:text-3xl">{getCategoryIcon(displayCategory)}</span>
+ <span className="text-lg sm:text-3xl">{getCategoryIcon(displayCategory)}</span>
  )}
  </div>
  </div>
- <div className="p-2 sm:p-3">
+ <div className="p-1.5 sm:p-3">
  {/* Available Badge */}
- <div className="mb-2">
- <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] sm:text-xs px-2 py-1 rounded-full font-semibold inline-flex items-center">
- <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
+ <div className="mb-1 sm:mb-2">
+ <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-semibold inline-flex items-center">
+ <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full mr-1"></span>
  Available
  </span>
  </div>
  {/* Item Name */}
- <h5 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight line-clamp-1">
+ <h5 className="font-bold text-gray-800 dark:text-slate-200 text-[11px] sm:text-sm mb-0.5 sm:mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight line-clamp-1">
  {highlightText(item.name, searchTerm)}
  </h5>
  {/* Category */}
- <p className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mb-2">
+ <p className="text-[9px] sm:text-xs text-gray-500 dark:text-slate-500 mb-1 sm:mb-2">
  {displayCategory}
  </p>
  {/* Price and Add Button */}
  <div className="flex items-center justify-between">
- <p className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
+ <p className="text-xs sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
  {fmt(item.price)}
  </p>
  <button
  onClick={() => addToCart(item)}
- className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-110 flex-shrink-0"
+ className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-110 flex-shrink-0"
  >
  +
  </button>
