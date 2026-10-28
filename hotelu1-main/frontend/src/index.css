@@ -1332,30 +1332,33 @@ html.dark .text-4xl {
 }
 
 /* ── Pill Backgrounds (Dark) ───────────────────────────────────────── */
-html.dark [class*="bg-blue-50"],
-html.dark [class*="bg-blue-100"] {
+/* NOTE: exact class selectors only — do NOT use [class*="bg-green-50"]
+   because it also matches bg-green-500 (solid colors used by Notification,
+   buttons, etc.) and makes them transparent in dark mode. */
+html.dark .bg-blue-50,
+html.dark .bg-blue-100 {
   background-color: rgba(59, 130, 246, 0.12) !important;
 }
-html.dark [class*="bg-green-50"],
-html.dark [class*="bg-green-100"],
-html.dark [class*="bg-emerald-50"],
-html.dark [class*="bg-emerald-100"] {
+html.dark .bg-green-50,
+html.dark .bg-green-100,
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-100 {
   background-color: rgba(16, 185, 129, 0.12) !important;
 }
-html.dark [class*="bg-red-50"],
-html.dark [class*="bg-red-100"],
-html.dark [class*="bg-rose-50"],
-html.dark [class*="bg-rose-100"] {
+html.dark .bg-red-50,
+html.dark .bg-red-100,
+html.dark .bg-rose-50,
+html.dark .bg-rose-100 {
   background-color: rgba(239, 68, 68, 0.12) !important;
 }
-html.dark [class*="bg-purple-50"],
-html.dark [class*="bg-purple-100"] {
+html.dark .bg-purple-50,
+html.dark .bg-purple-100 {
   background-color: rgba(139, 92, 246, 0.12) !important;
 }
-html.dark [class*="bg-yellow-50"],
-html.dark [class*="bg-yellow-100"],
-html.dark [class*="bg-amber-50"],
-html.dark [class*="bg-amber-100"] {
+html.dark .bg-yellow-50,
+html.dark .bg-yellow-100,
+html.dark .bg-amber-50,
+html.dark .bg-amber-100 {
   background-color: rgba(245, 158, 11, 0.12) !important;
 }
 

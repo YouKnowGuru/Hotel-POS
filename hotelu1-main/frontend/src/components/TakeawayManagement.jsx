@@ -353,7 +353,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  return (
 	<div
-		className={`px-4 sm:px-6 lg:px-8 py-6 min-h-0 overflow-x-hidden transition-opacity duration-500 ${
+		className={`px-3 sm:px-6 lg:px-8 py-4 sm:py-6 min-h-0 overflow-x-hidden transition-opacity duration-500 ${
 			isLoaded ? 'opacity-100' : 'opacity-0'
 		} bg-[#F7F7F8] dark:bg-[#0B1220] text-gray-900 dark:text-gray-100`}
 	>
@@ -848,10 +848,10 @@ const OrderCard = ({
 const ReceiptModal = ({ order, fmt, onClose }) => {
  const t = enrichOrderWithTotals(order);
  return (
-	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
- <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[88vh] overflow-hidden flex flex-col animate-scale-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-2 sm:p-4">
+ <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[88vh] overflow-hidden flex flex-col animate-scale-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Header */}
- <div className="bg-indigo-600 p-5 text-center text-white relative">
+ <div className="bg-indigo-600 p-4 sm:p-5 text-center text-white relative">
  <button
  onClick={onClose}
  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/30 hover:bg-white/30 text-white flex items-center justify-center"
@@ -859,23 +859,23 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  >
  <X className="w-4 h-4" />
  </button>
- <div className="w-14 h-14 rounded-full bg-white/30 flex items-center justify-center mx-auto mb-2">
- <CheckCircle2 className="w-7 h-7 text-white" />
+ <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/30 flex items-center justify-center mx-auto mb-2">
+ <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
  </div>
- <h2 className="text-xl font-bold">Order Confirmed</h2>
+ <h2 className="text-lg sm:text-xl font-bold">Order Confirmed</h2>
  <p className="text-indigo-100 text-xs mt-0.5">
  Your takeaway order has been placed
  </p>
  </div>
 
  {/* Body */}
- <div className="p-5 overflow-y-auto flex-1 space-y-4">
+ <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3 sm:space-y-4">
  {/* Token */}
- <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center dark:bg-amber-950/40 dark:border-amber-800/60">
+ <div className="bg-amber-50 border border-amber-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center dark:bg-amber-950/40 dark:border-amber-800/60">
  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
  Order Token
  </p>
- <p className="text-4xl font-extrabold text-amber-700 tracking-widest my-1 dark:text-amber-300">
+ <p className="text-2xl sm:text-4xl font-extrabold text-amber-700 tracking-widest my-1 dark:text-amber-300 break-all">
  {order.token}
  </p>
  <p className="text-[11px] text-amber-600 dark:text-amber-400">
@@ -907,7 +907,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
 
  {/* Items */}
  <div>
- <p className="text-xs font-bold text-gray-500 mb-2 tracking-wide uppercase">
+ <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 tracking-wide uppercase">
  Items
  </p>
  <div className="space-y-1.5 max-h-32 overflow-y-auto">
@@ -916,10 +916,10 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  key={idx}
  className="flex justify-between text-sm gap-2"
  >
- <span className="text-gray-700 min-w-0 truncate">
+ <span className="text-gray-700 dark:text-gray-300 min-w-0 truncate">
  {item.qty || item.quantity}× {item.name}
  </span>
- <span className="font-semibold text-gray-900 shrink-0 whitespace-nowrap">
+ <span className="font-semibold text-gray-900 dark:text-gray-100 shrink-0 whitespace-nowrap">
  {fmt(item.price * (item.qty || item.quantity || 1))}
  </span>
  </div>
@@ -928,30 +928,30 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  </div>
 
  {/* Totals */}
- <div className="border-t border-gray-100 pt-3 space-y-1 text-sm">
+ <div className="border-t border-gray-100 dark:border-slate-700/60 pt-3 space-y-1 text-sm">
  <div className="flex justify-between">
- <span className="text-gray-500">Subtotal</span>
- <span className="font-semibold text-gray-800">{fmt(t.subtotal)}</span>
+ <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+ <span className="font-semibold text-gray-800 dark:text-gray-200">{fmt(t.subtotal)}</span>
  </div>
  {t.discountPercent > 0 && (
  <div className="flex justify-between">
- <span className="text-gray-500">Discount ({t.discountPercent}%)</span>
- <span className="font-semibold text-emerald-600">
+ <span className="text-gray-500 dark:text-gray-400">Discount ({t.discountPercent}%)</span>
+ <span className="font-semibold text-emerald-600 dark:text-emerald-400">
  -{fmt(t.discountAmount)}
  </span>
  </div>
  )}
  <div className="flex justify-between">
- <span className="text-gray-500">Service charge ({t.serviceChargePercent}%)</span>
- <span className="font-semibold text-gray-800">+{fmt(t.serviceCharge)}</span>
+ <span className="text-gray-500 dark:text-gray-400">Service charge ({t.serviceChargePercent}%)</span>
+ <span className="font-semibold text-gray-800 dark:text-gray-200">+{fmt(t.serviceCharge)}</span>
  </div>
  <div className="flex justify-between">
- <span className="text-gray-500">GST ({t.taxPercent}%)</span>
- <span className="font-semibold text-gray-800">+{fmt(t.taxAmount)}</span>
+ <span className="text-gray-500 dark:text-gray-400">GST ({t.taxPercent}%)</span>
+ <span className="font-semibold text-gray-800 dark:text-gray-200">+{fmt(t.taxAmount)}</span>
  </div>
- <div className="flex justify-between items-center border-t-2 border-gray-100 pt-2 mt-1.5">
- <span className="text-base font-bold text-gray-900">Total</span>
- <span className="text-xl font-extrabold text-indigo-600">
+ <div className="flex justify-between items-center border-t-2 border-gray-100 dark:border-slate-700/60 pt-2 mt-1.5">
+ <span className="text-base font-bold text-gray-900 dark:text-gray-100">Total</span>
+ <span className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
  {fmt(t.total)}
  </span>
  </div>
@@ -965,7 +965,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  </div>
 
  {/* Footer actions */}
- <div className="flex gap-2 p-4 border-t border-gray-100 bg-white dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div className="flex gap-2 p-3 sm:p-4 border-t border-gray-100 bg-white dark:bg-[#141C2E] dark:border-slate-700/60">
  <button
  onClick={() => {
  const printWindow = window.open('', '_blank', 'width=300,height=400');
@@ -1045,14 +1045,14 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  printWindow.close();
  }, 250);
  }}
- className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-semibold transition dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
+ className="flex-1 inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 text-xs sm:text-sm font-semibold transition min-h-[44px] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
  >
  <Printer className="w-4 h-4" />
  Print
  </button>
  <button
  onClick={onClose}
- className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition"
+ className="flex-1 inline-flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition min-h-[44px]"
  >
  Done
  </button>
