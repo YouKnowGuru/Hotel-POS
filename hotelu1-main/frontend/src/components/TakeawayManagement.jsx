@@ -480,7 +480,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
  Place First Order
  </button>
  </div>
- ) : (<div className="grid grid-cols-1 gap-2.5 sm:gap-4">
+ ) : (<div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2.5 sm:gap-4">
  {filteredOrders.map((order, index) => (
  <OrderCard
   key={order.id}
@@ -644,6 +644,7 @@ const OrderCard = ({
  const isEmpty = !order.items || order.items.length === 0;
  const totalSafe =
  typeof order.total === 'number' && !isNaN(order.total) ? order.total : 0;
+ const t = enrichOrderWithTotals(order);
 
  return (
 	<div
@@ -652,44 +653,42 @@ const OrderCard = ({
 			animation: isLoaded
 				? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
 				: 'none',
-			h: '100%',
 		}}
 	>
  {/* Card header */}
-		<div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-gray-50 dark:border-gray-800">
+		<div className="px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between border-b border-gray-50 dark:border-gray-800 gap-2">
 				<div className="min-w-0 flex-1">
-					<p className="text-xs font-semibold text-gray-400 dark:text-gray-500">Order</p>
 					<div className="flex items-center gap-2 flex-wrap">
 						<p className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">#{order.id}</p>
 						<SourceBadge source={order.source} />
 					</div>
 				</div>
 				<span
-					className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full border text-[10px] sm:text-[11px] font-semibold ${meta.pill} shrink-0`}
+					className={`inline-flex items-center gap-1 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full border text-[9px] sm:text-[11px] font-semibold ${meta.pill} shrink-0`}
 				>
-					<span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-					<Icon className="w-3 h-3" />
-					{meta.label}
+					<span className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full ${meta.dot}`} />
+					<Icon className="w-2.5 h-2.5 sm:w-3 h-3" />
+					<span className="hidden xs:inline sm:inline">{meta.label}</span>
 				</span>
 			</div>
 
- {/* Token badge */}
+ {/* Token badge — compact on mobile */}
 		{order.token && (
-			<div className={`mx-3 sm:mx-4 mt-3 mb-1 flex items-center gap-2 rounded-xl px-3 py-2 ${
+			<div className={`mx-3 sm:mx-4 mt-2 flex items-center gap-2 rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 ${
 				isDark
 					? 'bg-amber-500/10 border-amber-500/30'
 					: 'bg-amber-50 border border-amber-100'
 			}`}>
-				<div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${
+				<div className={`w-5 h-5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center shrink-0 ${
 					isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
 				}`}>
-					<Hash className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+					<Hash className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
 				</div>
-				<div className="min-w-0">
-					<p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+				<div className="min-w-0 flex-1">
+					<p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400 leading-none">
 						Token
 					</p>
-					<p className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 leading-none tracking-wider break-all">
+					<p className="text-xs sm:text-base font-bold text-amber-700 dark:text-amber-400 leading-tight tracking-wider break-all">
 						{order.token}
 					</p>
 				</div>
@@ -698,33 +697,33 @@ const OrderCard = ({
 
  {/* Customer label */}
 		{order.table_name && (
-			<div className="px-3 sm:px-4 pt-2 pb-1">
-				<p className="text-xs text-gray-400 dark:text-gray-500">Customer / Label</p>
-				<p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{order.table_name}</p>
+			<div className="px-3 sm:px-4 pt-1.5 sm:pt-2 pb-0.5 sm:pb-1">
+				<p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 leading-none">Customer</p>
+				<p className="text-xs sm:text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{order.table_name}</p>
 			</div>
 		)}
 
  {/* Items */}
- <div className="flex-1 min-h-0">
- <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Items</p>
+ <div className="flex-1 min-h-0 px-3 sm:px-4 py-1.5 sm:py-2">
+ <p className="text-[10px] sm:text-xs font-semibold text-gray-400 dark:text-gray-500 mb-1 sm:mb-2">Items {order.items?.length > 0 && <span className="text-gray-300 dark:text-gray-600">({order.items.length})</span>}</p>
  {isEmpty ? (
- <p className="text-xs text-gray-400 dark:text-gray-500 italic">No items in this order yet</p>
+ <p className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500 italic">No items yet</p>
  ) : (
- <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+ <ul className="space-y-1 sm:space-y-1.5 max-h-32 sm:max-h-40 overflow-y-auto pr-0.5 sm:pr-1">
  {order.items.map((item, idx) => {
  const qty = item.qty || item.quantity || 1;
  return (
  <li
  key={idx}
- className="flex items-center justify-between gap-2 text-sm"
+ className="flex items-center justify-between gap-1.5 sm:gap-2"
  >
- <span className="flex items-center gap-2 min-w-0 flex-1">
- <span className={`inline-flex items-center justify-center w-6 h-6 rounded-md bg-indigo-50 text-indigo-600 text-[11px] font-bold shrink-0 ${isDark ? 'dark:bg-indigo-500/15 dark:text-indigo-400' : ''}`}>
+ <span className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+ <span className={`inline-flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-md bg-indigo-50 text-indigo-600 text-[10px] sm:text-[11px] font-bold shrink-0 ${isDark ? 'dark:bg-indigo-500/15 dark:text-indigo-400' : ''}`}>
  {qty}×
  </span>
- <span className="text-gray-800 dark:text-gray-200 truncate">{item.name}</span>
+ <span className="text-[11px] sm:text-sm text-gray-800 dark:text-gray-200 truncate">{item.name}</span>
  </span>
- <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 shrink-0">
+ <span className="text-[10px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200 shrink-0">
  {fmt(item.price * qty)}
  </span>
  </li>
@@ -734,92 +733,110 @@ const OrderCard = ({
  )}
  </div>
 
- {/* Total + money breakdown — the card used to show only a bare
-     total, so staff couldn't see the recorded service charge / GST. */}
- <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336] flex-1 min-h-0">
-  {(() => {
-    const t = enrichOrderWithTotals(order);
-    return (
-      <div className="space-y-1 mb-3 text-xs">
-        <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
-          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.subtotal)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">Service charge ({t.serviceChargePercent}%)</span>
-          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.serviceCharge)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-500 dark:text-gray-400">GST ({t.taxPercent}%)</span>
-          <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.taxAmount)}</span>
-        </div>
-      </div>
-    );
-  })()}
-<div className="flex items-center justify-between mb-3">
-<span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Total</span>
-<span className="text-lg font-bold text-gray-900 dark:text-gray-100">{fmt(totalSafe)}</span>
-</div>
+ {/* Total + money breakdown */}
+ <div className="px-3 sm:px-4 py-2 sm:py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336]">
+ {/* Compact breakdown */}
+ <div className="space-y-0.5 sm:space-y-1 mb-2 text-[10px] sm:text-xs">
+ <div className="flex justify-between">
+ <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+ <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.subtotal)}</span>
+ </div>
+ <div className="flex justify-between">
+ <span className="text-gray-500 dark:text-gray-400">Svc ({t.serviceChargePercent}%)</span>
+ <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.serviceCharge)}</span>
+ </div>
+ <div className="flex justify-between">
+ <span className="text-gray-500 dark:text-gray-400">GST ({t.taxPercent}%)</span>
+ <span className="font-semibold text-gray-700 dark:text-gray-200">{fmt(t.taxAmount)}</span>
+ </div>
+ {t.discountPercent > 0 && (
+ <div className="flex justify-between text-green-600">
+ <span>Disc ({t.discountPercent}%)</span>
+ <span className="font-semibold">-{fmt(t.discountAmount)}</span>
+ </div>
+ )}
+ </div>
 
- <div className="space-y-2">
+ {/* Total */}
+ <div className="flex items-center justify-between mb-2 sm:mb-3">
+ <span className="text-[11px] sm:text-xs font-semibold text-gray-500 dark:text-gray-400">Total</span>
+ <span className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">{fmt(totalSafe)}</span>
+ </div>
+
+ {/* Action buttons */}
+ <div className="space-y-1.5 sm:space-y-2">
  {order.status === 'ready' && (
  <button
  onClick={onMarkCompleted}
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-sm transition"
+ className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm transition min-h-[40px]"
  >
- <CheckCircle2 className="w-4 h-4" />
- Mark as Delivered
+ <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+ <span className="sm:hidden">Delivered</span>
+ <span className="hidden sm:inline">Mark as Delivered</span>
  </button>
  )}
  {order.status === 'pending' && (
- /* There is no kitchen step in the takeaway flow: once the money is
-    collected the order must CLOSE and its service charge, GST and
-    food price are recorded via /complete-payment (with a manual
-    fallback here so an order can never get stuck in this state). */
  <button
  onClick={() => onPayComplete(order)}
  disabled={completingId === order.id}
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold shadow-sm transition disabled:opacity-60"
+ className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm transition disabled:opacity-60 min-h-[40px]"
  >
- <CheckCircle2 className="w-4 h-4" />
- {completingId === order.id ? 'Completing…' : 'Pay & complete order'}
+ <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+ {completingId === order.id ? (
+ <span>Completing…</span>
+ ) : (
+ <>
+ <span className="sm:hidden">Pay & Complete</span>
+ <span className="hidden sm:inline">Pay & complete order</span>
+ </>
+ )}
  </button>
  )}
  {order.status === 'preparing' && (
  <button
  disabled
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-semibold cursor-not-allowed dark:bg-blue-500/10 dark:text-blue-400"
+ className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-blue-50 text-blue-600 text-xs sm:text-sm font-semibold cursor-not-allowed dark:bg-blue-500/10 dark:text-blue-400 min-h-[40px]"
  >
- <Utensils className="w-4 h-4" />
- Being prepared
+ <Utensils className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+ Preparing
  </button>
  )}
  {order.status === 'NOT_AVAILABLE' && (
  <button
  onClick={onAddItems}
- className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-semibold transition dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20"
+ className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs sm:text-sm font-semibold transition dark:bg-rose-500/10 dark:text-rose-400 dark:hover:bg-rose-500/20 min-h-[40px]"
  >
- <AlertTriangle className="w-4 h-4" />
+ <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
  Retry order
  </button>
  )}
 
- {/* Secondary actions row */}<div className="grid grid-cols-2 gap-2">
+ {/* Secondary actions row */}
+ <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
 	<button
 		onClick={onAddItems}
-		className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400 min-w-0"
+		className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-[11px] sm:text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400 min-w-0 min-h-[36px]"
 	>
-		<Plus className="w-3.5 h-3.5 shrink-0" />
-		<span className="truncate">Add items</span>
+		<Plus className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+		<span className="truncate">Add</span>
 	</button>
-	{isEmpty && (
+	{isEmpty ? (
 		<button
 			onClick={onDeleteEmpty}
-			className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50 min-w-0"
+			className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-[11px] sm:text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50 min-w-0 min-h-[36px]"
 		>
-			<Trash2 className="w-3.5 h-3.5 shrink-0" />
-			<span className="truncate">Remove</span>
-	</button>
+			<Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+			<span className="truncate">Delete</span>
+		</button>
+	) : (
+		<button
+			onClick={() => onPayComplete(order)}
+			disabled={completingId === order.id}
+			className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-gray-300 text-[11px] sm:text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 min-w-0 min-h-[36px] disabled:opacity-50"
+		>
+			<Printer className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+			<span className="truncate">Receipt</span>
+		</button>
 	)}
  </div>
  </div>

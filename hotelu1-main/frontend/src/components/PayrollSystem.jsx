@@ -39,6 +39,15 @@ const PAY_FORM_CSS = `
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* ── Touch-friendly inputs: ensure min 44px tap target ── */
+.pay-input-field input,
+.pay-input-field select,
+.pay-input-field textarea {
+  min-height: 44px;
+  font-size: 16px !important; /* prevents iOS auto-zoom */
+  -webkit-appearance: none;
+}
+
 @media (max-width: 768px) {
   .pay-g4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -117,9 +126,9 @@ const PAY_FORM_CSS = `
   .pay-kpi-grid { grid-template-columns: minmax(0,1fr) !important; }
 }
 
-/* ── Staff Config drawer: the fixed 190px employee-list column sits
-   beside the form and squeezes it to ~150px on phones — stack the
-   list as a horizontal strip above the form on small screens ── */
+/* ══════════════════════════════════════════════════════════════════
+   STAFF CONFIG DRAWER — Mobile
+   ══════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {
   .pay-drawer-body { flex-direction: column !important; overflow-y: auto !important; }
   .pay-drawer-list {
@@ -138,30 +147,126 @@ const PAY_FORM_CSS = `
     margin-bottom: 0 !important;
     flex-shrink: 0 !important;
   }
+  .pay-drawer-header { padding: 14px 16px !important; }
+  .pay-drawer-header h2 { font-size: 16px !important; }
+  .pay-drawer-header p { font-size: 11px !important; }
   .pay-drawer-form { padding: 16px 14px 20px !important; }
-  .pay-drawer-header, .pay-drawer-footer { padding: 14px 16px !important; }
+  .pay-drawer-form > div:first-child { font-size: 15px !important; margin-bottom: 12px !important; }
+  /* Estimate section */
+  .pay-drawer-estimate { padding: 12px !important; margin-top: 16px !important; }
+  .pay-drawer-estimate > div:first-child { font-size: 10px !important; margin-bottom: 8px !important; }
+  .pay-drawer-estimate .pay-g3 { grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 6px !important; }
+  .pay-drawer-estimate .pay-g3 > div { padding: 8px 6px !important; }
+  .pay-drawer-estimate .pay-g3 > div > div:first-child { font-size: 14px !important; }
+  .pay-drawer-estimate .pay-g3 > div > div:last-child { font-size: 9px !important; }
+  /* Footer: stack buttons vertically, full width */
+  .pay-drawer-footer { padding: 14px 16px !important; flex-direction: column !important; gap: 8px !important; }
+  .pay-drawer-footer button { width: 100% !important; justify-content: center !important; padding: 12px 16px !important; font-size: 14px !important; min-height: 44px !important; }
 }
 
-/* ── Manual Payroll modal: quick-calc rows wrap so the input gets
-   full width on phones; action footer stacks instead of overflowing ── */
-@media (max-width: 600px) {
-  .pay-calc-row { flex-wrap: wrap !important; }
-  .pay-calc-row > div:first-child { flex: 1 1 100% !important; }
-}
-@media (max-width: 520px) {
+/* ══════════════════════════════════════════════════════════════════
+   MANUAL PAYROLL MODAL — Mobile (Create Payroll)
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Modal outer: reduce padding so the form gets more screen width */
+  .pay-modal-overlay { padding: 8px !important; }
+  /* Modal card: smaller border radius, full width */
+  .pay-modal-card { max-width: 100% !important; border-radius: 14px !important; max-height: 92dvh !important; }
+  /* Header: stack icon + title vertically, reduce padding */
+  .pay-modal-header-row { padding: 12px 14px !important; flex-direction: column !important; align-items: flex-start !important; gap: 8px !important; }
+  .pay-modal-header-row > div:first-child { width: 100% !important; }
+  .pay-modal-header-icon { display: none !important; }
+  .pay-modal-header-text h2 { font-size: 15px !important; }
+  .pay-modal-header-text h2 span { font-size: 10px !important; }
+  .pay-modal-header-text p { font-size: 11px !important; }
+  .pay-modal-header-close { width: 32px !important; height: 32px !important; position: absolute !important; top: 12px !important; right: 14px !important; }
+  /* Tab nav: smaller padding, horizontal scroll */
+  .pay-modal-tabs { padding: 4px 8px !important; gap: 4px !important; }
+  .pay-modal-tabs button { padding: 6px 8px !important; font-size: 10px !important; gap: 4px !important; }
+  .pay-modal-tabs button span:last-child { font-size: 9px !important; padding: 1px 4px !important; }
+  /* Tab body: tighter padding */
+  .pay-modal-body { padding: 12px !important; }
+  /* Section cards: reduce padding */
+  .pay-section-card { padding: 12px !important; }
+  .pay-section-card > div:first-child { font-size: 11px !important; margin-bottom: 10px !important; }
+  /* Calc rows: full width, stack vertically */
+  .pay-calc-row { flex-wrap: wrap !important; padding: 10px !important; gap: 10px !important; }
+  .pay-calc-row > div:first-child { flex: 1 1 100% !important; min-width: 0 !important; }
   .pay-calc-row > div:last-child { width: 100% !important; }
-  .pay-modal-footer {
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-  .pay-modal-footer button { justify-content: center !important; }
-  .pay-modal-footer-actions { flex: 1 1 auto !important; }
-  .pay-modal-footer-actions button { flex: 1 1 auto !important; }
-}
-@media (max-width: 520px) {
-  .pay-modal-header-close { width: 100% !important; justify-content: center !important; margin-top: 4px !important; }
+  .pay-calc-row > div:last-child > div:first-child { font-size: 10px !important; }
+  .pay-calc-row > div:last-child > button { padding: 8px 14px !important; font-size: 11px !important; min-height: 40px !important; width: 100% !important; justify-content: center !important; }
+  /* Metric bar: 2x2 grid on mobile */
+  .pay-metric-bar { grid-template-columns: repeat(2, minmax(0,1fr)) !important; padding: 10px 12px !important; gap: 8px !important; }
+  .pay-metric-bar > div { padding: 6px 8px !important; }
+  .pay-metric-bar > div > div:first-child { font-size: 9px !important; }
+  .pay-metric-bar > div > div:last-child { font-size: 13px !important; }
+  /* Footer: stack buttons, full width */
+  .pay-modal-footer { flex-direction: column !important; gap: 8px !important; padding: 10px 12px !important; }
+  .pay-modal-footer > button { width: 100% !important; justify-content: center !important; min-height: 44px !important; padding: 10px 16px !important; font-size: 13px !important; }
   .pay-modal-footer-actions { width: 100% !important; }
-  .pay-modal-footer-actions > * { width: 100% !important; flex: 1 1 auto !important; justify-content: center !important; }
+  .pay-modal-footer-actions > * { width: 100% !important; flex: 1 1 auto !important; justify-content: center !important; min-height: 44px !important; }
+}
+
+@media (max-width: 520px) {
+  .pay-modal-footer-actions { display: flex !important; flex-direction: column !important; gap: 8px !important; }
+}
+
+@media (max-width: 400px) {
+  .pay-metric-bar { grid-template-columns: minmax(0,1fr) !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PAYSLIP MODAL — Mobile
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .payslip-modal-overlay { padding: 8px !important; }
+  .payslip-modal-card { max-width: 100% !important; border-radius: 14px !important; max-height: 90dvh !important; }
+  .payslip-modal-header { padding: 12px 14px !important; }
+  .payslip-modal-header h2 { font-size: 15px !important; }
+  .payslip-modal-header p { font-size: 11px !important; }
+  .payslip-modal-body { padding: 14px !important; }
+  .payslip-company-block { padding: 14px 16px !important; flex-direction: column !important; gap: 8px !important; border-radius: 12px !important; }
+  .payslip-company-block h1 { font-size: 16px !important; }
+  .payslip-company-block > div:last-child { text-align: left !important; }
+  /* Attendance grid: 2 columns on mobile */
+  .payslip-attendance { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 8px !important; margin-bottom: 14px !important; }
+  .payslip-attendance > div { padding: 10px !important; }
+  .payslip-attendance > div > div:first-child { font-size: 16px !important; }
+  .payslip-attendance > div > div:last-child { font-size: 10px !important; }
+  /* Earnings/Deductions: stack vertically */
+  .payslip-earn-ded { grid-template-columns: minmax(0,1fr) !important; gap: 10px !important; margin-bottom: 14px !important; }
+  .payslip-earn-ded > div { padding: 12px 14px !important; }
+  .payslip-earn-ded > div > div:first-child { font-size: 10px !important; margin-bottom: 8px !important; }
+  .payslip-earn-ded > div > div > div { font-size: 12px !important; padding: 4px 0 !important; }
+  /* Net salary block: stack vertically, centered */
+  .payslip-net-block { padding: 14px 16px !important; flex-direction: column !important; gap: 8px !important; text-align: center !important; border-radius: 12px !important; }
+  .payslip-net-block > div:first-child > div:first-child { font-size: 11px !important; }
+  .payslip-net-block > div:first-child > div:last-child { font-size: 22px !important; }
+  .payslip-net-block > div:last-child { text-align: center !important; font-size: 11px !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PAY MODAL + GENERATE MODAL — Mobile (small modals)
+   ══════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .pay-modal-small-overlay { padding: 8px !important; }
+  .pay-modal-small-card { max-width: 100% !important; border-radius: 14px !important; padding: 16px !important; }
+  .pay-modal-small-card h3 { font-size: 15px !important; }
+  .pay-modal-small-card p { font-size: 11px !important; }
+  /* Icon + title row: reduce icon size */
+  .pay-modal-small-card > div:first-child > div:first-child { width: 36px !important; height: 36px !important; border-radius: 12px !important; }
+  .pay-modal-small-card > div:first-child > div:first-child svg { width: 18px !important; height: 18px !important; }
+  /* Info box in Generate modal */
+  .pay-modal-small-info { padding: 10px 12px !important; margin-bottom: 14px !important; }
+  .pay-modal-small-info > div:first-child { font-size: 11px !important; }
+  .pay-modal-small-info ul { font-size: 11px !important; line-height: 1.6 !important; }
+  /* Footer: stack buttons vertically, full width */
+  .pay-modal-small-footer { flex-direction: column !important; gap: 8px !important; }
+  .pay-modal-small-footer button { width: 100% !important; justify-content: center !important; min-height: 44px !important; padding: 10px 16px !important; font-size: 13px !important; }
+}
+
+@media (max-width: 400px) {
+  .pay-modal-small-card { padding: 14px 12px !important; }
 }
 `;
 
@@ -245,7 +350,7 @@ const ActionBtn = ({ title, onClick, color, icon: Icon, isDark = true }) => (
 );
 
 const InputField = ({ label, value, onChange, type = 'text', prefix, isDark = true, placeholder }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+  <div className="pay-input-field" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
     <label style={{ fontSize: 11, fontWeight: 700, color: isDark ? '#94A3B8' : '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</label>
     <div style={{ position: 'relative' }}>
       {prefix && (
@@ -320,16 +425,16 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
   ].filter((x) => parseFloat(x.val || 0) > 0);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{
-        width: '100%', maxWidth: 780, maxHeight: '90vh', overflow: 'auto', borderRadius: 24,
+    <div className="payslip-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="payslip-modal-card" style={{
+        width: '100%', maxWidth: 780, maxHeight: '90dvh', overflow: 'auto', borderRadius: 24,
         background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
         boxShadow: isDark ? '0 25px 60px rgba(0,0,0,0.8)' : '0 20px 40px rgba(0,0,0,0.12)',
         color: isDark ? '#FFFFFF' : '#0F172A',
       }}>
         {/* Header bar */}
-        <div style={{
+        <div className="payslip-modal-header" style={{
           padding: '20px 24px',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -356,9 +461,9 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
         </div>
 
         {/* Printable section */}
-        <div ref={printRef} style={{ padding: 24 }}>
+        <div ref={printRef} className="payslip-modal-body" style={{ padding: 24 }}>
           {/* Company block */}
-          <div style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 14, padding: '20px 28px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="payslip-company-block" style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 14, padding: '20px 28px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <h1 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 800, color: '#fff' }}>PAYSLIP</h1>
               <p style={{ margin: '2px 0', fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>
@@ -378,7 +483,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Attendance summary */}
-          <div className="pay-g4" style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
+          <div className="pay-g4 payslip-attendance" style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
             {[
               { label: 'Working Days', val: r.total_working_days, color: null },
               { label: 'Present',      val: r.days_present,       color: '#10B981' },
@@ -397,7 +502,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Earnings / Deductions */}
-          <div className="pay-g2" style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
+          <div className="pay-g2 payslip-earn-ded" style={{ display: 'grid', gap: 16, marginBottom: 20 }}>
             <div style={{
               background: isDark ? 'rgba(16,185,129,0.08)' : '#F0FDF4',
               border: isDark ? '1px solid rgba(16,185,129,0.2)' : '1px solid #BBF7D0',
@@ -434,7 +539,7 @@ const PayslipModal = ({ record: r, onClose, isDark = true }) => {
           </div>
 
           {/* Net salary */}
-          <div style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 16, padding: '20px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="payslip-net-block" style={{ background: 'linear-gradient(135deg,#4338CA,#2563EB)', borderRadius: 16, padding: '20px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>Net Salary Payable</div>
               <div style={{ fontSize: 32, fontWeight: 900, color: '#fff', marginTop: 4, letterSpacing: '-0.03em' }}>{fmt(r.net_salary)}</div>
@@ -565,7 +670,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
               {(() => {
                 const e = estimate(local[selUser]);
                 return (
-                  <div style={{
+                  <div className="pay-drawer-estimate" style={{
                     marginTop: 20,
                     background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC',
                     border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
@@ -614,8 +719,8 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
   const [ref, setRef] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{
+    <div className="pay-modal-small-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="pay-modal-small-card" style={{
         width: '100%', maxWidth: 440,
         background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
@@ -652,7 +757,7 @@ const PayModal = ({ record, onPay, onClose, isDark = true }) => {
           <InputField label="Payment Reference" value={ref} onChange={setRef} isDark={isDark} />
           <InputField label="Payment Date" value={date} onChange={setDate} type="date" isDark={isDark} />
         </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
+        <div className="pay-modal-small-footer" style={{ display: 'flex', gap: 10, marginTop: 24, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#475569', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Cancel</button>
           <button onClick={() => onPay({ payment_method: method, payment_reference: ref, payment_date: date })} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#3B82F6,#4F46E5)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Banknote size={14} /> Confirm Payment
@@ -670,8 +775,8 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
   const [month, setMonth] = useState(String(now.getMonth() + 1));
   const [busy,  setBusy]  = useState(false);
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{
+    <div className="pay-modal-small-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="pay-modal-small-card" style={{
         width: '100%', maxWidth: 440,
         background: isDark ? '#141C2E' : '#FFFFFF',
         border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E2E8F0',
@@ -723,7 +828,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
           </div>
         </div>
 
-        <div style={{
+        <div className="pay-modal-small-info" style={{
           background: isDark ? 'rgba(251,191,36,0.08)' : '#FFFBEB',
           border: isDark ? '1px solid rgba(251,191,36,0.2)' : '1px solid #FDE68A',
           borderRadius: 12, padding: '12px 16px', marginBottom: 20
@@ -737,7 +842,7 @@ const GenerateModal = ({ onGenerate, onClose, isDark = true }) => {
           </ul>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <div className="pay-modal-small-footer" style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#475569', cursor: 'pointer', fontWeight: 600, fontSize: 13 }}>Cancel</button>
           <button disabled={busy} onClick={async () => { setBusy(true); await onGenerate(year, month); setBusy(false); }} style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg,${GOLD},#A16207)`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: busy ? 0.7 : 1 }}>
             <Zap size={14} /> {busy ? 'Generating…' : 'Generate Now'}
@@ -980,9 +1085,9 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div style={{
-        width: '100%', maxWidth: 840, maxHeight: '92vh',
+    <div className="pay-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="pay-modal-card" style={{
+        width: '100%', maxWidth: 840, maxHeight: '90dvh',
         background: isDark ? '#141C2E' : '#FFFFFF',
         borderRadius: 24, display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: isDark ? '0 25px 60px -15px rgba(0,0,0,0.7)' : '0 20px 45px rgba(0,0,0,0.12)',
@@ -995,7 +1100,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           padding: '20px 24px',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0,
+          flexShrink: 0, position: 'relative',
           background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFC',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1020,7 +1125,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Tab Navigation */}
-        <div style={{
+        <div className="pay-modal-tabs" style={{
           display: 'flex',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           background: isDark ? 'rgba(0,0,0,0.25)' : '#F1F5F9',
@@ -1065,7 +1170,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Tab Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(14px,4vw,22px) clamp(12px,4vw,26px)' }}>
+        <div className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(14px,4vw,22px) clamp(12px,4vw,26px)' }}>
 
           {/* TAB 1: EMPLOYEE & PERIOD */}
           {activeTab === 'employee' && (
@@ -1098,7 +1203,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Pay Period Quick Chooser */}
-              <div style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0', borderRadius: 14, padding: 16 }}>
+              <div className="pay-section-card" style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0', borderRadius: 14, padding: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: GOLD, textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Calendar size={14} /> Pay Period Selection
                 </div>
@@ -1147,7 +1252,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Attendance & Work Stats */}
-              <div style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0', borderRadius: 14, padding: 16 }}>
+              <div className="pay-section-card" style={{ background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0', borderRadius: 14, padding: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#0284C7', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Clock size={14} /> Attendance & Work Metrics
                 </div>
@@ -1176,12 +1281,12 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Overtime pay with quick calc */}
-                <div className="pay-calc-row" style={{
+                <div className="pay-calc-row pay-section-card" style={{
                 background: isDark ? 'rgba(59,130,246,0.06)' : '#EFF6FF',
                 border: isDark ? '1px solid rgba(59,130,246,0.2)' : '1px solid #BFDBFE',
                 borderRadius: 14, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap'
               }}>
-                <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <InputField label="Overtime Pay (Nu.)" type="number" prefix="Nu." value={form.overtime_pay} onChange={(v) => upd('overtime_pay', v)} isDark={isDark} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1203,7 +1308,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Allowances */}
-              <div style={{
+              <div className="pay-section-card" style={{
                 background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
                 border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
                 borderRadius: 14, padding: 16
@@ -1221,7 +1326,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {/* Bonuses & Incentives */}
-              <div style={{
+              <div className="pay-section-card" style={{
                 background: isDark ? 'rgba(16,185,129,0.05)' : '#F0FDF4',
                 border: isDark ? '1px solid rgba(16,185,129,0.2)' : '1px solid #BBF7D0',
                 borderRadius: 14, padding: 16
@@ -1241,7 +1346,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           {/* TAB 3: DEDUCTIONS */}
           {activeTab === 'deductions' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{
+              <div className="pay-section-card" style={{
                 background: isDark ? 'rgba(239,68,68,0.06)' : '#FEF2F2',
                 border: isDark ? '1px solid rgba(239,68,68,0.2)' : '1px solid #FECACA',
                 borderRadius: 14, padding: 16
@@ -1256,7 +1361,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 </div>
               </div>
 
-              <div style={{
+              <div className="pay-section-card" style={{
                 background: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
                 border: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
                 borderRadius: 14, padding: 16
@@ -1351,7 +1456,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </div>
 
               {form.status === 'paid' && (
-                <div style={{
+                <div className="pay-section-card" style={{
                   background: isDark ? 'rgba(59,130,246,0.08)' : '#EFF6FF',
                   border: isDark ? '1px solid rgba(59,130,246,0.25)' : '1px solid #BFDBFE',
                   borderRadius: 14, padding: 16
@@ -1388,7 +1493,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Live Calculation Metric Bar */}
-        <div className="pay-g4" style={{
+        <div className="pay-g4 pay-metric-bar" style={{
           background: isDark ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
           borderTop: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           padding: '14px 24px', display: 'grid', gap: 12, flexShrink: 0

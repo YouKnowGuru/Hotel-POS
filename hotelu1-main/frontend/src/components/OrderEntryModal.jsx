@@ -473,15 +473,15 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
      h-full menu list — could not resolve its sizes and the Menu Items
      panel collapsed to 0px, leaving the popup blank below the header.
      A definite h-[95vh] makes every nested flex/percent height resolvable. */}
- <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[90dvh] sm:h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
- <div className="flex justify-between items-center p-4 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
- <h3 className="text-lg sm:text-2xl font-bold text-white">
+ <div className="flex justify-between items-center p-3 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
+ <h3 className="text-sm sm:text-2xl font-bold text-white truncate pr-2">
  New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order for {table && table.id === 'Takeaway' ? 'Takeaway' : table && table.id ? `Table ${table.id}` : ''}
  </h3>
  <button 
  onClick={onClose} 
- className="text-white/80 hover:text-white bg-white/30 hover:bg-white/30 rounded-full p-2 transition-colors"
+ className="text-white/80 hover:text-white bg-white/30 hover:bg-white/30 rounded-full p-1.5 sm:p-2 transition-colors flex-shrink-0"
  >
  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -489,13 +489,13 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </button>
  </div>
  {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
- <div className="p-3 sm:p-6 flex-grow overflow-hidden flex flex-col">
- <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-grow min-h-0">
+ <div className="p-2 sm:p-6 flex-grow overflow-hidden flex flex-col">
+ <div className="flex flex-col lg:flex-row gap-3 sm:gap-6 flex-grow min-h-0">
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
- <div className="flex-1 lg:flex-[3] bg-indigo-50 p-3 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
- <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
- <h4 className="text-lg sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
- <span className="mr-1 sm:mr-2 text-lg sm:text-2xl">🍽️</span> Menu Items
+ <div className="flex-1 lg:flex-[3] bg-indigo-50 p-2 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
+ <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
+ <h4 className="text-base sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
+ <span className="mr-1 sm:mr-2 text-base sm:text-2xl">🍽️</span> Menu Items
  </h4>
  <div className="flex items-center space-x-2">
  <div className="relative">
@@ -504,7 +504,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  placeholder="Search items"
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
- className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#0B1220] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm dark:shadow-none dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
+ className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#0B1220] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm dark:shadow-none dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
  />
  {searchTerm && (
  <button
@@ -519,7 +519,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  
  {/* Category Tabs */}
- <div className="flex flex-wrap gap-1 sm:gap-2 mb-3 sm:mb-4 flex-shrink-0">
+ <div className="flex flex-nowrap overflow-x-auto scrollbar-none gap-1 sm:gap-2 mb-3 sm:mb-4 flex-shrink-0 pb-1">
  {categories.map(category => (
  <button
  key={category}
@@ -580,8 +580,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  return (
  <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-102 overflow-hidden group border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
  {/* Food Image - Circular like MenuManagement */}
- <div className="w-full h-24 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
- <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
+ <div className="w-full h-20 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
+ <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
  {item.image ? (
  <img 
  src={item.image} 
@@ -616,7 +616,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </p>
  <button
  onClick={() => addToCart(item)}
- className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-110 flex-shrink-0"
+ className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center font-bold text-sm shadow-md transition-all duration-200 transform hover:scale-110 flex-shrink-0"
  >
  +
  </button>
@@ -889,15 +889,14 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {showMobileCart && (
  <div className="md:hidden fixed inset-0 z-[100] flex items-end pointer-events-none">
  <div className="absolute inset-0 bg-black/50 pointer-events-auto" onClick={() => setShowMobileCart(false)} />
- <div className="relative bg-white dark:bg-[#141C2E] w-full rounded-t-3xl shadow-2xl max-h-[85vh] overflow-hidden flex flex-col pointer-events-auto dark:bg-[#141C2E]">
- <div className="flex flex-col flex-1 overflow-hidden">
- <div className="p-4 overflow-y-auto h-full">
- <div className="flex items-center justify-between mb-4">
- <h3 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
- <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <div className="relative bg-white dark:bg-[#141C2E] w-full rounded-t-3xl shadow-2xl max-h-[88dvh] overflow-hidden flex flex-col pointer-events-auto dark:bg-[#141C2E]">
+ {/* Fixed Header */}
+ <div className="p-4 border-b border-gray-100 dark:border-slate-700/60 flex items-center justify-between flex-shrink-0">
+ <h3 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+ <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
- Your Cart ({Object.keys(cart).length} items)
+ Your Cart ({Object.keys(cart).length})
  </h3>
  <div className="flex items-center gap-2">
  {Object.keys(cart).length > 0 && (
@@ -922,8 +921,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
 
+ {/* Scrollable Content Area */}
+ <div className="flex-1 overflow-y-auto p-4">
  {Object.keys(cart).length === 0 ? (
- <div className="text-center py-8">
+ <div className="text-center py-12">
  <svg className="w-16 h-16 text-gray-300 dark:text-slate-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
@@ -932,21 +933,22 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  ) : (
  <>
- <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+ {/* Cart Items */}
+ <div className="space-y-2 mb-4">
  {Object.values(cart).map(item => (
-<div key={item.id} className="flex items-center justify-between bg-indigo-50 dark:bg-[#1A2336] p-3 rounded-xl gap-2">
+<div key={item.id} className="flex items-center justify-between bg-indigo-50 dark:bg-[#1A2336] p-2.5 sm:p-3 rounded-xl gap-2">
 <div className="flex-1 min-w-0">
-<p className="font-semibold text-gray-800 dark:text-slate-200 truncate">{item.name}</p>
-<p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
+<p className="font-semibold text-gray-800 dark:text-slate-200 text-sm truncate">{item.name}</p>
+<p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
  </div>
- <div className="flex items-center gap-2">
+ <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
  <button
  onClick={() => updateCartQty(item.id, -1)}
 className="w-8 h-8 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center font-bold transition-colors"
 >
 −
 </button>
-<span className="w-8 text-center font-bold text-lg dark:text-white">{item.qty}</span>
+<span className="w-7 text-center font-bold text-base dark:text-white">{item.qty}</span>
 <button
 onClick={() => updateCartQty(item.id, 1)}
 className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center font-bold transition-colors"
@@ -957,34 +959,10 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </div>
  ))}
  </div>
-<div className="border-t-2 border-indigo-100 dark:border-slate-700/60 pt-4 mt-4">
-<div className="flex justify-between items-center mb-4">
-<span className="text-lg font-semibold text-gray-700 dark:text-slate-300">Order Summary</span>
-<span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
- {fmt(Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0))}
- </span>
- </div>
-
- {/* Payment Method Selection */}
- <div className="grid grid-cols-2 gap-2 mb-4">
- {['cash', 'card'].map(method => (
- <button
- key={method}
- onClick={() => setPaymentMethod(method)}
- className={`p-3 rounded-xl font-bold text-sm transition-all ${
- paymentMethod === method
- ? 'bg-indigo-600 text-white shadow-lg'
- : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#1E293B] dark:text-slate-300 dark:hover:bg-slate-600'
- }`}
- >
- {method === 'cash' ? '💵 Cash' : '💳 Card'}
- </button>
- ))}
- </div>
 
  {/* Guests seated at this table (dine-in only) */}
  {orderType !== 'TAKEAWAY' && (
- <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-4 dark:bg-blue-950/40">
+ <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-3 dark:bg-blue-950/40">
  <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300">
  <Users className="w-4 h-4 text-blue-500" />
  Guests
@@ -1021,12 +999,44 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </div>
  </div>
  )}
+ </>
+ )}
+ </div>
+
+ {/* Fixed Footer with totals + Place Order */}
+ {Object.keys(cart).length > 0 && (
+ <div className="border-t border-gray-100 dark:border-slate-700/60 p-4 flex-shrink-0 bg-white dark:bg-[#141C2E]">
+ {/* Mini breakdown */}
+ <div className="space-y-1 mb-3 text-xs">
+ <div className="flex justify-between text-gray-500 dark:text-slate-400">
+ <span>Subtotal</span>
+ <span className="font-semibold tabular-nums">{fmt(takeTotals.subtotal)}</span>
+ </div>
+ <div className="flex justify-between text-gray-500 dark:text-slate-400">
+ <span>Service charge ({takeTotals.serviceChargePercent}%)</span>
+ <span className="font-semibold tabular-nums">+{fmt(takeTotals.serviceCharge)}</span>
+ </div>
+ <div className="flex justify-between text-gray-500 dark:text-slate-400">
+ <span>GST ({takeTotals.taxPercent}%)</span>
+ <span className="font-semibold tabular-nums">+{fmt(takeTotals.taxAmount)}</span>
+ </div>
+ {takeTotals.discountPercent > 0 && (
+ <div className="flex justify-between text-green-600">
+ <span>Discount ({takeTotals.discountPercent}%)</span>
+ <span className="font-semibold tabular-nums">-{fmt(takeTotals.discountAmount)}</span>
+ </div>
+ )}
+ </div>
+ <div className="flex justify-between items-center mb-3">
+ <span className="text-base font-bold text-gray-800 dark:text-white">Total</span>
+ <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{fmt(totalAmount)}</span>
+ </div>
 
  {/* Place Order Button */}
  <button
  onClick={handlePlaceOrder}
  disabled={isSubmitting}
- className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+ className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
  >
  {isSubmitting ? (
  <>
@@ -1046,10 +1056,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  )}
  </button>
  </div>
- </>
  )}
- </div>
- </div>
  </div>
  </div>
  )}
@@ -1057,14 +1064,14 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  {/* Payment Modal for Takeaway Orders - z-[100] to stay above Notification toasts */}
  {showPaymentModal && pendingOrder && (
  <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
- <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl max-w-md w-full max-h-[90dvh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Header */}
- <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-center">
- <h2 className="text-xl font-bold text-white">Payment</h2>
- <p className="text-green-100 text-sm">Complete your takeaway order payment</p>
+ <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 sm:p-4 text-center flex-shrink-0">
+ <h2 className="text-lg sm:text-xl font-bold text-white">Payment</h2>
+ <p className="text-green-100 text-xs sm:text-sm">Complete your takeaway order payment</p>
  </div>
 
- <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+ <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
  {/* Order Summary */}
 <div className="bg-gray-50 dark:bg-[#1A2336] rounded-xl p-4 dark:bg-[#1A2336]">
 <h3 className="font-semibold text-gray-800 dark:text-slate-200 mb-2">Order Summary</h3>
@@ -1122,7 +1129,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  <div className="grid grid-cols-2 gap-2">
  <button
  onClick={() => setPaymentMethod('cash')}
- className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+ className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm font-semibold ${
  paymentMethod === 'cash' 
 ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
 : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
@@ -1135,7 +1142,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </button>
  <button
  onClick={() => setPaymentMethod('card')}
- className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+ className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm font-semibold ${
  paymentMethod === 'card' 
 ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
 : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
@@ -1148,7 +1155,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </button>
  <button
  onClick={() => setPaymentMethod('mbob')}
- className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+ className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm font-semibold ${
  paymentMethod === 'mbob'
 ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
 : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
@@ -1161,7 +1168,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </button>
  <button
  onClick={() => setPaymentMethod('mpay')}
- className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
+ className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 min-h-[44px] text-sm font-semibold ${
  paymentMethod === 'mpay'
 ? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
 : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
@@ -1176,19 +1183,19 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </div>
 
  {/* Action Buttons */}
- <div className="flex gap-3 pt-4">
+ <div className="flex gap-3 pt-4 flex-shrink-0">
  <button
  onClick={() => {
  setShowPaymentModal(false);
  setPendingOrder(null);
  }}
- className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-gray-600 hover:bg-gray-50 transition-colors dark:bg-[#141C2E] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336]"
+ className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors dark:bg-[#141C2E] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336] min-h-[44px]"
  >
  Cancel
  </button>
  <button
  onClick={handlePaymentComplete}
- className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all shadow-lg"
+ className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-sm hover:from-green-600 hover:to-green-700 transition-all shadow-lg min-h-[44px]"
  >
  Complete Payment
  </button>
