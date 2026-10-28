@@ -7,7 +7,6 @@ import {
   Receipt,
   Utensils,
   ShoppingBag,
-  Store,
   HelpCircle,
   LogOut,
   Package,
@@ -36,7 +35,6 @@ import {
   fetchPermissionsMatrixFromServer,
   PERMISSIONS_UPDATED_EVENT,
 } from '../utils/permissions';
-import { getBranchLabel, getBranchSubLabel, isAdminUser } from '../utils/branchScope';
 import BrandMark from './BrandMark';
 import { loadBranding } from '../utils/branding';
 
@@ -271,65 +269,27 @@ const Sidebar = ({
         />
       </div>
 
-      {/* ── Branch / location card ──────────────────────────── */}
+      {/* ── Compact status line ─────────────────────────────── */}
       <div className="px-4 mb-3 relative" style={{ zIndex: 1 }}>
         <div
-          className="flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-200"
+          className="flex items-center justify-between px-3 py-2 rounded-xl"
           style={{
-            background: 'linear-gradient(135deg, rgba(79,70,229,0.10) 0%, rgba(79,70,229,0.03) 100%)',
-            border: '1px solid rgba(79,70,229,0.15)',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)',
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(212,160,23,0.20) 0%, rgba(212,160,23,0.08) 100%)',
-              border: '1px solid rgba(212,160,23,0.25)',
-            }}
-          >
-            <Store className="w-4 h-4" style={{ color: '#F0C050' }} />
-          </div>
-          <div className="flex-1 text-left min-w-0">
-            <p className="text-sm font-semibold text-white leading-tight truncate">
-              {getBranchLabel(currentUser)}
-            </p>
-            <p className="text-[11px] leading-tight truncate" style={{ color: '#64748B' }}>
-              {getBranchSubLabel(currentUser)}
-            </p>
-            <p className="text-[11px] font-semibold flex items-center gap-1 mt-0.5" style={{ color: '#34D399' }}>
-              <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{
-                  background: '#34D399',
-                  boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
-                }}
-              />
-              Online
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Currency badge ──────────────────────────────────── */}
-      <div className="px-4 mb-3 relative" style={{ zIndex: 1 }}>
-        <div
-          className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs"
-          style={{
-            background: 'rgba(212,160,23,0.06)',
-            border: '1px solid rgba(212,160,23,0.12)',
-          }}
-        >
-          <span className="font-medium" style={{ color: '#64748B' }}>Currency</span>
-          <span
-            className="font-bold text-[11px] px-2.5 py-1 rounded-lg"
-            style={{
-              color: '#F0C050',
-              background: 'rgba(212,160,23,0.10)',
-              border: '1px solid rgba(212,160,23,0.18)',
-            }}
-          >
-            Nu. (BTN)
+          <span className="text-[11px] font-semibold flex items-center gap-1.5" style={{ color: '#34D399' }}>
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                background: '#34D399',
+                boxShadow: '0 0 6px rgba(52, 211, 153, 0.5)',
+              }}
+            />
+            Online
+          </span>
+          <span className="text-[11px] font-medium" style={{ color: '#64748B' }}>
+            {currentUser?.name || currentUser?.email?.split('@')[0] || 'Admin'}
           </span>
         </div>
       </div>
