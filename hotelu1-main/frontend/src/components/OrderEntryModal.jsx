@@ -433,7 +433,16 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  'Desserts': '🍰',
  'Chinese': '🥡',
  'Veg': '🥬',
- 'Other': '🍽️'
+ 'Other': '🍽️',
+ // Tomza-specific categories
+ 'Refreshing Drinks': '🥤',
+ 'Local Village Spirits': '🍶',
+ 'Bhutanese Bar Selection': '🍺',
+ 'Tomza': '🍜',
+ 'Snacks': '🍟',
+ 'Hot Beverages': '☕',
+ 'Noodles': '🍜',
+ 'Noodle': '🍜',
  };
  return icons[category] || '🍽️';
  };
@@ -518,13 +527,13 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  
- {/* Category Tabs */}
- <div className="flex flex-nowrap overflow-x-auto scrollbar-none gap-1 sm:gap-2 mb-3 sm:mb-4 flex-shrink-0 pb-1">
+ {/* Category Tabs — wraps on mobile for easy tapping, horizontal scroll on sm+ */}
+ <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-shrink-0 sm:overflow-x-auto sm:scrollbar-none sm:flex-nowrap sm:pb-1">
  {categories.map(category => (
  <button
  key={category}
  onClick={() => setSelectedCategory(category)}
- className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm ${
+ className={`px-2.5 sm:px-3 py-1.5 sm:py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
  selectedCategory === category
  ? 'bg-gradient-to-r from-indigo-600 to-red-400 text-white shadow-lg transform scale-105'
  : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400 hover:shadow-md dark:bg-[#1A2336] dark:text-slate-300 dark:border-slate-600 dark:hover:border-indigo-500'

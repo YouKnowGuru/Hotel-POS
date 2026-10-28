@@ -24,7 +24,7 @@ const getGlass = (isDark) => ({
   boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.30)' : '0 4px 18px rgba(0,0,0,0.04)',
 });
 
-/* ── Responsive form grids (skill §5 mobile-first: rows collapse to a
+/* ── Responsive form grids (mobile-first: rows collapse to a
    single column on phones instead of squeezing 3–5 inputs side by side) */
 const PAY_FORM_CSS = `
 .pay-g2  { grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -48,16 +48,56 @@ const PAY_FORM_CSS = `
   -webkit-appearance: none;
 }
 
+/* Ensure all bare inputs/selects inside modals are also touch-friendly */
+.pay-modal-small-card input,
+.pay-modal-small-card select,
+.pay-modal-small-card textarea,
+.pay-modal-card input:not([type="checkbox"]):not([type="radio"]),
+.pay-modal-card select,
+.pay-modal-card textarea,
+.pay-drawer-panel input:not([type="checkbox"]):not([type="radio"]),
+.pay-drawer-panel select,
+.pay-drawer-panel textarea {
+  min-height: 40px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .pay-modal-small-card input,
+  .pay-modal-small-card select,
+  .pay-modal-small-card textarea,
+  .pay-modal-card input:not([type="checkbox"]):not([type="radio"]),
+  .pay-modal-card select,
+  .pay-modal-card textarea,
+  .pay-drawer-panel input:not([type="checkbox"]):not([type="radio"]),
+  .pay-drawer-panel select,
+  .pay-drawer-panel textarea {
+    min-height: 44px;
+    font-size: 16px !important; /* prevents iOS auto-zoom */
+  }
+}
+
+/* ── Tablet (<= 1024px): 3-col grids become 2-col, 5-col becomes 3-col ── */
+@media (max-width: 1024px) {
+  .pay-g5 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+
+/* ── Small tablet / large phone (<= 768px) ── */
 @media (max-width: 768px) {
   .pay-g4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g3x { grid-template-columns: minmax(0,1fr); }
 }
+
+/* ── Phone landscape / small tablet (<= 720px): 2-col grids collapse ── */
 @media (max-width: 720px) {
   .pay-g2, .pay-g2x, .pay-g2w { grid-template-columns: minmax(0,1fr); }
   .pay-g3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
-@media (max-width: 400px) {
+
+/* ── Phone (<= 480px): everything single column ── */
+@media (max-width: 480px) {
   .pay-g3 { grid-template-columns: minmax(0,1fr); }
   .pay-g4, .pay-g5 { grid-template-columns: minmax(0,1fr); }
 }
@@ -127,8 +167,16 @@ const PAY_FORM_CSS = `
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   STAFF CONFIG DRAWER — Mobile
+   STAFF CONFIG DRAWER — Responsive (tablet + mobile)
    ══════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (<= 900px): drawer takes full width, sidebar narrows ── */
+@media (max-width: 900px) {
+  .pay-drawer-body .pay-drawer-list { width: 160px !important; }
+  .pay-drawer-panel { max-width: 100% !important; }
+}
+
+/* ── Small tablet / large phone (<= 640px): sidebar becomes horizontal strip ── */
 @media (max-width: 640px) {
   .pay-drawer-body { flex-direction: column !important; overflow-y: auto !important; }
   .pay-drawer-list {
@@ -165,8 +213,16 @@ const PAY_FORM_CSS = `
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   MANUAL PAYROLL MODAL — Mobile (Create Payroll)
+   MANUAL PAYROLL MODAL — Responsive (Create Payroll)
    ══════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (<= 900px): slightly reduce modal padding and widths ── */
+@media (max-width: 900px) {
+  .pay-modal-card { max-width: 95% !important; }
+  .pay-modal-header-row { padding: '16px 18px' !important; }
+}
+
+/* ── Small tablet / large phone (<= 640px) ── */
 @media (max-width: 640px) {
   /* Modal outer: reduce padding so the form gets more screen width */
   .pay-modal-overlay { padding: 8px !important; }
@@ -246,8 +302,15 @@ const PAY_FORM_CSS = `
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   PAY MODAL + GENERATE MODAL — Mobile (small modals)
+   PAY MODAL + GENERATE MODAL — Responsive (small modals)
    ══════════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (<= 768px): allow modal to be wider ── */
+@media (max-width: 768px) {
+  .pay-modal-small-card { max-width: 90% !important; }
+}
+
+/* ── Phone (<= 640px): full width, stacked layout ── */
 @media (max-width: 640px) {
   .pay-modal-small-overlay { padding: 8px !important; }
   .pay-modal-small-card { max-width: 100% !important; border-radius: 14px !important; padding: 16px !important; }
@@ -267,6 +330,34 @@ const PAY_FORM_CSS = `
 
 @media (max-width: 400px) {
   .pay-modal-small-card { padding: 14px 12px !important; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HEADER BUTTONS + PAGE FILTERS — Responsive
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Phone (<= 640px): header buttons wrap, full-width stacked ── */
+@media (max-width: 640px) {
+  .pay-header-actions { width: 100% !important; }
+  .pay-header-actions button { flex: 1 1 auto !important; min-height: 40px !important; font-size: 11px !important; }
+}
+
+/* ── Records filter bar: stack on phones ── */
+@media (max-width: 640px) {
+  .pay-filter-bar { flex-direction: column !important; align-items: stretch !important; }
+  .pay-filter-bar > * { width: 100% !important; }
+  .pay-filter-bar input,
+  .pay-filter-bar select { width: 100% !important; }
+}
+
+/* ── Payslip cards: reduce min width on small screens ── */
+@media (max-width: 640px) {
+  .pay-payslip-cards { grid-template-columns: minmax(0,1fr) !important; }
+}
+
+/* ── My config salary structure: wrap better ── */
+@media (max-width: 480px) {
+  .pay-config-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
 }
 `;
 
@@ -590,7 +681,7 @@ const StaffConfigDrawer = ({ users, config, onSave, onClose, isDark = true }) =>
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: isDark ? 'rgba(0,0,0,0.80)' : 'rgba(15,23,42,0.65)', display: 'flex', alignItems: 'stretch', justifyContent: 'flex-end' }}>
-      <div style={{
+      <div className="pay-drawer-panel" style={{
         width: '100%', maxWidth: 720,
         background: isDark ? '#141C2E' : '#FFFFFF',
         borderLeft: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
@@ -1125,7 +1216,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         </div>
 
         {/* Tab Navigation */}
-        <div className="pay-modal-tabs" style={{
+        <div className="pay-modal-tabs scrollbar-none" style={{
           display: 'flex',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           background: isDark ? 'rgba(0,0,0,0.25)' : '#F1F5F9',
@@ -1160,7 +1251,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                   fontSize: 10, padding: '2px 6px', borderRadius: 8,
                   background: active ? (isDark ? 'rgba(212,160,23,0.25)' : '#FDE68A') : (isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0'),
                   color: active ? (isDark ? '#fff' : '#92400E') : (isDark ? '#94A3B8' : '#64748B'),
-                  fontWeight: 600,
+                  fontWeight: 600, maxWidth: 80, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {t.badge}
                 </span>
@@ -1802,14 +1893,14 @@ const PayrollSystem = ({ currentUser }) => {
             {isAdmin ? 'Staff salary processing, payslips & financial analytics' : 'Your private salary structure, monthly earnings & itemized payslips'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+        <div className="pay-header-actions" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
           <ThemeToggle />
           {isAdmin && (
             <>
               <button
                 onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
                 style={{
-                  padding: '7px 12px sm:8px 14px', borderRadius: 12, border: 'none',
+                  padding: '8px 14px', borderRadius: 12, border: 'none',
                   background: `linear-gradient(135deg,${GOLD},#A16207)`,
                   color: '#fff', fontWeight: 800, fontSize: 11, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 5,
@@ -1822,7 +1913,7 @@ const PayrollSystem = ({ currentUser }) => {
               <button
                 onClick={() => setShowGenerate(true)}
                 style={{
-                  padding: '7px 10px sm:8px 12px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
+                  padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
                   background: isDark ? 'rgba(212,160,23,0.1)' : '#FEF3C7',
                   color: isDark ? GOLD : '#B45309',
                   fontWeight: 700, fontSize: 11, cursor: 'pointer',
@@ -1835,7 +1926,7 @@ const PayrollSystem = ({ currentUser }) => {
               <button
                 onClick={() => setShowConfig(true)}
                 style={{
-                  padding: '7px 10px sm:8px 12px', borderRadius: 12,
+                  padding: '8px 12px', borderRadius: 12,
                   border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                   background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
                   color: isDark ? '#FFFFFF' : '#0F172A',
@@ -1854,7 +1945,7 @@ const PayrollSystem = ({ currentUser }) => {
 
       {/* Tabs */}
       {isAdmin && (
-        <div style={{
+        <div className="scrollbar-none" style={{
           display: 'flex', gap: 4, marginBottom: 24,
           background: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
           padding: 4, borderRadius: 14, width: 'fit-content', maxWidth: '100%', overflowX: 'auto',
@@ -1884,13 +1975,13 @@ const PayrollSystem = ({ currentUser }) => {
       {tab === 'overview' && isAdmin && (
         <>
           {/* Period filter */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="pay-filter-bar" style={{ display: 'flex', gap: 10, marginBottom: 22, flexWrap: 'wrap', alignItems: 'center' }}>
             <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)} style={selWrap()}>
               {MONTHS.map((m, i) => (
                 <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
-            <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 90 }} />
+            <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 'auto', minWidth: 80, flex: '0 0 auto' }} />
             <button
               onClick={fetchAll}
               style={{
@@ -1900,6 +1991,7 @@ const PayrollSystem = ({ currentUser }) => {
                 color: isDark ? '#94A3B8' : '#475569',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13,
                 boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                flexShrink: 0,
               }}
             >
               <RefreshCw size={13} /> Refresh
@@ -2040,11 +2132,11 @@ const PayrollSystem = ({ currentUser }) => {
       {/* ═══════════ RECORDS ═══════════ */}
       {tab === 'records' && isAdmin && (
         <>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center', rowGap: 8 }}>
+          <div className="pay-filter-bar" style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center', rowGap: 8 }}>
             <button
               onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
               style={{
-                padding: '7px 12px', borderRadius: 10, border: 'none',
+                padding: '8px 12px', borderRadius: 10, border: 'none',
                 background: `linear-gradient(135deg,${GOLD},#A16207)`,
                 color: '#fff', cursor: 'pointer', display: 'flex',
                 alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
@@ -2054,7 +2146,7 @@ const PayrollSystem = ({ currentUser }) => {
             >
               <PlusCircle size={14} /> <span className="hidden sm:inline">New Entry</span><span className="sm:hidden">New</span>
             </button>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', flex: '0 1 auto' }}>
               <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: isDark ? '#94A3B8' : '#64748B', pointerEvents: 'none' }} />
               <input
                 placeholder="Search employee…"
@@ -2066,7 +2158,8 @@ const PayrollSystem = ({ currentUser }) => {
                   border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                   borderRadius: 10,
                   color: isDark ? '#FFFFFF' : '#0F172A',
-                  fontSize: 13, outline: 'none', width: 'min(200px, calc(100vw - 48px))',
+                  fontSize: 13, outline: 'none', width: '100%', minWidth: 0,
+                  boxSizing: 'border-box',
                   boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
                 }}
               />
@@ -2076,7 +2169,7 @@ const PayrollSystem = ({ currentUser }) => {
                 <option key={m} value={String(i+1)} style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>{m}</option>
               ))}
             </select>
-            <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 90 }} />
+            <input type="number" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} style={{ ...selWrap(), width: 'auto', minWidth: 80, flex: '0 0 auto' }} />
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={selWrap()}>
               <option value="" style={{ background: isDark ? '#4338CA' : '#FFFFFF', color: isDark ? '#FFFFFF' : '#0F172A' }}>All Status</option>
               {Object.keys(STATUS_STYLES).map((s) => (
@@ -2092,6 +2185,7 @@ const PayrollSystem = ({ currentUser }) => {
                 color: isDark ? '#94A3B8' : '#475569',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13,
                 boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                flexShrink: 0,
               }}
             >
               <RefreshCw size={13} /> Refresh
@@ -2183,7 +2277,7 @@ const PayrollSystem = ({ currentUser }) => {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+              <div className="pay-config-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
                 {parseFloat(myConfig.hra || 0) > 0 && (
                   <div style={{ padding: '8px 12px', borderRadius: 10, background: isDark ? 'rgba(255,255,255,0.04)' : '#F8FAFC', border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0' }}>
                     <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B', fontWeight: 600 }}>HRA</div>
@@ -2228,7 +2322,7 @@ const PayrollSystem = ({ currentUser }) => {
               <p style={{ color: isDark ? '#94A3B8' : '#64748B', fontSize: 14, margin: 0 }}>No payslips yet. Ask your manager to process payroll.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
+            <div className="pay-payslip-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
               {mySlips.map((r) => (
                 <div
                   key={r.id}
