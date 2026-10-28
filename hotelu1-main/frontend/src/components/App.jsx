@@ -17,6 +17,7 @@ import {
   applyDocumentBranding,
   BRANDING_UPDATED_EVENT,
 } from '../utils/branding';
+import SiteLoader from './SiteLoader';
 
 // BUNDLE SIZE: everything used to be eagerly imported, so the public QR
 // menu shipped the whole admin suite (xlsx ≈ 1 MB, exceljs ≈ 3 MB,
@@ -53,15 +54,8 @@ const AboutPage = lazy(() => import('./AboutPage'));
 const PrivacyPage = lazy(() => import('./PrivacyPage'));
 const TermsPage = lazy(() => import('./TermsPage'));
 
-// Loading component for Suspense fallback - Reference Image Design
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0B1220]">
-    <div className="text-center bg-white rounded-2xl shadow-md p-8 dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
-      <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4 dark:border-slate-700 dark:border-t-indigo-500"></div>
-      <p className="text-gray-600 font-medium dark:text-gray-300">Loading...</p>
-    </div>
-  </div>
-);
+// Loading component for Suspense fallback — uses the modern SiteLoader
+const LoadingSpinner = () => <SiteLoader />;
 
 
 const App = () => {
@@ -155,7 +149,7 @@ const App = () => {
   };
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return <SiteLoader />;
   }
 
   const renderContent = () => {
@@ -402,7 +396,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <NotificationsProvider>
-        <Suspense fallback={<LoadingSpinner />}>
+        <Suspense fallback={<SiteLoader minimal />}>
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={
