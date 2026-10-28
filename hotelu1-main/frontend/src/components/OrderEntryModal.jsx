@@ -482,7 +482,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
      h-full menu list — could not resolve its sizes and the Menu Items
      panel collapsed to 0px, leaving the popup blank below the header.
      A definite h-[95vh] makes every nested flex/percent height resolvable. */}
- <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[90dvh] sm:h-[95vh] overflow-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
+ <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl w-full max-w-6xl h-[90dvh] sm:h-[95vh] overflow-hidden overflow-x-hidden flex flex-col dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
  {/* Modal Header - Orange Theme */}
  <div className="flex justify-between items-center p-3 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
  <h3 className="text-sm sm:text-2xl font-bold text-white truncate pr-2">
@@ -498,10 +498,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </button>
  </div>
  {notification && <Notification message={notification.message} type={notification.type} onClose={() => setNotification(null)} />}
- <div className="p-2 sm:p-6 flex-grow overflow-hidden flex flex-col">
+ <div className="p-2 sm:p-6 flex-grow overflow-hidden flex flex-col overflow-x-hidden">
  <div className="flex flex-col lg:flex-row gap-3 sm:gap-6 flex-grow min-h-0">
  {/* Menu Items Panel - Full width on mobile, 3/4 on desktop */}
- <div className="flex-1 lg:flex-[3] bg-indigo-50 p-2 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
+ <div className="flex-1 lg:flex-[3] min-w-0 bg-indigo-50 p-2 sm:p-6 rounded-xl border border-indigo-100 overflow-hidden flex flex-col min-h-0 lg:max-h-none dark:bg-[#1A2336] dark:border-slate-700/60">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 sm:mb-4 flex-shrink-0 gap-2 sm:gap-0">
  <h4 className="text-base sm:text-2xl font-bold text-gray-800 dark:text-white flex items-center">
  <span className="mr-1 sm:mr-2 text-base sm:text-2xl">🍽️</span> Menu Items
@@ -527,19 +527,20 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  
- {/* Category Tabs — wraps on mobile for easy tapping, horizontal scroll on sm+ */}
- <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-shrink-0 sm:overflow-x-auto sm:scrollbar-none sm:flex-nowrap sm:pb-1">
+ {/* Category Tabs — horizontal scroll with snap on all sizes (food-app style) */}
+ <div className="flex gap-2 mb-3 sm:mb-4 flex-shrink-0 overflow-x-auto scrollbar-none pb-1" style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}>
  {categories.map(category => (
  <button
  key={category}
  onClick={() => setSelectedCategory(category)}
- className={`px-2.5 sm:px-3 py-1.5 sm:py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
+ style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+ className={`px-3 py-1.5 rounded-full font-medium transition-all duration-200 text-xs sm:text-sm whitespace-nowrap ${
  selectedCategory === category
  ? 'bg-gradient-to-r from-indigo-600 to-red-400 text-white shadow-lg transform scale-105'
  : 'bg-white text-gray-700 border border-gray-300 hover:border-indigo-400 hover:shadow-md dark:bg-[#1A2336] dark:text-slate-300 dark:border-slate-600 dark:hover:border-indigo-500'
  }`}
  >
- <span className="mr-0.5 sm:mr-1 text-xs sm:text-sm">{getCategoryIcon(category)}</span>
+ <span className="mr-1 text-xs sm:text-sm">{getCategoryIcon(category)}</span>
  <span className="text-xs sm:text-sm">{category}</span>
  </button>
  ))}
@@ -567,7 +568,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  ) : (
- <div className="h-full overflow-y-auto pr-1 sm:pr-2">
+ <div className="h-full overflow-y-auto overflow-x-hidden pr-1 sm:pr-2">
  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
  {filteredMenu.map(item => {
  // Smart categorization for display with consistent casing
