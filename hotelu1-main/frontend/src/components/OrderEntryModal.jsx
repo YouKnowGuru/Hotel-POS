@@ -504,12 +504,12 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  placeholder="Search items"
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
- className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#1A2336] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 bg-white shadow-sm dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
+ className="pl-3 sm:pl-4 pr-8 sm:pr-10 py-1.5 sm:py-2.5 border-2 border-indigo-100 dark:border-slate-600 rounded-xl bg-white dark:bg-[#0B1220] text-gray-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 w-32 sm:w-56 text-xs sm:text-sm font-medium transition-all duration-200 shadow-sm dark:shadow-none dark:bg-[#0B1220] dark:border-slate-600 dark:text-slate-200 dark:focus:border-indigo-500"
  />
  {searchTerm && (
  <button
  onClick={() => setSearchTerm('')}
- className="absolute right-2 sm:right-3 top-1.5 sm:top-2.5 text-gray-400 hover:text-gray-600 transition-colors text-xs sm:text-sm"
+ className="absolute right-2 sm:right-3 top-1.5 sm:top-2.5 text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors text-xs sm:text-sm"
  >
  ✕
  </button>
@@ -543,16 +543,16 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {searchTerm ? (
  <>
  <div className="text-4xl sm:text-6xl mb-2 sm:mb-4">🔍</div>
- <p className="text-gray-500 text-sm sm:text-lg mb-1 sm:mb-2">No items found for "{searchTerm}"</p>
- <p className="text-xs sm:text-sm text-gray-400 mb-2 sm:mb-4">Try different keywords or browse categories</p>
+ <p className="text-gray-500 dark:text-slate-400 text-sm sm:text-lg mb-1 sm:mb-2">No items found for "{searchTerm}"</p>
+ <p className="text-xs sm:text-sm text-gray-400 dark:text-slate-500 mb-2 sm:mb-4">Try different keywords or browse categories</p>
  </>
  ) : (
  <>
- <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+ <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
  <span className="text-3xl">🍽️</span>
  </div>
- <p className="text-gray-600 font-medium mb-1">No menu items available</p>
- <p className="text-xs text-gray-400">Try selecting a different category</p>
+ <p className="text-gray-600 dark:text-slate-400 font-medium mb-1">No menu items available</p>
+ <p className="text-xs text-gray-400 dark:text-slate-500">Try selecting a different category</p>
  </>
  )}
  </div>
@@ -596,22 +596,22 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div className="p-2 sm:p-3">
  {/* Available Badge */}
  <div className="mb-2">
- <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs px-2 py-1 rounded-full font-semibold inline-flex items-center">
+ <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] sm:text-xs px-2 py-1 rounded-full font-semibold inline-flex items-center">
  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1"></span>
  Available
  </span>
  </div>
  {/* Item Name */}
- <h5 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm mb-1 group-hover:text-indigo-600 transition-colors leading-tight line-clamp-1">
+ <h5 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight line-clamp-1">
  {highlightText(item.name, searchTerm)}
  </h5>
  {/* Category */}
- <p className="text-[10px] sm:text-xs text-gray-500 mb-2">
+ <p className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-500 mb-2">
  {displayCategory}
  </p>
  {/* Price and Add Button */}
  <div className="flex items-center justify-between">
- <p className="text-sm sm:text-base font-bold text-indigo-600">
+ <p className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">
  {fmt(item.price)}
  </p>
  <button
@@ -631,7 +631,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  {/* Right Panel - Current Order - Hidden on mobile, visible on tablet+ */}
  <div className="hidden md:flex flex-1 md:max-w-[280px] bg-white dark:bg-[#141C2E] flex-col rounded-xl border border-indigo-100 shadow-sm dark:bg-[#141C2E] dark:border-slate-700/60">
- <div className="p-3 sm:p-4 bg-indigo-50/50 border-b border-indigo-100 flex-shrink-0">
+ <div className="p-3 sm:p-4 bg-indigo-50/50 dark:bg-[#0B1220] border-b border-indigo-100 dark:border-slate-700/60 flex-shrink-0">
  <h4 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white flex items-center">
  <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -643,13 +643,13 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {Object.keys(cart).length === 0 ? (
  <div className="h-full flex items-center justify-center">
  <div className="text-center">
- <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
- <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+ <svg className="w-8 h-8 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
  </div>
- <p className="text-gray-600 font-medium mb-1">Add items to order</p>
- <p className="text-xs text-gray-400">Select delicious items from the menu</p>
+ <p className="text-gray-600 dark:text-slate-400 font-medium mb-1">Add items to order</p>
+ <p className="text-xs text-gray-400 dark:text-slate-500">Select delicious items from the menu</p>
  </div>
  </div>
  ) : (
@@ -680,25 +680,25 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </button>
  </div>
  </div>
- <div className="mt-1 pt-1 border-t border-indigo-100">
- <p className="text-xs font-semibold text-indigo-600">
+<div className="mt-1 pt-1 border-t border-indigo-100 dark:border-slate-700/60">
+<p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
  Item Total: {fmt(item.price * item.qty)}
  </p>
  </div>
  </div>
  ))}
  </div>
- <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t-2 border-gray-300 flex-shrink-0">
- <div className="space-y-1 text-xs sm:text-sm mb-2 sm:mb-3">
- <div className="flex justify-between text-gray-500">
- <span>Subtotal</span><span className="font-semibold tabular-nums">{fmt(takeTotals.subtotal)}</span>
- </div>
- <div className="flex justify-between text-gray-500">
- <span>Service charge ({takeTotals.serviceChargePercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.serviceCharge)}</span>
- </div>
- <div className="flex justify-between text-gray-500">
- <span>GST ({takeTotals.taxPercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.taxAmount)}</span>
- </div>
+<div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t-2 border-gray-300 dark:border-slate-600 flex-shrink-0">
+<div className="space-y-1 text-xs sm:text-sm mb-2 sm:mb-3">
+<div className="flex justify-between text-gray-500 dark:text-slate-400">
+<span>Subtotal</span><span className="font-semibold tabular-nums">{fmt(takeTotals.subtotal)}</span>
+</div>
+<div className="flex justify-between text-gray-500 dark:text-slate-400">
+<span>Service charge ({takeTotals.serviceChargePercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.serviceCharge)}</span>
+</div>
+<div className="flex justify-between text-gray-500 dark:text-slate-400">
+<span>GST ({takeTotals.taxPercent}%)</span><span className="font-semibold tabular-nums">+{fmt(takeTotals.taxAmount)}</span>
+</div>
  {takeTotals.discountPercent > 0 && (
  <div className="flex justify-between text-green-600">
  <span>Discount ({takeTotals.discountPercent}%)</span><span className="font-semibold tabular-nums">-{fmt(takeTotals.discountAmount)}</span>
@@ -709,8 +709,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <span className="text-lg sm:text-xl font-bold text-green-600">{fmt(totalAmount)}</span>
  </div>
  </div>
- <div className="bg-gradient-to-r from-indigo-600 to-red-100 p-1.5 sm:p-2 rounded-lg">
- <p className="text-xs text-gray-600 text-center">
+<div className="bg-gradient-to-r from-indigo-600 to-red-100 dark:from-indigo-900/50 dark:to-rose-900/30 p-1.5 sm:p-2 rounded-lg">
+<p className="text-xs text-gray-600 dark:text-slate-300 text-center">
  🎉 Great choice! Your order is ready to confirm.
  </p>
  </div>
@@ -722,11 +722,11 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
  {/* Footer - Orange Theme - Hidden on mobile */}
- <div className="hidden md:flex p-3 sm:p-4 border-t border-indigo-100 bg-indigo-50/50 flex-col sm:flex-row justify-between items-center flex-shrink-0 gap-3 sm:gap-0">
- <div className="text-left text-center sm:text-left">
- <p className="text-xs sm:text-sm text-gray-600 font-medium">Order Summary</p>
- <p className="text-lg sm:text-xl font-bold text-indigo-600">
- {fmt(totalAmount)} <span className="text-gray-500 text-sm">• {Object.keys(cart).length} items</span>
+<div className="hidden md:flex p-3 sm:p-4 border-t border-indigo-100 dark:border-slate-700/60 bg-indigo-50/50 dark:bg-[#0B1220] flex-col sm:flex-row justify-between items-center flex-shrink-0 gap-3 sm:gap-0">
+<div className="text-left text-center sm:text-left">
+<p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 font-medium">Order Summary</p>
+<p className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
+{fmt(totalAmount)} <span className="text-gray-500 dark:text-slate-500 text-sm">• {Object.keys(cart).length} items</span>
  </p>
  </div>
  <div className="flex space-x-2 sm:space-x-3">
@@ -735,8 +735,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  disabled={Object.keys(cart).length === 0}
  className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center ${
  Object.keys(cart).length === 0
- ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
- : 'bg-white text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 shadow-sm dark:bg-[#1A2336] dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-950/40'
+? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
+: 'bg-white text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 shadow-sm dark:bg-[#1A2336] dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-950/40'
  }`}
  >
  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -749,8 +749,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  disabled={Object.keys(cart).length === 0}
  className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center ${
  Object.keys(cart).length === 0
- ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
- : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transform hover:scale-105'
+? 'bg-gray-200 text-gray-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500'
+: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg transform hover:scale-105'
  }`}
  >
  <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -782,31 +782,31 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Receipt Content */}
  <div className="p-6">
  {/* Order Token - Main highlight */}
- <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4 mb-6 text-center">
- <p className="text-amber-700 text-xs font-semibold uppercase tracking-wide mb-1">Your Order Token</p>
- <p className="text-3xl sm:text-4xl font-bold text-amber-800 tracking-wider break-all">{confirmedOrder.token}</p>
- <p className="text-amber-600 text-xs mt-2">Show this token when collecting your order</p>
+<div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800/50 rounded-xl p-4 mb-6 text-center">
+<p className="text-amber-700 dark:text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Your Order Token</p>
+<p className="text-3xl sm:text-4xl font-bold text-amber-800 dark:text-amber-300 tracking-wider break-all">{confirmedOrder.token}</p>
+<p className="text-amber-600 dark:text-amber-500 text-xs mt-2">Show this token when collecting your order</p>
  </div>
 
  {/* Order Details */}
  <div className="space-y-3 mb-6">
  <div className="flex justify-between text-sm">
- <span className="text-gray-500">Order ID</span>
- <span className="font-semibold text-gray-900 dark:text-white">#{confirmedOrder.id}</span>
- </div>
- <div className="flex justify-between text-sm">
- <span className="text-gray-500">Date & Time</span>
- <span className="font-semibold text-gray-900 dark:text-white">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
- </div>
- <div className="flex justify-between text-sm">                        <span className="text-gray-500">Status</span>
+<span className="text-gray-500 dark:text-slate-400">Order ID</span>
+<span className="font-semibold text-gray-900 dark:text-white">#{confirmedOrder.id}</span>
+</div>
+<div className="flex justify-between text-sm">
+<span className="text-gray-500 dark:text-slate-400">Date & Time</span>
+<span className="font-semibold text-gray-900 dark:text-white">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
+</div>
+<div className="flex justify-between text-sm">                        <span className="text-gray-500 dark:text-slate-400">Status</span>
                         {/* REAL payment state — a paid takeaway used to read
                             "Pending" while the board said waiting-for-kitchen */}
                         {confirmedOrder.payment_status === 'paid' || confirmedOrder.status === 'completed' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                             Paid — Order Complete
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
                             Pending
                           </span>
                         )}
@@ -827,16 +827,16 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
 
  {/* Total */}
- <div className="border-t-2 border-gray-200 dark:border-slate-700 pt-4 mb-6">
- <div className="flex justify-between items-center">
- <span className="text-lg font-bold text-gray-900 dark:text-white">Total Amount</span>
- <span className="text-2xl font-bold text-blue-600">{fmt(confirmedOrder.total)}</span>
+<div className="border-t-2 border-gray-200 dark:border-slate-700 pt-4 mb-6">
+<div className="flex justify-between items-center">
+<span className="text-lg font-bold text-gray-900 dark:text-white">Total Amount</span>
+<span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(confirmedOrder.total)}</span>
  </div>
  </div>
 
  {/* Instructions */}
- <div className="bg-blue-50 rounded-lg p-4 mb-6">
- <p className="text-sm text-blue-800 text-center">
+<div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 mb-6">
+<p className="text-sm text-blue-800 dark:text-blue-300 text-center">
  <strong>Important:</strong> Please show your token <strong>{confirmedOrder.token}</strong> at the counter to collect your order.
  </p>
  </div>
@@ -847,7 +847,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onClick={() => {
  window.print();
  }}
- className="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+ className="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-300 bg-white dark:bg-[#1A2336] hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-blue-500"
  >
  <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -903,7 +903,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {Object.keys(cart).length > 0 && (
  <button
  onClick={() => { clearCart(); setShowMobileCart(false); }}
- className="p-2 hover:bg-red-100 text-red-500 rounded-full transition-colors"
+ className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 dark:text-red-400 rounded-full transition-colors"
  title="Clear Cart"
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -924,32 +924,32 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
 
  {Object.keys(cart).length === 0 ? (
  <div className="text-center py-8">
- <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+ <svg className="w-16 h-16 text-gray-300 dark:text-slate-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
  </svg>
- <p className="text-gray-600 text-lg font-medium">Your cart is empty</p>
- <p className="text-gray-400 text-sm mt-2">Add items to get started!</p>
+<p className="text-gray-600 dark:text-slate-400 text-lg font-medium">Your cart is empty</p>
+<p className="text-gray-400 dark:text-slate-500 text-sm mt-2">Add items to get started!</p>
  </div>
  ) : (
  <>
  <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
  {Object.values(cart).map(item => (
- <div key={item.id} className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl gap-2">
- <div className="flex-1 min-w-0">
- <p className="font-semibold text-gray-800 dark:text-slate-200 truncate">{item.name}</p>
- <p className="text-sm text-indigo-600 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
+<div key={item.id} className="flex items-center justify-between bg-indigo-50 dark:bg-[#1A2336] p-3 rounded-xl gap-2">
+<div className="flex-1 min-w-0">
+<p className="font-semibold text-gray-800 dark:text-slate-200 truncate">{item.name}</p>
+<p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
  </div>
  <div className="flex items-center gap-2">
  <button
  onClick={() => updateCartQty(item.id, -1)}
- className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center font-bold transition-colors"
- >
- −
- </button>
- <span className="w-8 text-center font-bold text-lg">{item.qty}</span>
- <button
- onClick={() => updateCartQty(item.id, 1)}
- className="w-8 h-8 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center font-bold transition-colors"
+className="w-8 h-8 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center font-bold transition-colors"
+>
+−
+</button>
+<span className="w-8 text-center font-bold text-lg dark:text-white">{item.qty}</span>
+<button
+onClick={() => updateCartQty(item.id, 1)}
+className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hover:bg-green-900/50 text-green-600 dark:text-green-400 rounded-lg flex items-center justify-center font-bold transition-colors"
  >
  +
  </button>
@@ -957,10 +957,10 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  ))}
  </div>
- <div className="border-t-2 border-indigo-100 pt-4 mt-4">
- <div className="flex justify-between items-center mb-4">
- <span className="text-lg font-semibold text-gray-700 dark:text-slate-300">Order Summary</span>
- <span className="text-2xl font-bold text-indigo-600">
+<div className="border-t-2 border-indigo-100 dark:border-slate-700/60 pt-4 mt-4">
+<div className="flex justify-between items-center mb-4">
+<span className="text-lg font-semibold text-gray-700 dark:text-slate-300">Order Summary</span>
+<span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
  {fmt(Object.values(cart).reduce((sum, item) => sum + item.price * item.qty, 0))}
  </span>
  </div>
@@ -1066,19 +1066,19 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
 
  <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
  {/* Order Summary */}
- <div className="bg-gray-50 dark:bg-[#0B1220] rounded-xl p-4 dark:bg-[#1A2336]">
- <h3 className="font-semibold text-gray-800 dark:text-slate-200 mb-2">Order Summary</h3>
- <div className="flex justify-between text-sm mb-1">
- <span className="text-gray-600">Order ID</span>
- <span className="font-medium">#{pendingOrder.id}</span>
+<div className="bg-gray-50 dark:bg-[#1A2336] rounded-xl p-4 dark:bg-[#1A2336]">
+<h3 className="font-semibold text-gray-800 dark:text-slate-200 mb-2">Order Summary</h3>
+<div className="flex justify-between text-sm mb-1">
+<span className="text-gray-600 dark:text-slate-400">Order ID</span>
+<span className="font-medium dark:text-slate-200">#{pendingOrder.id}</span>
  </div>
  
  {/* Item Details */}
- <div className="my-3 space-y-2 border-t border-b border-gray-200 dark:border-slate-700 py-3">
- {pendingOrder.items?.map((item, idx) => (
- <div key={idx} className="flex justify-between text-sm">
- <span className="text-gray-700 dark:text-slate-300">{item.qty || item.quantity}x {item.name}</span>
- <span className="font-medium text-gray-800">{fmt((item.price || 0) * (item.qty || item.quantity || 1))}</span>
+<div className="my-3 space-y-2 border-t border-b border-gray-200 dark:border-slate-700 py-3">
+{pendingOrder.items?.map((item, idx) => (
+<div key={idx} className="flex justify-between text-sm">
+<span className="text-gray-700 dark:text-slate-300">{item.qty || item.quantity}x {item.name}</span>
+<span className="font-medium text-gray-800 dark:text-slate-200">{fmt((item.price || 0) * (item.qty || item.quantity || 1))}</span>
  </div>
  ))}
  </div>
@@ -1087,45 +1087,45 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {(() => {
  const t = enrichOrderWithTotals(pendingOrder);
  return (
- <div className="space-y-1 text-sm">
- <div className="flex justify-between">
- <span className="text-gray-600">Subtotal</span>
- <span className="font-medium">{fmt(t.subtotal)}</span>
- </div>
- {t.discountPercent > 0 && (
- <div className="flex justify-between">
- <span className="text-gray-600">Discount ({t.discountPercent}%)</span>
- <span className="font-medium text-green-600">-{fmt(t.discountAmount)}</span>
- </div>
- )}
- <div className="flex justify-between">
- <span className="text-gray-600">Service charge ({t.serviceChargePercent}%)</span>
- <span className="font-medium">+{fmt(t.serviceCharge)}</span>
- </div>
- <div className="flex justify-between">
- <span className="text-gray-600">GST ({t.taxPercent}%)</span>
- <span className="font-medium text-gray-800">+{fmt(t.taxAmount)}</span>
- </div>
+<div className="space-y-1 text-sm">
+<div className="flex justify-between">
+<span className="text-gray-600 dark:text-slate-400">Subtotal</span>
+<span className="font-medium dark:text-slate-200">{fmt(t.subtotal)}</span>
+</div>
+{t.discountPercent > 0 && (
+<div className="flex justify-between">
+<span className="text-gray-600 dark:text-slate-400">Discount ({t.discountPercent}%)</span>
+<span className="font-medium text-green-600 dark:text-green-400">-{fmt(t.discountAmount)}</span>
+</div>
+)}
+<div className="flex justify-between">
+<span className="text-gray-600 dark:text-slate-400">Service charge ({t.serviceChargePercent}%)</span>
+<span className="font-medium dark:text-slate-200">+{fmt(t.serviceCharge)}</span>
+</div>
+<div className="flex justify-between">
+<span className="text-gray-600 dark:text-slate-400">GST ({t.taxPercent}%)</span>
+<span className="font-medium text-gray-800 dark:text-slate-200">+{fmt(t.taxAmount)}</span>
+</div>
  </div>
  );
  })()}
  
- <div className="flex justify-between items-center pt-3 border-t border-gray-200 mt-3">
- <span className="text-lg font-bold text-gray-800">Total</span>
- <span className="text-2xl font-bold text-green-600">{fmt(enrichOrderWithTotals(pendingOrder).total)}</span>
+<div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-slate-700 mt-3">
+<span className="text-lg font-bold text-gray-800 dark:text-white">Total</span>
+<span className="text-2xl font-bold text-green-600 dark:text-green-400">{fmt(enrichOrderWithTotals(pendingOrder).total)}</span>
  </div>
  </div>
 
  {/* Payment Method */}
  <div>
- <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+ <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Payment Method</label>
  <div className="grid grid-cols-2 gap-2">
  <button
  onClick={() => setPaymentMethod('cash')}
  className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
  paymentMethod === 'cash' 
- ? 'border-green-500 bg-green-50 text-green-700' 
- : 'border-gray-200 hover:border-gray-300'
+? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+: 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
  }`}
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1137,8 +1137,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onClick={() => setPaymentMethod('card')}
  className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
  paymentMethod === 'card' 
- ? 'border-green-500 bg-green-50 text-green-700' 
- : 'border-gray-200 hover:border-gray-300'
+? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+: 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
  }`}
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1150,8 +1150,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onClick={() => setPaymentMethod('mbob')}
  className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
  paymentMethod === 'mbob'
- ? 'border-green-500 bg-green-50 text-green-700' 
- : 'border-gray-200 hover:border-gray-300'
+? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+: 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
  }`}
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1163,8 +1163,8 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  onClick={() => setPaymentMethod('mpay')}
  className={`p-3 rounded-xl border-2 transition-all flex items-center justify-center gap-2 ${
  paymentMethod === 'mpay'
- ? 'border-green-500 bg-green-50 text-green-700' 
- : 'border-gray-200 hover:border-gray-300'
+? 'border-green-500 bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+: 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500 dark:text-slate-300'
  }`}
  >
  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
