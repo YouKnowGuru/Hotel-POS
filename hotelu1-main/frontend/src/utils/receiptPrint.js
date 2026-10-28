@@ -3,17 +3,50 @@
 /*  Used by the Orders page "View Bill" preview and print actions.     */
 /* ------------------------------------------------------------------ */
 
+import { loadBranding } from './branding';
+
+/**
+ * Load the restaurant/business info that appears at the top of every
+ * printed bill, kitchen slip, and ledger export.
+ *
+ * Resolution order (so the bill always shows the name the admin
+ * actually configured, no matter which Settings tab they used):
+ *   1. `restaurantName` from General Settings
+ *      (localStorage key `systemSettingsExtended_v1`)
+ *   2. `siteName` from the Branding system
+ *      (localStorage key `siteBranding`) — covers the case where the
+ *      admin only ever touched Settings → Branding.
+ *   3. Hard-coded fallback `'Restaurant POS'`
+ *
+ * Address, BST number and phone still come exclusively from General
+ * Settings because the Branding tab doesn't capture those fields.
+ */
 export const loadRestaurantInfo = () => {
   try {
     const raw = localStorage.getItem('systemSettingsExtended_v1');
     const s = raw ? JSON.parse(raw) : {};
+
+    // Fall back to the branding system's siteName when the admin never
+    // set restaurantName in General Settings but did customise it in
+    // Settings → Branding (or the branding was synced from the server).
+    let name = s.restaurantName || '';
+    if (!name) {
+      try {
+        name = loadBranding()?.siteName || '';
+      } catch {
+        /* branding not available — fall through to hard-coded default */
+      }
+    }
+    if (!name) name = 'Restaurant POS';
+
     return {
-      name: s.restaurantName || 'Restaurant POS',
+      name,
       address: s.address || '',
       bstNo: s.bstNo || '',
       phone: s.contactPhone || '',
     };
   } catch {
+    // Last-resort fallback so a bill can always print.
     return { name: 'Restaurant POS', address: '', bstNo: '', phone: '' };
   }
 };

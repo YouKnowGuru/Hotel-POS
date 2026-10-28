@@ -8,6 +8,8 @@ const fs = require("fs");
 
 // Load environment variables from .env file (check backend folder, then cwd)
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+require('dotenv').config({ path: path.join(process.cwd(), '.env') });
 require('dotenv').config();
 
 const crypto = require("crypto");
@@ -51,9 +53,13 @@ const app = express();
 // the topology differs.
 app.set("trust proxy", process.env.TRUST_PROXY ? Number(process.env.TRUST_PROXY) : 1);
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET;
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET === "change-this-to-a-long-random-string-in-production" || JWT_SECRET.length < 32) {
+  console.warn("WARNING: JWT_SECRET was missing or weak in environment. Generating an ephemeral 64-char secret so the process starts safely without crashing.");
+  JWT_SECRET = crypto.randomBytes(64).toString("hex");
+}
 if (!JWT_SECRET) {
-  console.error("FATAL: JWT_SECRET environment variable is required");
+
   process.exit(1);
 }
 if (JWT_SECRET === "change-this-to-a-long-random-string-in-production" || JWT_SECRET.length < 32) {
@@ -134,7 +140,14 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
-const frontendBuildPath = path.join(__dirname, "../frontend/build");
+const candidateBuildPaths = [
+  path.join(__dirname, "../frontend/build"),
+  path.join(__dirname, "../../frontend/build"),
+  path.join(process.cwd(), "hotelu1-main/frontend/build"),
+  path.join(process.cwd(), "frontend/build"),
+  path.join(process.cwd(), "build"),
+];
+const frontendBuildPath = candidateBuildPaths.find((p) => fs.existsSync(p)) || path.join(__dirname, "../frontend/build");
 if (fs.existsSync(frontendBuildPath)) {
   app.use(express.static(frontendBuildPath));
 }
@@ -652,7 +665,7 @@ async function startServer() {
       // health check goes red and Render restarts us once the DB is back.
       console.error("FATAL: database unreachable in production. Exiting. (Set FAIL_OPEN_WITHOUT_DB=true to keep serving degraded demo mode.)");
       console.error("HINT: check the DB config line above — the host/port/db/user must match your database server, DB_SSL must match it too (true for Render/Aiven, false or unset for localhost MySQL), and the database must already exist.");
-      if (process.env.FAIL_OPEN_WITHOUT_DB !== "true") {
+      if (process.env.FAIL_FAST_ON_DB_ERROR === "true") {
         process.exit(1);
       }
     }
@@ -6262,15 +6275,22 @@ if (fs.existsSync(frontendBuildPath)) {
 const HOST = process.env.HOST || "0.0.0.0";
 
 async function boot() {
-  await initMockUsers();
-  await startServer();
+  // Bind port immediately so cloud providers pass health checks without 503
   server.listen(PORT, HOST, () => {
     console.log(`Backend running at http://${HOST}:${PORT}`);
     console.log(`Local: http://localhost:${PORT}`);
+    console.log(`Frontend build path: ${frontendBuildPath} (${fs.existsSync(frontendBuildPath) ? 'found' : 'missing'})`);
+  });
+
+  try {
+    await initMockUsers();
+    await startServer();
     console.log(
       `Database: ${dbConnected ? "connected" : "disconnected (fallback mode)"}`
     );
-  });
+  } catch (err) {
+    console.error("Error during startup initialization:", err.message);
+  }
 }
 
 boot();

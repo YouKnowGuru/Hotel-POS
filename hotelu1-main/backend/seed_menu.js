@@ -2,9 +2,11 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const sequelize = require('./models/sequelize');
+const MenuItem = require('./models/MenuItem');
 
 async function seedMenu() {
   try {
+    await MenuItem.sync();
     console.log('Clearing existing menu items...');
 
     // Clear existing menu items first (safe delete via isDeleted or hard delete)

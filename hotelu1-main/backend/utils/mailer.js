@@ -21,6 +21,26 @@
 
 const nodemailer = require('nodemailer');
 
+// Lazy-loaded to avoid a circular require at module-evaluation time
+// (server.js loads mailer before models finish initialising).
+let _Settings = null;
+function getSettingsModel() {
+  if (_Settings === null) {
+    try {
+      _Settings = require('../models/Settings');
+    } catch {
+      _Settings = false;
+    }
+  }
+  return _Settings;
+}
+
+// In-memory cache of the DB-saved restaurant name so we don't hit the
+// database on every email send. Refreshed every 5 minutes.
+let _dbBrandName = null;
+let _dbBrandNameAt = 0;
+const DB_BRAND_TTL_MS = 5 * 60 * 1000;
+
 let cachedTransport = null;
 
 function getTransport() {
@@ -63,8 +83,72 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
+/**
+ * Resolve the brand name for email bills.
+ *
+ * Priority:
+ *   1. `BRAND_NAME` env var (explicitly configured by the deployer)
+ *   2. `restaurantName` saved by the admin in Settings → General
+ *      (stored in the `settings` table, key `restaurantName`)
+ *   3. `siteName` saved by the admin in Settings → Branding
+ *      (stored in the `settings` table, key `siteBranding`)
+ *   4. Fallback `'Our Restaurant'`
+ *
+ * This keeps the email bills consistent with the printed receipts and
+ * the on-screen branding without requiring the deployer to also set
+ * BRAND_NAME in the environment.
+ */
+async function brandNameAsync() {
+  // 1. Env var always wins if set
+  if (process.env.BRAND_NAME) return process.env.BRAND_NAME;
+
+  // 2. Check the in-memory cache
+  const now = Date.now();
+  if (_dbBrandName && now - _dbBrandNameAt < DB_BRAND_TTL_MS) {
+    return _dbBrandName;
+  }
+
+  // 3. Query the DB
+  const Settings = getSettingsModel();
+  if (Settings) {
+    try {
+      const row = await Settings.findOne({ where: { key: 'restaurantName' } });
+      if (row && row.value) {
+        const name = String(row.value).trim();
+        if (name) {
+          _dbBrandName = name;
+          _dbBrandNameAt = now;
+          return name;
+        }
+      }
+      // Try branding as a secondary DB source
+      const brandingRow = await Settings.findOne({ where: { key: 'siteBranding' } });
+      if (brandingRow && brandingRow.value) {
+        const parsed = typeof brandingRow.value === 'string'
+          ? JSON.parse(brandingRow.value)
+          : brandingRow.value;
+        const siteName = parsed && parsed.siteName ? String(parsed.siteName).trim() : '';
+        if (siteName && siteName !== 'Hotel POS') {
+          _dbBrandName = siteName;
+          _dbBrandNameAt = now;
+          return siteName;
+        }
+      }
+    } catch {
+      /* DB not connected or table doesn't exist yet — fall through */
+    }
+  }
+
+  return 'Our Restaurant';
+}
+
+/**
+ * Synchronous brand name — uses the cached value or falls back to the
+ * env var. Call brandNameAsync() before sending to refresh the cache,
+ * then use brandName() in the template.
+ */
 function brandName() {
-  return process.env.BRAND_NAME || 'Our Restaurant';
+  return process.env.BRAND_NAME || _dbBrandName || 'Our Restaurant';
 }
 
 function brandAddress() {
@@ -227,11 +311,13 @@ function billRows(order) {
   return rows;
 }
 
-function sendOrderPlacedEmail(order) {
+async function sendOrderPlacedEmail(order) {
+  await brandNameAsync();
+  const name = brandName();
   const first = (order.customer_name || '').split(' ')[0];
   return sendMail({
     to: order.customer_email,
-    subject: `Order #${order.id} confirmed — ${brandName()}`,
+    subject: `Order #${order.id} confirmed — ${name}`,
     heading: `Thanks${first ? `, ${first}` : ''} — your order is confirmed!`,
     accent: '#7c3aed',
     subheading:
@@ -248,14 +334,16 @@ function sendOrderPlacedEmail(order) {
   });
 }
 
-function sendPaymentApprovedEmail(order) {
+async function sendPaymentApprovedEmail(order) {
+  await brandNameAsync();
+  const name = brandName();
   // For cash-on-delivery orders the admin approval means "start
   // preparing" — no money has changed hands yet, so the copy must not
   // claim the payment was approved.
   const isCod = order.payment_method === 'cash';
   return sendMail({
     to: order.customer_email,
-    subject: `${isCod ? 'Order' : 'Payment'} approved for order #${order.id} — ${brandName()}`,
+    subject: `${isCod ? 'Order' : 'Payment'} approved for order #${order.id} — ${name}`,
     heading: isCod ? 'Order approved — your food is on the way!' : 'Payment approved — your food is on the way!',
     accent: '#059669',
     subheading: isCod
@@ -281,12 +369,14 @@ function sendDeliveredDeliveredRows(order) {
   return billRows(order);
 }
 
-function sendDeliveredEmail(order) {
+async function sendDeliveredEmail(order) {
+  await brandNameAsync();
+  const name = brandName();
   const isCash = order.payment_method === 'cash';
   const isPaid = order.payment_status === 'paid';
   return sendMail({
     to: order.customer_email,
-    subject: `Order #${order.id} delivered — your bill — ${brandName()}`,
+    subject: `Order #${order.id} delivered — your bill — ${name}`,
     heading: isPaid ? 'Delivered! Enjoy your meal 🍜' : 'Delivered! Please hand over the cash 🍜',
     accent: '#0ea5e9',
     subheading: isCash
@@ -307,7 +397,9 @@ function sendDeliveredEmail(order) {
   });
 }
 
-function sendPaymentReceivedEmail(order) {
+async function sendPaymentReceivedEmail(order) {
+  await brandNameAsync();
+  const name = brandName();
   return sendMail({
     to: order.customer_email,
     subject: `Payment received for order #${order.id} — thank you!`,
@@ -321,7 +413,7 @@ function sendPaymentReceivedEmail(order) {
       `We received the cash payment for order #${order.id}.`,
       `Amount: ${formatMoney(order.total)}`,
     ],
-    footerNote: 'This email is your payment receipt. Thank you for ordering with ' + brandName() + '.',
+    footerNote: 'This email is your payment receipt. Thank you for ordering with ' + name + '.',
     preheader: `Payment received for order #${order.id} — ${formatMoney(order.total)}`,
   });
 }
@@ -358,6 +450,7 @@ module.exports = {
   sendPaymentReceivedEmail,
   sendRejectionEmail,
   billRows,
+  brandNameAsync,
   // exposed for template previews/tests
   buildEmailHtml,
   buildText,
