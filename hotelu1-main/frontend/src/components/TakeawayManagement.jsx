@@ -480,24 +480,23 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
  Place First Order
  </button>
  </div>
- ) : (
- <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4">
+ ) : (<div className="grid grid-cols-1 gap-2.5 sm:gap-4">
  {filteredOrders.map((order, index) => (
  <OrderCard
- key={order.id}
- order={order}
- fmt={fmt}
- index={index}
- isLoaded={isLoaded}
- isDark={isDark}
- onMarkCompleted={() => handleMarkCompleted(order.id)}
- onPayComplete={() => handlePayComplete(order)}
- completingId={completingId}
- onAddItems={() => handleAddMoreItems(order)}
- onDeleteEmpty={() => handleDeleteEmptyOrder(order)}
+  key={order.id}
+  order={order}
+  fmt={fmt}
+  index={index}
+  isLoaded={isLoaded}
+  isDark={isDark}
+  onMarkCompleted={() => handleMarkCompleted(order.id)}
+  onPayComplete={() => handlePayComplete(order)}
+  completingId={completingId}
+  onAddItems={() => handleAddMoreItems(order)}
+  onDeleteEmpty={() => handleDeleteEmptyOrder(order)}
  />
  ))}
- </div>
+</div>
  )}
 
  {/* Order entry modal — preserved untouched */}
@@ -653,6 +652,7 @@ const OrderCard = ({
 			animation: isLoaded
 				? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
 				: 'none',
+			h: '100%',
 		}}
 	>
  {/* Card header */}
@@ -705,12 +705,12 @@ const OrderCard = ({
 		)}
 
  {/* Items */}
- <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex-1">
+ <div className="flex-1 min-h-0">
  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Items</p>
  {isEmpty ? (
  <p className="text-xs text-gray-400 dark:text-gray-500 italic">No items in this order yet</p>
  ) : (
- <ul className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+ <ul className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
  {order.items.map((item, idx) => {
  const qty = item.qty || item.quantity || 1;
  return (
@@ -736,7 +736,7 @@ const OrderCard = ({
 
  {/* Total + money breakdown — the card used to show only a bare
      total, so staff couldn't see the recorded service charge / GST. */}
- <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336]">
+ <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336] flex-1 min-h-0">
   {(() => {
     const t = enrichOrderWithTotals(order);
     return (
@@ -804,8 +804,7 @@ const OrderCard = ({
  </button>
  )}
 
- {/* Secondary actions row */}
- <div className="grid grid-cols-2 gap-2 min-w-0">
+ {/* Secondary actions row */}<div className="grid grid-cols-2 gap-2">
 	<button
 		onClick={onAddItems}
 		className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400 min-w-0"
@@ -820,7 +819,7 @@ const OrderCard = ({
 		>
 			<Trash2 className="w-3.5 h-3.5 shrink-0" />
 			<span className="truncate">Remove</span>
-		</button>
+	</button>
 	)}
  </div>
  </div>

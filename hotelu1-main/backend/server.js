@@ -67,7 +67,7 @@ if (JWT_SECRET === "change-this-to-a-long-random-string-in-production" || JWT_SE
   process.exit(1);
 }
 
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000,https://paradisetomza.com")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);

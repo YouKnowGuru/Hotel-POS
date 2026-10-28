@@ -158,6 +158,11 @@ const PAY_FORM_CSS = `
   .pay-modal-footer-actions { flex: 1 1 auto !important; }
   .pay-modal-footer-actions button { flex: 1 1 auto !important; }
 }
+@media (max-width: 520px) {
+  .pay-modal-header-close { width: 100% !important; justify-content: center !important; margin-top: 4px !important; }
+  .pay-modal-footer-actions { width: 100% !important; }
+  .pay-modal-footer-actions > * { width: 100% !important; flex: 1 1 auto !important; justify-content: center !important; }
+}
 `;
 
 const fmt = (v) =>
@@ -986,7 +991,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
       }}>
 
         {/* Header */}
-        <div style={{
+        <div className="pay-modal-header-row" style={{
           padding: '20px 24px',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -994,10 +999,12 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           background: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFC',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(212,160,23,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(212,160,23,0.3)' }}>
-              {isEdit ? <Edit size={20} style={{ color: GOLD }} /> : <PlusCircle size={20} style={{ color: GOLD }} />}
+            <div className="pay-modal-header-icon">
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(212,160,23,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(212,160,23,0.3)' }}>
+                {isEdit ? <Edit size={20} style={{ color: GOLD }} /> : <PlusCircle size={20} style={{ color: GOLD }} />}
+              </div>
             </div>
-            <div>
+            <div className="pay-modal-header-text">
               <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: isDark ? '#FFFFFF' : '#0F172A', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {isEdit ? 'Edit Payroll Record' : 'Manual Payroll Entry'}
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 12, background: 'rgba(212,160,23,0.2)', color: GOLD, fontWeight: 700 }}>Admin Direct</span>
@@ -1007,7 +1014,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
               </p>
             </div>
           </div>
-          <button onClick={onClose} style={{ width: 34, height: 34, borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button className="pay-modal-header-close" onClick={onClose} style={{ width: 34, height: 34, borderRadius: 10, border: isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1', background: isDark ? 'rgba(255,255,255,0.05)' : '#F1F5F9', color: isDark ? '#94A3B8' : '#64748B', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={16} />
           </button>
         </div>
