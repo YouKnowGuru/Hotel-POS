@@ -117,7 +117,7 @@ const App = () => {
         setActiveTab('dashboard');
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = (user, token) => {
     startTransition(() => {
