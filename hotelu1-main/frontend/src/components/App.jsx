@@ -91,6 +91,7 @@ const App = () => {
   // on top of the (transparent) minimal SiteLoader, so users saw a blank
   // grey screen instead of the loader. Compute isLoading synchronously.
   const isLoading = false;
+  const navigate = useNavigate();
 
   // Apply admin branding (document title + favicon) immediately from
   // the local cache, then converge on the server copy for other devices.
