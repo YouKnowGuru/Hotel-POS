@@ -96,6 +96,21 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  const [exiting, setExiting] = useState(false);
  const rafRef = useRef(null);
  const startRef = useRef(null);
+ // ── FIX: use a ref for the "already exiting" guard so the closure
+ //    captured by the RAF callback inside useEffect([]) never goes
+ //    stale.  The old `if (exiting) return` always saw `false` because
+ //    the state value was frozen at first-render time.
+ const exitingRef = useRef(false);
+
+ // ── FIX: stable triggerExit that doesn't depend on component-body
+ //    state.  Works correctly whether called from the RAF loop, the
+ //    setTimeout fallback, or a user tap.
+ const triggerExit = useRef(() => {
+   if (exitingRef.current) return;
+   exitingRef.current = true;
+   setExiting(true);
+   setTimeout(onDone, 650);
+ }).current;
 
  /* ── Progress + phase timer ── */
  useEffect(() => {
@@ -117,17 +132,22 @@ function WelcomeSplash({ branding, tableLabel, isTakeaway, onDone }) {
  };
  rafRef.current = requestAnimationFrame(animate);
 
+ // ── FIX: mobile RAF throttle fallback.  On mobile browsers
+ //    requestAnimationFrame can be suspended when the tab is hidden
+ //    or the device is in power-saving mode.  If RAF stops firing,
+ //    the splash would stay covering the menu (z-index 9999) forever.
+ //    This setTimeout fires unconditionally after SPLASH_MS + 200ms
+ //    buffer, guaranteeing dismissal regardless of RAF behaviour.
+ const rafFallback = setTimeout(() => {
+   triggerExit();
+ }, SPLASH_MS + 200);
+
  return () => {
  cancelAnimationFrame(rafRef.current);
  phaseTimers.forEach(clearTimeout);
+ clearTimeout(rafFallback);
  };
- }, []);
-
- const triggerExit = () => {
- if (exiting) return;
- setExiting(true);
- setTimeout(onDone, 650);
- };
+ }, [triggerExit]);
 
  const logoRadius =
  branding.logoShape === 'circle' ? '50%'

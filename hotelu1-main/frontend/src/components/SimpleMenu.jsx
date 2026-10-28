@@ -223,6 +223,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const [orders, setOrders] = useState([]);
  const [settings, setSettings] = useState({ taxPercent: 5, discountPercent: 0 });
  const [loading, setLoading] = useState(true);
+ const [menuError, setMenuError] = useState('');
  const [cartOpen, setCartOpen] = useState(false);
  const [placing, setPlacing] = useState(false);
  const [boom, setBoom] = useState(false);
@@ -300,13 +301,39 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  }
  } catch (_) { /* corrupted cache — just fetch fresh */ }
 
- fetch(`${getAPI_URL()}/api/menu`).then(r => r.json()).then(data => {
+ fetch(`${getAPI_URL()}/api/menu`)
+ .then(r => {
+   // ── FIX: detect non-JSON responses (e.g. Vercel catch-all rewrite
+   //    serving index.html when REACT_APP_API_URL is not set and
+   //    getAPI_URL() falls back to window.location.origin).  Without
+   //    this check, r.json() throws a parse error that is silently
+   //    swallowed, leaving the menu blank with no diagnostic.
+   if (!r.ok) throw new Error(`Menu request failed (HTTP ${r.status})`);
+   const ct = r.headers.get('content-type') || '';
+   if (!ct.includes('application/json')) {
+     throw new Error('Menu endpoint returned non-JSON (likely served by frontend rewrite — check REACT_APP_API_URL)');
+   }
+   return r.json();
+ })
+ .then(data => {
  const av = (data || []).filter(i => i.isAvailable !== false);
  setItems(av);
  const c = [...new Set(av.map(i => i.category).filter(Boolean))];
  setCats(c); setCat(''); setLoading(false);
+ setMenuError(''); // clear any previous error on success
  try { localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(av)); } catch (_) { /* quota — non-fatal */ }
- }).catch(() => setLoading(false));
+})
+ .catch(err => {
+   // ── FIX: surface the error instead of silently swallowing it.
+   //    If we have cached items, keep showing them (stale-while-revalidate).
+   //    If not, show an error message so the user knows something went
+   //    wrong instead of staring at a blank screen.
+   console.error('Menu fetch failed:', err);
+   if (!items.length) {
+     setMenuError('Unable to load the menu. Please check your connection and try again.');
+   }
+   setLoading(false);
+ });
  }, []);
 
  /* Self-service takeaway: the QR "table" label carries the word takeaway (e.g. ?table=takeaway). These orders are TAKEAWAY typed server-side too — see the backend takeaway-label rule — so the tracker polls/filters them with the same type. */ const isTakeaway = /takeaway/i.test(String(tableId || ''));
@@ -562,6 +589,38 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const id = setInterval(() => setSpotlightIdx(p => (p + 1) % firstItems.length), 5000);
  return () => clearInterval(id);
  }, [firstItems.length]);
+
+ // ── FIX: show an error state instead of a blank screen when the menu
+ //    fails to load AND there is no cached data to fall back on.
+ if (menuError && !loading && !items.length) return (
+ <div className="sm-root" style={s.root}>
+ <style>{CSS}</style>
+ <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
+ <div style={{
+ position: 'relative', zIndex: 1,
+ display: 'flex', flexDirection: 'column', alignItems: 'center',
+ justifyContent: 'center', minHeight: '60vh', padding: 24, textAlign: 'center',
+ }}>
+ <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
+ <p style={{ fontSize: 17, fontWeight: 600, color: '#333', marginBottom: 8 }}>
+ Menu Unavailable
+ </p>
+ <p style={{ fontSize: 14, color: '#888', maxWidth: 320, lineHeight: 1.5, marginBottom: 20 }}>
+ {menuError}
+ </p>
+ <button
+ onClick={() => { setMenuError(''); setLoading(true); window.location.reload(); }}
+ style={{
+ padding: '10px 24px', borderRadius: 12, border: 'none',
+ background: '#6366f1', color: '#fff', fontSize: 14, fontWeight: 600,
+ cursor: 'pointer', boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+ }}
+ >
+ Retry
+ </button>
+ </div>
+ </div>
+ );
 
  if (loading) return (
  <div className="sm-root" style={s.root}>

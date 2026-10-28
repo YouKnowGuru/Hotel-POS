@@ -1,4 +1,5 @@
-const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";export const getAPI_URL = () => {
+const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";
+export const getAPI_URL = () => {
  if (typeof window !== "undefined") {
  const host = window.location.hostname;
  const isDevHost = host === "localhost" || host === "127.0.0.1";
@@ -16,6 +17,19 @@ const BACKEND_PORT = process.env.REACT_APP_API_PORT || "3001";export const getAP
  if (isDevHost) {
  return `${window.location.protocol}//${host}:${BACKEND_PORT}`;
  }
+ // ── FIX: In production without REACT_APP_API_URL set, the old code
+ //    fell back to window.location.origin — the frontend's own URL.
+ //    On Vercel (with a catch-all rewrite to /index.html), this caused
+ //    /api/menu to return HTML instead of JSON, silently breaking the
+ //    menu on all devices. We now log a loud warning so the developer
+ //    knows to set REACT_APP_API_URL in the Vercel build environment.
+ //    We still return window.location.origin as the last resort
+ //    (works when frontend + backend are served from the same origin).
+ console.warn(
+ "[API] REACT_APP_API_URL is not set. Falling back to window.location.origin (" +
+ window.location.origin + "). If the backend is on a separate host " +
+ "(e.g. Render), set REACT_APP_API_URL in your build environment."
+ );
  return window.location.origin;
  }
  return "";
