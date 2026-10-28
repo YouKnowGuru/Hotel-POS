@@ -197,10 +197,11 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  {isAdmin && (
  <button
  onClick={goToSubFranchise}
- className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition"
+ className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition whitespace-nowrap shrink-0"
  >
  <Plus className="w-4 h-4" />
- ONBOARD BRANCH
+ <span className="hidden sm:inline">ONBOARD BRANCH</span>
+ <span className="sm:hidden">+ BRANCH</span>
  </button>
  )}
  </div>
@@ -212,7 +213,7 @@ const FranchiseDashboard = ({ currentUser, locationSettings, setActiveTab }) => 
  )}
 
  {/* KPI cards */}
- <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-5">
+ <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-5">
  <KpiCard
  label="ENTERPRISE REVENUE"
  value={formatBTNShort(totalEnterpriseRevenue)}
@@ -452,7 +453,7 @@ const KpiCard = ({ label, value, sub, Icon, tone = 'orange', delay = 0, isLoaded
  <Icon className="w-4 h-4" />
  </div>
  </div>
- <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-none break-words truncate" title={value}>{value}</p>
+ <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-none break-words truncate" title={value}>{value}</p>
  <p className="text-xs text-gray-500 mt-2 truncate">{sub}</p>
  </div>
  );
@@ -469,14 +470,14 @@ const OutletRow = ({ loc, idx, isAdmin, isLoaded, onClick }) => {
  <button
  onClick={onClick}
  disabled={!isAdmin}
- className={`w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition px-4 sm:px-5 py-4 text-left grid grid-cols-1 md:grid-cols-[2fr_repeat(4,1fr)] gap-3 md:gap-5 items-center ${
+ className={`w-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition px-4 sm:px-5 py-4 text-left grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[2fr_repeat(4,1fr)] gap-3 sm:gap-4 lg:gap-5 items-center ${
  isAdmin ? 'cursor-pointer hover:-translate-y-0.5' : 'cursor-default'
  }`}
  style={{
  animation: isLoaded ? `slideUpFade .35s ease-out ${idx * 50}ms both` : 'none',
  }}
  >
- <div className="flex items-center gap-3 min-w-0">
+ <div className="flex items-center gap-3 min-w-0 col-span-2 sm:col-span-1">
  <div
  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
  isHq ? 'bg-indigo-100 text-indigo-500' : 'bg-gray-100 text-gray-500'

@@ -514,14 +514,14 @@ const Reports = ({ locationSettings }) => {
  </div>
 
  <div className="flex items-center gap-2 flex-wrap">
- <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1 flex items-center gap-1 flex-wrap dark:bg-[#141C2E] dark:border-slate-700/60">
+ <div className="bg-white border border-gray-200 shadow-sm rounded-full p-1 flex items-center gap-1 overflow-x-auto scrollbar-none max-w-full dark:bg-[#141C2E] dark:border-slate-700/60">
  {QUICK_RANGES.map((q) => {
  const active = activeRange === q.id;
  return (
  <button
  key={q.id}
  onClick={() => setQuickDateRange(q.id)}
- className={`px-3 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold rounded-full whitespace-nowrap transition-all ${
+ className={`px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-sm font-semibold rounded-full whitespace-nowrap shrink-0 transition-all ${
  active
  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/50'
  : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
@@ -587,7 +587,7 @@ const Reports = ({ locationSettings }) => {
  )}
 
  {/* KPI cards */}
- <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-5 min-w-0">
+ <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-5 min-w-0">
  {kpis.map((k, idx) => (
  <KpiCard
  key={k.id}
@@ -704,7 +704,7 @@ const Reports = ({ locationSettings }) => {
  </div>
 
  {/* Order Distribution + Top Selling Items */}
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
  <ChartCard title="Order Distribution">
  {orderDistribution.length === 0 ? (
  <div className="h-[260px] flex items-center justify-center text-sm text-gray-400">
@@ -1200,7 +1200,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  </div>
 
  {/* Roll-up KPIs */}
- <div className="flex items-center gap-2 flex-wrap">
+ <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
  <MiniStat
  Icon={Timer}
  label="Avg prep time"
@@ -1236,7 +1236,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
 
  <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
  {/* Leaderboard */}
- <div className="space-y-3">
+ <div className="space-y-3 order-2 lg:order-1">
  {staffList.map((c, idx) => {
  const ordersPct = (c.ordersPrepared / maxOrders) * 100;
  const isFastest =
@@ -1307,7 +1307,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  </span>{' '}
  items
  </span>
- <span>
+ <span className="text-[10px] sm:text-[11px]">
  {hasTiming
  ? `${c.estimated ? 'Est.' : 'Fast'} ${formatPrepTime(c.fastestMin)} · ${c.estimated ? 'Est.' : 'Slow'} ${formatPrepTime(c.slowestMin)}`
  : 'No prep-time recorded'}
@@ -1334,7 +1334,7 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
  </div>
 
  {/* Avg prep-time chart */}
- <div className="border border-gray-100 rounded-xl p-3">
+ <div className="border border-gray-100 rounded-xl p-3 order-1 lg:order-2">
  <p className="text-[11px] font-bold tracking-wider text-gray-400 uppercase mb-2">
  Average prep time by kitchen staff (lower is better)
  </p>
@@ -1414,11 +1414,11 @@ const KitchenPerformanceSection = ({ stats, fmt, isLoaded, live }) => {
 };
 
 const MiniStat = ({ Icon, label, value, tint }) => (
- <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
- <span className={`w-6 h-6 rounded-md flex items-center justify-center ${tint}`}>
- <Icon className="w-3.5 h-3.5" />
+ <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+ <span className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md flex items-center justify-center ${tint}`}>
+ <Icon className="w-3 sm:w-3.5 sm:h-3.5" />
  </span>
- <span className="text-[11px] text-gray-500 font-semibold">{label}</span>
+ <span className="text-[10px] sm:text-[11px] text-gray-500 font-semibold hidden sm:inline">{label}</span>
  <span className="text-xs text-gray-900 font-bold">{value}</span>
  </div>
 );

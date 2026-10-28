@@ -35,14 +35,22 @@ const PAY_FORM_CSS = `
 .pay-g4  { grid-template-columns: repeat(4, minmax(0,1fr)); }
 .pay-g5  { grid-template-columns: repeat(5, minmax(0,1fr)); }
 .pay-g2, .pay-g2x, .pay-g2w, .pay-g3, .pay-g3x, .pay-g4, .pay-g5 { display: grid; }
-@media (max-width: 720px) {
-  .pay-g2, .pay-g2x, .pay-g2w, .pay-g3x { grid-template-columns: minmax(0,1fr); }
-  .pay-g3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+/* Hide scrollbar for horizontal nav/button strips */
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media (max-width: 768px) {
   .pay-g4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .pay-g5 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .pay-g3x { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .pay-g2, .pay-g2x, .pay-g2w { grid-template-columns: minmax(0,1fr); }
+  .pay-g3 { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 400px) {
   .pay-g3 { grid-template-columns: minmax(0,1fr); }
+  .pay-g4, .pay-g5 { grid-template-columns: minmax(0,1fr); }
 }
 
 /* ── Responsive payroll tables ──────────────────────────────────── */
@@ -102,7 +110,7 @@ const PAY_FORM_CSS = `
   .pay-charts-grid { grid-template-columns: minmax(0,1fr) !important; }
 
   /* Payroll page padding */
-  .payroll-page { padding: '16px 12px' !important; }
+  .payroll-page { padding: 16px 12px !important; }
 }
 
 @media (max-width: 380px) {
@@ -968,6 +976,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           background: isDark ? 'rgba(0,0,0,0.25)' : '#F1F5F9',
           padding: '6px 20px', gap: 8, overflowX: 'auto',
+          scrollbarWidth: 'none',
         }}>
           {[
             { id: 'employee',   label: '1. Staff & Period',   icon: User, badge: form.user_name || 'Select' },
@@ -982,15 +991,17 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', borderRadius: 10,
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '9px 12px', borderRadius: 10,
                   border: active ? '1px solid rgba(212,160,23,0.4)' : '1px solid transparent',
                   background: active ? (isDark ? 'rgba(212,160,23,0.15)' : '#FEF3C7') : 'transparent',
                   color: active ? (isDark ? GOLD : '#B45309') : (isDark ? '#94A3B8' : '#64748B'),
-                  cursor: 'pointer', fontSize: 12, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap',
+                  cursor: 'pointer', fontSize: 11, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 <Icon size={14} />
-                <span>{t.label}</span>
+                <span className="hidden sm:inline">{t.label}</span>
+                <span className="sm:hidden">{t.id === 'employee' ? '1' : t.id === 'earnings' ? '2' : t.id === 'deductions' ? '3' : '4'}</span>
                 <span style={{
                   fontSize: 10, padding: '2px 6px', borderRadius: 8,
                   background: active ? (isDark ? 'rgba(212,160,23,0.25)' : '#FDE68A') : (isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0'),
@@ -1644,43 +1655,43 @@ const PayrollSystem = ({ currentUser }) => {
               <button
                 onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
                 style={{
-                  padding: '8px 14px', borderRadius: 12, border: 'none',
+                  padding: '7px 12px sm:8px 14px', borderRadius: 12, border: 'none',
                   background: `linear-gradient(135deg,${GOLD},#A16207)`,
-                  color: '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  color: '#fff', fontWeight: 800, fontSize: 11, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5,
                   boxShadow: '0 4px 16px rgba(212,160,23,0.35)',
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap', flexShrink: 0,
                 }}
               >
-                <PlusCircle size={14} /> Create Payroll
+                <PlusCircle size={14} /> <span className="hidden sm:inline">Create Payroll</span><span className="sm:hidden">Create</span>
               </button>
               <button
                 onClick={() => setShowGenerate(true)}
                 style={{
-                  padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
+                  padding: '7px 10px sm:8px 12px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
                   background: isDark ? 'rgba(212,160,23,0.1)' : '#FEF3C7',
                   color: isDark ? GOLD : '#B45309',
-                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  fontWeight: 700, fontSize: 11, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 5,
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap', flexShrink: 0,
                 }}
               >
-                <Zap size={14} /> Auto-Generate
+                <Zap size={14} /> <span className="hidden sm:inline">Auto-Generate</span><span className="sm:hidden">Generate</span>
               </button>
               <button
                 onClick={() => setShowConfig(true)}
                 style={{
-                  padding: '8px 12px', borderRadius: 12,
+                  padding: '7px 10px sm:8px 12px', borderRadius: 12,
                   border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                   background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
                   color: isDark ? '#FFFFFF' : '#0F172A',
-                  fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                  fontWeight: 600, fontSize: 11, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 5,
                   boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'nowrap', flexShrink: 0,
                 }}
               >
-                <Settings size={14} /> Salary Config
+                <Settings size={14} /> <span className="hidden sm:inline">Salary Config</span><span className="sm:hidden">Config</span>
               </button>
             </>
           )}
@@ -1815,7 +1826,7 @@ const PayrollSystem = ({ currentUser }) => {
           {/* Recent table */}
           <div style={{ ...getGlass(isDark), overflow: 'hidden' }}>
             <div style={{
-              padding: '14px 16px sm:18px 22px',
+              padding: '14px 16px',
               borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
               background: isDark ? 'transparent' : '#F8FAFC'
             }}>
@@ -1879,15 +1890,15 @@ const PayrollSystem = ({ currentUser }) => {
             <button
               onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
               style={{
-                padding: '7px 14px', borderRadius: 10, border: 'none',
+                padding: '7px 12px', borderRadius: 10, border: 'none',
                 background: `linear-gradient(135deg,${GOLD},#A16207)`,
                 color: '#fff', cursor: 'pointer', display: 'flex',
-                alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700,
+                alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 700,
                 boxShadow: '0 2px 10px rgba(212,160,23,0.25)',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'nowrap', flexShrink: 0,
               }}
             >
-              <PlusCircle size={14} /> New Entry
+              <PlusCircle size={14} /> <span className="hidden sm:inline">New Entry</span><span className="sm:hidden">New</span>
             </button>
             <div style={{ position: 'relative' }}>
               <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: isDark ? '#94A3B8' : '#64748B', pointerEvents: 'none' }} />
