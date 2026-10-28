@@ -54,7 +54,10 @@ const AboutPage = lazy(() => import('./AboutPage'));
 const PrivacyPage = lazy(() => import('./PrivacyPage'));
 const TermsPage = lazy(() => import('./TermsPage'));
 
-// Loading component for Suspense fallback — uses the modern SiteLoader
+// Loading component for Suspense fallback — uses the full SiteLoader
+// (not minimal) because the minimal variant used to have a transparent
+// background, which let the eager app wrappers (DashboardLayout etc.)
+// show through and cover the loader.
 const LoadingSpinner = () => <SiteLoader />;
 
 
@@ -78,8 +81,16 @@ const App = () => {
       return null;
     }
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+  // The user is hydrated synchronously above (line 73-80), so there is
+  // no need for a useEffect + setIsLoading(false) cycle. The old code
+  // set isLoading=true, rendered the full SiteLoader, then on the NEXT
+  // frame flipped to false — which unmounted the loader and mounted the
+  // route tree. But the route tree's wrappers (DashboardLayout /
+  // MenuLayout) are eager and render a position:fixed zIndex:10 div with
+  // a solid background BEFORE the lazy child suspends. That wrapper sat
+  // on top of the (transparent) minimal SiteLoader, so users saw a blank
+  // grey screen instead of the loader. Compute isLoading synchronously.
+  const isLoading = false;
 
   // Apply admin branding (document title + favicon) immediately from
   // the local cache, then converge on the server copy for other devices.
@@ -91,30 +102,22 @@ const App = () => {
     return () => window.removeEventListener(BRANDING_UPDATED_EVENT, onBranding);
   }, []);
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-
-    if (storedToken && storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        startTransition(() => {
-          setCurrentUser(user);
-          if (user.role === 'waiter') {
-            setActiveTab('delivery');
-          } else if (user.role === 'franchise' || user.role === 'subfranchise') {
-            setActiveTab('franchise-dashboard');
-          } else {
-            setActiveTab('dashboard');
-          }
-        });
-      } catch (error) {
-        console.error('Failed to restore user from localStorage:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    // Set the active tab based on the user role that was already
+    // hydrated synchronously above. The old useEffect also re-read
+    // localStorage and called setCurrentUser + setIsLoading(false),
+    // but currentUser is already set synchronously and isLoading is
+    // now computed inline — so all that remains is the activeTab.
+    if (currentUser) {
+      const role = currentUser.role;
+      if (role === 'waiter') {
+        setActiveTab('delivery');
+      } else if (role === 'franchise' || role === 'subfranchise') {
+        setActiveTab('franchise-dashboard');
+      } else {
+        setActiveTab('dashboard');
       }
     }
-    setIsLoading(false);
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogin = (user, token) => {
     startTransition(() => {
@@ -147,10 +150,6 @@ const App = () => {
     setLocationSettings(settings);
     localStorage.setItem('posCountry', 'Bhutan');
   };
-
-  if (isLoading) {
-    return <SiteLoader />;
-  }
 
   const renderContent = () => {
     if (activeTab === 'qr-ordering') {
@@ -396,7 +395,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <NotificationsProvider>
-        <Suspense fallback={<SiteLoader minimal />}>
+        <Suspense fallback={<SiteLoader />}>
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={

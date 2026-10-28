@@ -5,6 +5,21 @@ import {
   BRANDING_UPDATED_EVENT,
 } from '../utils/branding';
 
+/* Inject the scoped CSS exactly once at module load. Previously a
+   <style>{SITE_LOADER_CSS}</style> tag was rendered inside the component,
+   which re-injected ~330 lines of CSS into the DOM on every render
+   (e.g. every time branding state changed). */
+let _cssInjected = false;
+function injectCSS() {
+  if (_cssInjected) return;
+  if (typeof document === 'undefined') return;
+  const tag = document.createElement('style');
+  tag.setAttribute('data-site-loader', '');
+  tag.textContent = SITE_LOADER_CSS;
+  document.head.appendChild(tag);
+  _cssInjected = true;
+}
+
 /**
  * SiteLoader — a super-modern full-screen boot loader.
  *
@@ -119,9 +134,6 @@ const SiteLoader = ({ minimal = false }) => {
           <div className="site-loader-bar-fill" />
         </div>
       </div>
-
-      {/* Scoped styles — injected once per render, deduped by browser */}
-      <style>{SITE_LOADER_CSS}</style>
     </div>
   );
 };
@@ -156,9 +168,22 @@ html.dark .site-loader-root {
     linear-gradient(160deg, #0b1220 0%, #0d1526 100%);
 }
 
-/* ===== Minimal variant (Suspense fallback) ===== */
+/* ===== Minimal variant (Suspense fallback) =====
+   Previously this was transparent, which meant the fixed app wrappers
+   (DashboardLayout / MenuLayout with zIndex:10 and a solid background)
+   showed THROUGH the loader — the user saw a blank grey screen instead
+   of the loader. Give it the same opaque backdrop as the full loader. */
 .site-loader-minimal {
-  background: transparent !important;
+  background:
+    radial-gradient(ellipse at top left, #eef2ff 0%, transparent 55%),
+    radial-gradient(ellipse at bottom right, #fef3c7 0%, transparent 55%),
+    linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%) !important;
+}
+html.dark .site-loader-minimal {
+  background:
+    radial-gradient(ellipse at top left, #1e293b 0%, transparent 55%),
+    radial-gradient(ellipse at bottom right, #1a1206 0%, transparent 55%),
+    linear-gradient(160deg, #0b1220 0%, #0d1526 100%) !important;
 }
 .site-loader-minimal .site-loader-orb {
   width: 56px;
@@ -459,5 +484,8 @@ html.dark .site-loader-bar {
   }
 }
 `;
+
+// Inject the CSS once after the constant is defined (see injectCSS above).
+injectCSS();
 
 export default SiteLoader;

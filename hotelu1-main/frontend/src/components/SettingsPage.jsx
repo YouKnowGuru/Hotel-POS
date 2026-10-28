@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { getAPI_URL } from '../utils/api';
-import { useTheme, applyAppearance } from '../contexts/ThemeContext';
+import { useTheme, applyAppearance, THEME_COLORS } from '../contexts/ThemeContext';
 import {
  loadBranding,
  saveBranding,
@@ -972,13 +972,30 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  );
 };
 
-const COLOR_SWATCHES = [
- { id: 'orange', label: 'Orange', cls: 'bg-indigo-600' },
- { id: 'blue', label: 'Blue', cls: 'bg-blue-500' },
- { id: 'emerald', label: 'Emerald', cls: 'bg-emerald-500' },
- { id: 'purple', label: 'Purple', cls: 'bg-purple-500' },
- { id: 'rose', label: 'Rose', cls: 'bg-rose-500' },
-];
+/* Build swatches dynamically from the THEME_COLORS map so every
+   palette in ThemeContext is represented here with its real gradient. */
+const COLOR_SWATCHES = Object.keys(THEME_COLORS).map((id) => {
+  const c = THEME_COLORS[id];
+  const [g1, g2] = c.grad || [c[500], c[600]];
+  const labels = {
+    orange: 'Orange Sunset',
+    blue: 'Ocean Blue',
+    emerald: 'Emerald Forest',
+    purple: 'Royal Purple',
+    rose: 'Rose Garden',
+    amber: 'Golden Amber',
+    teal: 'Teal Lagoon',
+    indigo: 'Deep Indigo',
+    crimson: 'Crimson Fire',
+    cyan: 'Cyan Wave',
+  };
+  return {
+    id,
+    label: labels[id] || id.charAt(0).toUpperCase() + id.slice(1),
+    grad: `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)`,
+    hex: g1,
+  };
+});
 
 const AppearanceForm = ({ value, onChange, onSave }) => {
  const set = (k, v) => {
@@ -987,6 +1004,10 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  applyAppearance(next);
  };
  const { mode: themeMode, setMode: setThemeMode } = useTheme();
+
+ // Current theme palette for live accent on the Theme + Density buttons
+ const currentColor = THEME_COLORS[value.themeColor] || THEME_COLORS.orange;
+ const accentGrad = `linear-gradient(135deg, ${currentColor.grad[0]}, ${currentColor.grad[1]})`;
 
  const THEME_OPTIONS = [
  { id: 'light', label: 'Light', Icon: Sun },
@@ -1005,11 +1026,15 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  key={id}
  onClick={() => setThemeMode(id)}
  type="button"
- className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition ${
+ className={`flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all ${
  active
- ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
- : 'border-gray-200 hover:border-gray-300 text-gray-700'
+ ? 'text-white shadow-md'
+ : 'border-gray-200 hover:border-gray-300 text-gray-700 dark:border-slate-600 dark:text-slate-300 dark:hover:border-slate-500'
  }`}
+ style={active ? {
+ borderColor: currentColor.grad[0],
+ background: accentGrad,
+ } : undefined}
  >
  <Icon className="w-4 h-4" />
  <span className="text-sm font-semibold">{label}</span>
@@ -1017,30 +1042,73 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  );
  })}
  </div>
- <p className="mt-2 text-[12px] text-gray-500">
+ <p className="mt-2 text-[12px] text-gray-500 dark:text-slate-400">
  Choose Light or Dark, or let the app follow your operating system theme.
  </p>
  </Field>
 
  <div className="mt-6">
  <Field label="Theme Color">
- <div className="flex flex-wrap items-center gap-3">
+ <p className="mb-3 text-[12px] text-gray-500 dark:text-slate-400">
+ Pick a gradient palette — the accent color updates live across the
+ entire app (buttons, badges, borders, gradients, focus rings).
+ </p>
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
  {COLOR_SWATCHES.map((c) => {
  const active = value.themeColor === c.id;
  return (
  <button
  key={c.id}
  onClick={() => set('themeColor', c.id)}
- className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition ${
+ type="button"
+ className={`relative group rounded-2xl overflow-hidden border-2 transition-all duration-200 ${
  active
- ? 'border-indigo-300 bg-indigo-50'
- : 'border-gray-200 hover:border-gray-300'
+ ? 'ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#0B1220] shadow-lg scale-[1.03]'
+ : 'hover:shadow-md hover:scale-[1.01] border-transparent'
  }`}
+ style={{
+ borderColor: active ? c.hex : 'transparent',
+ // Use the gradient as the ring color via box-shadow
+ boxShadow: active
+ ? `0 0 0 2px ${c.hex}, 0 8px 24px -8px ${c.hex}80`
+ : undefined,
+ }}
  >
- <span className={`w-5 h-5 rounded-full ${c.cls}`} />
- <span className="text-sm font-semibold text-gray-700">
+ {/* Gradient preview area */}
+ <div
+ className="h-20 w-full flex items-center justify-center relative"
+ style={{ background: c.grad }}
+ >
+ {/* Sheen overlay */}
+ <div
+ className="absolute inset-0 opacity-30"
+ style={{
+ background:
+ 'linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.15) 100%)',
+ }}
+ />
+ {active && (
+ <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white/90 flex items-center justify-center shadow-md">
+ <Check className="w-4 h-4" style={{ color: c.hex }} strokeWidth={3} />
+ </div>
+ )}
+ {/* Preview "button" mock */}
+ <div
+ className="px-3 py-1.5 rounded-lg text-[11px] font-bold text-white shadow-md backdrop-blur-sm"
+ style={{
+ background: 'rgba(255,255,255,0.22)',
+ border: '1px solid rgba(255,255,255,0.35)',
+ }}
+ >
+ Preview
+ </div>
+ </div>
+ {/* Label */}
+ <div className="px-3 py-2.5 bg-white dark:bg-[#1A2336]">
+ <p className="text-[12px] font-bold text-gray-800 dark:text-slate-200 text-center truncate">
  {c.label}
- </span>
+ </p>
+ </div>
  </button>
  );
  })}
@@ -1057,11 +1125,12 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  <button
  key={d}
  onClick={() => set('layoutDensity', d)}
- className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+ className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
  active
- ? 'bg-indigo-600 text-white shadow-sm'
+ ? 'text-white shadow-md'
  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-[#1A2336] dark:text-slate-300 dark:hover:bg-[#1E293B]'
  }`}
+ style={active ? { background: accentGrad } : undefined}
  >
  {d.charAt(0).toUpperCase() + d.slice(1)}
  </button>
