@@ -112,10 +112,12 @@ export const saveBranding = async (branding) => {
   }
 
   // Best-effort server persistence so other browsers/devices pick it up.
+  // The response is checked so we can warn the user if the server save
+  // failed (e.g. non-admin role, database not connected, payload too large).
   try {
     const token = localStorage.getItem('token');
     if (token) {
-      await fetch(`${getAPI_URL()}/api/settings`, {
+      const res = await fetch(`${getAPI_URL()}/api/settings`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -127,6 +129,15 @@ export const saveBranding = async (branding) => {
           description: 'Admin branding: site name, tagline, logo, favicon',
         }),
       });
+      if (!res.ok) {
+        // Server save failed — branding is still in localStorage, so
+        // it will show on this browser. But it won't sync to other
+        // devices until the server issue is resolved.
+        console.warn(
+          `[branding] Server save returned ${res.status}. ` +
+          'Logo is saved locally but will not sync to other devices.'
+        );
+      }
     }
   } catch {
     /* offline / non-admin — local copy still applies */

@@ -672,8 +672,13 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  setLogoBusy(true);
  try {
  const dataUrl = await readImageFile(file, MAX_LOGO_KB);
- set('logo', dataUrl);
- onSaved?.({ ...value, logo: dataUrl });
+ const updated = { ...value, logo: dataUrl };
+ onChange(updated);
+ // Persist immediately so the logo survives a page refresh.
+ const saved = await saveBranding(updated);
+ onChange(saved);
+ applyDocumentBranding(saved);
+ onSaved?.(saved);
  } catch (e) {
  onError?.(e.message || 'Could not read the logo image.');
  } finally {
@@ -686,8 +691,13 @@ const BrandingForm = ({ value, onChange, onSaved, onError }) => {
  setFaviconBusy(true);
  try {
  const dataUrl = await readImageFile(file, 64);
- set('favicon', dataUrl);
- onSaved?.({ ...value, favicon: dataUrl });
+ const updated = { ...value, favicon: dataUrl };
+ onChange(updated);
+ // Persist immediately so the favicon survives a page refresh.
+ const saved = await saveBranding(updated);
+ onChange(saved);
+ applyDocumentBranding(saved);
+ onSaved?.(saved);
  } catch (e) {
  onError?.(e.message || 'Could not read the favicon image.');
  } finally {

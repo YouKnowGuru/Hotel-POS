@@ -615,9 +615,9 @@ async function startServer() {
     // SECURITY: demo users (admin/admin, manager/pass2, waiter/pass) are only
     // seeded in non-production. Seeding them in production — and printing
     // them on the public login page — was a full system takeover.
-    if (process.env.NODE_ENV !== "production" || process.env.SEED_DEMO_USERS === "true") {
+    if (process.env.SEED_DEMO_USERS === "true") {
       const demoUsersList = [
-        { username: "admin", password: "admin", role: "admin", name: "Administrator" },
+        { username: "admin", password: process.env.ADMIN_PASSWORD || "Tomza#Admin!2026@SecurePOS", role: "admin", name: "Administrator" },
         { username: "manager", password: "pass2", role: "manager", name: "Manager User" },
         { username: "waiter", password: "pass", role: "waiter", name: "Waiter User" },
       ];
@@ -4865,9 +4865,9 @@ app.get("/api/settings", optionalToken, async (req, res) => {
 // Update or create a setting (admin only)
 app.put("/api/settings", verifyToken, async (req, res) => {
   try {
-    // Check if user is admin - req.user is set by verifyToken middleware
-    if (!req.user || req.user.role !== 'admin') {
-      return res.status(403).json({ message: "Only admin can update settings" });
+    // Check if user is admin or manager - req.user is set by verifyToken middleware
+    if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ message: "Only admin or manager can update settings" });
     }
     
     const { key, value, description } = req.body;
@@ -4900,12 +4900,12 @@ app.put("/api/settings", verifyToken, async (req, res) => {
   }
 });
 
-// Batch update settings (admin only)
+// Batch update settings (admin/manager only)
 app.put("/api/settings/batch", verifyToken, async (req, res) => {
   try {
-    // Check if user is admin - req.user is set by verifyToken middleware
-    if (!req.user || req.user.role !== 'admin') {
-      return res.status(403).json({ message: "Only admin can update settings" });
+    // Check if user is admin or manager - req.user is set by verifyToken middleware
+    if (!req.user || !['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ message: "Only admin or manager can update settings" });
     }
     
     const settings = req.body; // { taxPercent: 10, discountPercent: 5 }

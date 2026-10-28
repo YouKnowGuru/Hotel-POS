@@ -369,28 +369,29 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
 
  {/* Header */}
  <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
- <div>
-<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-<span className="w-9 h-9 rounded-xl bg-indigo-600/10 text-indigo-500 flex items-center justify-center">
-<ShoppingBag className="w-5 h-5" />
+ <div className="min-w-0">
+<h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+<span className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-indigo-600/10 text-indigo-500 flex items-center justify-center shrink-0">
+<ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
 </span>
-Takeaway Orders
+<span className="truncate">Takeaway Orders</span>
 </h1>
-<p className="text-sm text-gray-500 dark:text-gray-400 mt-1 ml-11">
+<p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1 ml-9 sm:ml-11">
  Quick service orders &amp; live token tracking
  </p>
  </div>
  <button
  onClick={handleQuickOrder}
- className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:shadow-indigo-600 transition-all hover:-translate-y-0.5"
+ className="inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-indigo-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:shadow-indigo-600 transition-all hover:-translate-y-0.5 shrink-0"
  >
  <Plus className="w-4 h-4" />
- Place New Order
+ <span className="hidden sm:inline">Place New Order</span>
+ <span className="sm:hidden">New Order</span>
  </button>
  </div>
 
  {/* Summary cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5">
+ <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-5">
 	<SummaryCard
 		label="ACTIVE ORDERS"
 		value={counts.all}
@@ -430,7 +431,7 @@ Takeaway Orders
  </div>
 
  {/* Status filter pills */}
- <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-fit max-w-full overflow-x-auto scrollbar-thin dark:bg-[#141C2E] dark:border-gray-800">
+ <div className="bg-white border border-gray-100 rounded-full shadow-sm p-1 flex items-center gap-1 mb-5 w-full max-w-full overflow-x-auto scrollbar-none dark:bg-[#141C2E] dark:border-gray-800">
  {STATUS_TABS.map((tab) => {
  const isActive = activeFilter === tab.id;
  const count = counts[tab.id] ?? 0;
@@ -438,7 +439,7 @@ Takeaway Orders
  <button
  key={tab.id}
  onClick={() => setActiveFilter(tab.id)}
- className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
+ className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shrink-0 ${
  isActive
  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/60'
  : `${tab.accent} hover:bg-gray-50 dark:hover:bg-white/5`
@@ -459,7 +460,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
 
  {/* Orders grid */}
  {filteredOrders.length === 0 ? (
-<div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-12 text-center dark:bg-[#141C2E] dark:border-gray-800">
+<div className="bg-white border border-gray-100 rounded-xl sm:rounded-2xl shadow-sm p-8 sm:p-12 text-center dark:bg-[#141C2E] dark:border-gray-800">
 <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-400 mx-auto mb-3 flex items-center justify-center dark:bg-indigo-500/10 dark:text-indigo-500">
 <ShoppingBag className="w-7 h-7" />
 </div>
@@ -476,7 +477,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
  </button>
  </div>
  ) : (
- <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+ <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5 sm:gap-4">
  {filteredOrders.map((order, index) => (
  <OrderCard
  key={order.id}
@@ -606,20 +607,20 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
 
 const SummaryCard = ({ label, value, Icon, color, delay, isLoaded, isDark }) => (
 	<div
-		className={`rounded-2xl border shadow-sm p-4 sm:p-5 transition-colors bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800`}
+		className={`rounded-xl sm:rounded-2xl border shadow-sm p-3 sm:p-4 md:p-5 transition-colors bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800 min-w-0`}
 		style={{
 			animation: isLoaded ? `slideUpFade .35s ease-out ${delay}ms both` : 'none',
 		}}
 	>
-		<div className="flex items-center justify-between mb-2">
-			<p className={`text-[10px] font-bold tracking-wider ${
+		<div className="flex items-center justify-between mb-1.5 sm:mb-2">
+			<p className={`text-[9px] sm:text-[10px] font-bold tracking-wider truncate ${
 				isDark ? 'text-gray-500' : 'text-gray-400'
 			}`}>{label}</p>
-			<div className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-white/10 ${color}`}>
-				<Icon className="w-3.5 h-3.5" />
+			<div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center bg-gray-50 dark:bg-white/10 ${color} shrink-0`}>
+				<Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
 			</div>
 		</div>
-		<p className={`text-2xl sm:text-3xl font-bold ${color} leading-none`}>{value}</p>
+		<p className={`text-xl sm:text-2xl md:text-3xl font-bold ${color} leading-none truncate`}>{value}</p>
 	</div>
 );
 
@@ -643,7 +644,7 @@ const OrderCard = ({
 
  return (
 	<div
-		className={`rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800`}
+		className={`rounded-xl sm:rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col bg-white dark:bg-[#141C2E] border-gray-100 dark:border-slate-800`}
 		style={{
 			animation: isLoaded
 				? `slideUpFade .35s ease-out ${Math.min(index, 8) * 50}ms both`
@@ -651,16 +652,16 @@ const OrderCard = ({
 		}}
 	>
  {/* Card header */}
-		<div className="px-4 py-3 flex items-center justify-between border-b border-gray-50 dark:border-gray-800">
-				<div className="min-w-0">
+		<div className="px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between border-b border-gray-50 dark:border-gray-800">
+				<div className="min-w-0 flex-1">
 					<p className="text-xs font-semibold text-gray-400 dark:text-gray-500">Order</p>
 					<div className="flex items-center gap-2 flex-wrap">
-						<p className="text-base font-bold text-gray-900 dark:text-gray-100">#{order.id}</p>
+						<p className="text-sm sm:text-base font-bold text-gray-900 dark:text-gray-100">#{order.id}</p>
 						<SourceBadge source={order.source} />
 					</div>
 				</div>
 				<span
-					className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${meta.pill}`}
+					className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-full border text-[10px] sm:text-[11px] font-semibold ${meta.pill} shrink-0`}
 				>
 					<span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
 					<Icon className="w-3 h-3" />
@@ -670,21 +671,21 @@ const OrderCard = ({
 
  {/* Token badge */}
 		{order.token && (
-			<div className={`mx-4 mt-3 mb-1 flex items-center gap-2 rounded-xl px-3 py-2 ${
+			<div className={`mx-3 sm:mx-4 mt-3 mb-1 flex items-center gap-2 rounded-xl px-3 py-2 ${
 				isDark
 					? 'bg-amber-500/10 border-amber-500/30'
 					: 'bg-amber-50 border border-amber-100'
 			}`}>
-				<div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+				<div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${
 					isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'
 				}`}>
-					<Hash className="w-3.5 h-3.5" />
+					<Hash className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
 				</div>
 				<div className="min-w-0">
 					<p className="text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
 						Token
 					</p>
-					<p className="text-base font-bold text-amber-700 dark:text-amber-400 leading-none tracking-wider break-all">
+					<p className="text-sm sm:text-base font-bold text-amber-700 dark:text-amber-400 leading-none tracking-wider break-all">
 						{order.token}
 					</p>
 				</div>
@@ -693,14 +694,14 @@ const OrderCard = ({
 
  {/* Customer label */}
 		{order.table_name && (
-			<div className="px-4 pt-2 pb-1">
+			<div className="px-3 sm:px-4 pt-2 pb-1">
 				<p className="text-xs text-gray-400 dark:text-gray-500">Customer / Label</p>
-				<p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{order.table_name}</p>
+				<p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{order.table_name}</p>
 			</div>
 		)}
 
  {/* Items */}
- <div className="px-4 py-3 flex-1">
+ <div className="px-3 sm:px-4 py-2.5 sm:py-3 flex-1">
  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Items</p>
  {isEmpty ? (
  <p className="text-xs text-gray-400 dark:text-gray-500 italic">No items in this order yet</p>
@@ -731,7 +732,7 @@ const OrderCard = ({
 
  {/* Total + money breakdown — the card used to show only a bare
      total, so staff couldn't see the recorded service charge / GST. */}
- <div className="px-4 py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336]">
+ <div className="px-3 sm:px-4 py-2.5 sm:py-3 border-t border-gray-50 bg-gray-50 dark:border-slate-800 dark:bg-[#1A2336]">
   {(() => {
     const t = enrichOrderWithTotals(order);
     return (
@@ -800,21 +801,21 @@ const OrderCard = ({
  )}
 
  {/* Secondary actions row */}
- <div className="grid grid-cols-2 gap-2">
+ <div className="grid grid-cols-2 gap-2 min-w-0">
 	<button
 		onClick={onAddItems}
-		className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+		className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-indigo-300 hover:text-indigo-600 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 dark:hover:border-indigo-500 dark:hover:text-indigo-400 min-w-0"
 	>
-		<Plus className="w-3.5 h-3.5" />
-		Add items
+		<Plus className="w-3.5 h-3.5 shrink-0" />
+		<span className="truncate">Add items</span>
 	</button>
 	{isEmpty && (
 		<button
 			onClick={onDeleteEmpty}
-			className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50"
+			className="inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 rounded-xl bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 hover:border-rose-200 text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-rose-400 dark:hover:bg-rose-500/10 dark:hover:border-rose-500/50 min-w-0"
 		>
-			<Trash2 className="w-3.5 h-3.5" />
-			Remove
+			<Trash2 className="w-3.5 h-3.5 shrink-0" />
+			<span className="truncate">Remove</span>
 		</button>
 	)}
  </div>
@@ -863,7 +864,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  </div>
 
  {/* Meta */}
- <div className="grid grid-cols-2 gap-3 text-xs">
+ <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs">
  <div className="bg-gray-50 rounded-xl p-3 dark:bg-[#1A2336]">
  <p className="text-gray-400 font-semibold dark:text-slate-500">Order ID</p>
  <p className="text-sm font-bold text-gray-900 mt-0.5 dark:text-gray-100">#{order.id}</p>

@@ -491,10 +491,11 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
  <button
  onClick={() => setShowAddTable(true)}
- className="inline-flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition"
+ className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/60 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition"
  >
  <Plus className="w-4 h-4" />
- ADD TABLE
+ <span className="hidden sm:inline">ADD TABLE</span>
+ <span className="sm:hidden">Add</span>
  </button>
  </div>
 
@@ -508,16 +509,16 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  </div>
  )}
 
- {/* Summary cards */}
- <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-5">
- {['available', 'occupied', 'waiting_payment', 'cleaning'].map((status, idx) => {
- const cfg = STATUS_CONFIG[status];
- const total = tables.length || 1;
- const pct = Math.round(((summaryCounts[status] || 0) / total) * 100);
- return (
- <div
- key={status}
- className="relative overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 sm:px-5 sm:py-4 min-w-0"
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-5">
+      {['available', 'occupied', 'waiting_payment', 'cleaning'].map((status, idx) => {
+        const cfg = STATUS_CONFIG[status];
+        const total = tables.length || 1;
+        const pct = Math.round(((summaryCounts[status] || 0) / total) * 100);
+        return (
+          <div
+            key={status}
+            className="relative overflow-hidden bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm p-3 sm:px-5 sm:py-4 min-w-0"
  style={{
  animation: isLoaded
  ? `slideUpFade .35s ease-out ${idx * 60}ms both`
@@ -530,20 +531,20 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-slate-400 leading-snug">
  {cfg.summaryLabel}
  </p>
- <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white leading-none mt-1 sm:mt-1.5 break-words">
+ <p className="text-xl sm:text-3xl font-extrabold text-gray-900 dark:text-white leading-none mt-1 sm:mt-1.5 break-words">
  {summaryCounts[status]}
  </p>
- <p className="text-[11px] text-gray-400 mt-1">of {total} tables</p>
+ <p className="text-[10px] sm:text-[11px] text-gray-400 mt-0.5 sm:mt-1">of {total} tables</p>
  </div>
  {/* Donut ring */}
  <div
- className="w-9 h-9 sm:w-11 sm:h-11 rounded-full grid place-items-center shrink-0"
+ className="w-8 h-8 sm:w-11 sm:h-11 rounded-full grid place-items-center shrink-0"
  style={{
  background: `conic-gradient(currentColor ${pct * 3.6}deg, #F1F5F9 0deg)`,
  color: cfg.ringColor,
  }}
  >
- <span className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white grid place-items-center text-[9px] sm:text-[10px] font-bold text-gray-600">
+ <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-white grid place-items-center text-[8px] sm:text-[10px] font-bold text-gray-600">
  {pct}%
  </span>
  </div>
@@ -553,36 +554,37 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  })}
  </div>
 
- {/* Floor tabs */}
- <div className="flex items-center gap-2 mb-4 sm:mb-5 overflow-x-auto max-w-full pb-2 scrollbar-none flex-nowrap">
- {[{ key: 'all', label: 'All Floors' }, ...floors].map((f) => {
- const active = activeFloor === f.key;
- return (
- <button
- key={f.key}
- onClick={() => setActiveFloor(f.key)}
- className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 shrink-0 whitespace-nowrap ${
- active
- ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/60 scale-[1.02]'
- : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
- }`}
- >
- {f.label}
- </button>
- );
- })}
- <button
- onClick={() => setShowManageFloors(true)}
- className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-200 shrink-0 whitespace-nowrap"
- title="Add, rename or delete floors"
- >
- <Layers className="w-3.5 h-3.5" />
- Manage Floors
- </button>
- </div>
+      {/* Floor tabs */}
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-4 sm:mb-5 overflow-x-auto max-w-full pb-2 scrollbar-none flex-nowrap -mx-1 px-1">
+      {[{ key: 'all', label: 'All Floors' }, ...floors].map((f) => {
+        const active = activeFloor === f.key;
+        return (
+          <button
+            key={f.key}
+            onClick={() => setActiveFloor(f.key)}
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 shrink-0 whitespace-nowrap ${
+              active
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/60 scale-[1.02]'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300 hover:text-gray-800'
+            }`}
+          >
+            {f.label}
+          </button>
+        );
+      })}
+      <button
+        onClick={() => setShowManageFloors(true)}
+        className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-500 hover:text-indigo-600 hover:border-indigo-200 transition-all duration-200 shrink-0 whitespace-nowrap"
+        title="Add, rename or delete floors"
+      >
+        <Layers className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Manage Floors</span>
+        <span className="sm:hidden">Floors</span>
+      </button>
+    </div>
 
- {/* Tables grid */}
- <div className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 min-w-0">
+      {/* Tables grid */}
+      <div className="grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4 min-w-0">
  {filteredTables.map((table, idx) => {
  const cfg = STATUS_CONFIG[table.status] || STATUS_CONFIG.available;
  const tableOrder = orderForTable(table.id);
@@ -622,7 +624,7 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  onKeyDown={(e) => {
  if (e.key === 'Enter' || e.key === ' ') handleTableClick(table);
  }}
- className={`relative text-left bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-4 ${cfg.cardRing} hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#141C2E] dark:border-slate-700/60 dark:hover:border-slate-600`}
+ className={`relative text-left bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 p-3 sm:p-4 ${cfg.cardRing} hover:-translate-y-0.5 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-[#141C2E] dark:border-slate-700/60 dark:hover:border-slate-600`}
  style={{
  animation: isLoaded
  ? `cardPop .35s ease-out ${Math.min(idx * 35, 600)}ms both`
@@ -645,9 +647,9 @@ const DineInManagement = ({ locationSettings, nextOrderId, setNextOrderId }) => 
  {table.capacity}
  </span>
 
- {/* Big square badge */}
- <div className={`mx-auto w-20 h-20 sm:w-24 sm:h-24 rounded-2xl ${cfg.bigBg} flex flex-col items-center justify-center shadow-inner mt-5 sm:mt-4`}>
- <span className={`text-2xl sm:text-3xl font-extrabold ${cfg.text} leading-none`}>
+      {/* Big square badge */}
+      <div className={`mx-auto w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl ${cfg.bigBg} flex flex-col items-center justify-center shadow-inner mt-4 sm:mt-4`}>
+        <span className={`text-xl sm:text-3xl font-extrabold ${cfg.text} leading-none`}>
  {table.id}
  </span>
  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 mt-0.5">

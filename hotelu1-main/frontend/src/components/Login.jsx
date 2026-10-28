@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Flame,
   User,
   Lock,
   Eye,
@@ -32,35 +31,6 @@ const STATS = [
   { icon: ShieldCheck, label: 'Uptime', value: '99.9%' },
   { icon: Package, label: 'Orders/day', value: '1.2K+' },
 ];
-
-/* Logo-aware mark for the login card (navy tile, white logo bg). */
-const LoginCardMark = () => {
-  const branding = loadBranding();
-  const radius =
-    branding.logoShape === 'circle'
-      ? '9999px'
-      : branding.logoShape === 'square'
-        ? '6px'
-        : '16px';
-  return (
-    <div
-      className="w-16 h-16 flex items-center justify-center shadow-xl overflow-hidden relative"
-      style={{
-        borderRadius: radius,
-        background: branding.logo
-          ? '#FFFFFF'
-          : 'linear-gradient(135deg, #4338CA 0%, #1E3A8A 100%)',
-        boxShadow: '0 8px 32px rgba(67, 56, 202, 0.3), 0 0 0 4px rgba(255,255,255,0.08)',
-      }}
-    >
-      {branding.logo ? (
-        <img src={branding.logo} alt={branding.siteName} className="w-full h-full object-contain p-2" />
-      ) : (
-        <Flame className="w-8 h-8 text-white" />
-      )}
-    </div>
-  );
-};
 
 /* Animated floating orb for ambient background */
 const FloatingOrb = ({ size, color, opacity, top, left, delay, duration }) => (
@@ -325,13 +295,8 @@ const Login = ({ onLogin }) => {
               <PwaInstallButton />
             </div>
 
-            {/* Icon + heading */}
-            <div className="flex justify-center mb-4">
-              <LoginCardMark />
-            </div>
-
             <h2
-              className="text-2xl sm:text-3xl font-bold text-center font-brand text-white"
+              className="text-2xl sm:text-3xl font-bold text-center font-brand text-white mt-2"
             >
               Welcome Back
             </h2>

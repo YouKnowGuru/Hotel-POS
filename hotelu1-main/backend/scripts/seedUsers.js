@@ -3,7 +3,7 @@ const User = require('../models/User');
 const MenuItem = require('../models/MenuItem');
 
 const users = [
-  { username: 'admin', password: 'admin', role: 'admin', name: 'Super Admin' },
+  { username: 'admin', password: process.env.ADMIN_PASSWORD || 'Tomza#Admin!2026@SecurePOS', role: 'admin', name: 'Super Admin' },
   { username: 'franchise1', password: 'pass', role: 'franchise', name: 'Franchise A' },
   { username: 'subfranchise1', password: 'pass', role: 'subfranchise', name: 'Sub-Franchise X' },
   { username: 'manager1', password: 'pass', role: 'manager', name: 'Restaurant Manager' },

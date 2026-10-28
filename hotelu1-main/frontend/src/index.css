@@ -20,6 +20,16 @@
   display: none;                  /* Chrome/Safari/Opera */
 }
 
+/* Extra-small breakpoint (380px) — used by filter pills, status badges */
+@media (min-width: 380px) {
+  .xs\:inline { display: inline !important; }
+  .xs\:hidden { display: none !important; }
+}
+@media (max-width: 379px) {
+  .xs\:inline { display: none !important; }
+  .xs\:hidden { display: inline !important; }
+}
+
 @media (max-width: 640px) {
   /* Stat/KPI cards: ensure 2-col layout never overflows */
   .grid-cols-2 {

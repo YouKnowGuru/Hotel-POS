@@ -416,6 +416,27 @@ async function runSafeMigrations(sequelize, models = {}) {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ── Settings table: upgrade `value` column from TEXT to LONGTEXT ──────
+    // The settings table stores branding (including base64 logo data URLs)
+    // as JSON in the `value` column. MySQL TEXT caps at ~64KB, but a 120KB
+    // logo produces a ~160KB+ JSON string. LONGTEXT supports up to 4GB.
+    if (tableNames.includes("settings")) {
+      try {
+        const settingsDesc = await qi.describeTable("settings");
+        if (settingsDesc.value) {
+          const colType = (settingsDesc.value.type || '').toUpperCase();
+          if (colType === 'TEXT' || colType === 'MEDIUMTEXT') {
+            await sequelize.query(
+              "ALTER TABLE `settings` MODIFY COLUMN `value` LONGTEXT NOT NULL"
+            );
+            console.log("Migration: upgraded settings.value TEXT → LONGTEXT");
+          }
+        }
+      } catch (e) {
+        console.warn("Migration: could not upgrade settings.value column:", e.message);
+      }
+    }
+
   } catch (err) {
     console.warn("Safe migration warning:", err.message);
   }

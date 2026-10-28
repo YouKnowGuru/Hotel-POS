@@ -44,6 +44,70 @@ const PAY_FORM_CSS = `
 @media (max-width: 400px) {
   .pay-g3 { grid-template-columns: minmax(0,1fr); }
 }
+
+/* ── Responsive payroll tables ──────────────────────────────────── */
+/* On screens below 640px, convert wide tables to stacked card layout */
+@media (max-width: 640px) {
+  .payroll-table thead { display: none; }
+  .payroll-table, .payroll-table tbody, .payroll-table tr, .payroll-table td {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .payroll-table tr {
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    border: 1px solid #E2E8F0;
+    background: #FFFFFF;
+  }
+  .payroll-table tr[style*="rgba(255,255,255,0.04)"] {
+    border-color: rgba(255,255,255,0.10);
+    background: rgba(15,29,64,0.70);
+  }
+  .payroll-table td {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #F1F5F9;
+    text-align: right;
+    font-size: 13px;
+  }
+  .payroll-table td[style*="rgba(255,255,255,0.04)"] {
+    border-bottom-color: rgba(255,255,255,0.06);
+  }
+  .payroll-table td:last-child { border-bottom: none; }
+  .payroll-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748B;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .payroll-table td[data-actions="true"] {
+    justify-content: flex-end;
+    padding-top: 8px !important;
+    padding-bottom: 12px !important;
+  }
+  .payroll-table td[data-actions="true"]::before { display: none; }
+
+  /* KPI cards: 2 columns on phones */
+  .pay-kpi-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+
+  /* Charts stack vertically */
+  .pay-charts-grid { grid-template-columns: minmax(0,1fr) !important; }
+
+  /* Payroll page padding */
+  .payroll-page { padding: '16px 12px' !important; }
+}
+
+@media (max-width: 380px) {
+  .pay-kpi-grid { grid-template-columns: minmax(0,1fr) !important; }
+}
 `;
 
 const fmt = (v) =>
@@ -1533,6 +1597,7 @@ const PayrollSystem = ({ currentUser }) => {
       minHeight: '100vh',
       width: '100%',
       boxSizing: 'border-box',
+      overflowX: 'hidden',
     }}>
 
       {/* Toast */}
@@ -1561,41 +1626,43 @@ const PayrollSystem = ({ currentUser }) => {
       )}
 
       {/* Page Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 12, flexWrap: 'wrap' }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0, flex: '1 1 auto' }}>
           <h1 style={{ margin: 0, fontSize: 'clamp(18px,5vw,26px)', fontWeight: 900, color: isDark ? '#FFFFFF' : '#0F172A', letterSpacing: '-0.03em' }}>
             <span style={{ background: `linear-gradient(135deg,${GOLD},#F59E0B)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               {isAdmin ? 'Payroll' : 'My Salary &'}
             </span> {isAdmin ? 'Management' : 'Payslips'}
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: isDark ? '#94A3B8' : '#64748B' }}>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: isDark ? '#94A3B8' : '#64748B' }}>
             {isAdmin ? 'Staff salary processing, payslips & financial analytics' : 'Your private salary structure, monthly earnings & itemized payslips'}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
           <ThemeToggle />
           {isAdmin && (
             <>
               <button
                 onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
                 style={{
-                  padding: '10px 20px', borderRadius: 12, border: 'none',
+                  padding: '8px 14px', borderRadius: 12, border: 'none',
                   background: `linear-gradient(135deg,${GOLD},#A16207)`,
-                  color: '#fff', fontWeight: 800, fontSize: 13, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 7,
+                  color: '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
                   boxShadow: '0 4px 16px rgba(212,160,23,0.35)',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                <PlusCircle size={15} /> Create Payroll
+                <PlusCircle size={14} /> Create Payroll
               </button>
               <button
                 onClick={() => setShowGenerate(true)}
                 style={{
-                  padding: '10px 18px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
+                  padding: '8px 12px', borderRadius: 12, border: '1px solid rgba(212,160,23,0.3)',
                   background: isDark ? 'rgba(212,160,23,0.1)' : '#FEF3C7',
                   color: isDark ? GOLD : '#B45309',
-                  fontWeight: 700, fontSize: 13, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <Zap size={14} /> Auto-Generate
@@ -1603,13 +1670,14 @@ const PayrollSystem = ({ currentUser }) => {
               <button
                 onClick={() => setShowConfig(true)}
                 style={{
-                  padding: '10px 18px', borderRadius: 12,
+                  padding: '8px 12px', borderRadius: 12,
                   border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1',
                   background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
                   color: isDark ? '#FFFFFF' : '#0F172A',
-                  fontWeight: 600, fontSize: 13, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 5,
                   boxShadow: isDark ? 'none' : '0 1px 3px rgba(0,0,0,0.05)',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 <Settings size={14} /> Salary Config
@@ -1626,16 +1694,19 @@ const PayrollSystem = ({ currentUser }) => {
           background: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9',
           padding: 4, borderRadius: 14, width: 'fit-content', maxWidth: '100%', overflowX: 'auto',
           border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
         }}>
           {['overview', 'records', 'myslips'].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               style={{
-                padding: '8px 18px', borderRadius: 10, border: 'none',
+                padding: '8px 14px', borderRadius: 10, border: 'none',
                 background: tab === t ? `linear-gradient(135deg,${GOLD},#A16207)` : 'transparent',
                 color: tab === t ? '#fff' : (isDark ? '#94A3B8' : '#64748B'),
-                fontWeight: tab === t ? 700 : 500, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+                fontWeight: tab === t ? 700 : 500, fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
+                whiteSpace: 'nowrap', flexShrink: 0,
               }}
             >
               {t === 'overview' ? '📊 Overview' : t === 'records' ? '📋 Records' : '💼 My Payslips'}
@@ -1671,7 +1742,7 @@ const PayrollSystem = ({ currentUser }) => {
           </div>
 
           {/* KPI cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 12, marginBottom: 24 }}>
+          <div className="pay-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(150px,1fr))', gap: 12, marginBottom: 24 }}>
             <StatCard icon={DollarSign}   label="Total Gross"          value={fmtShort(summary?.totalGross      || 0)} sub={`${summary?.total || 0} employees`} accent={GOLD}    isDark={isDark} />
             <StatCard icon={Wallet}       label="Total Net Payout"     value={fmtShort(summary?.totalNet        || 0)} sub="After all deductions"               accent="#3B82F6" isDark={isDark} />
             <StatCard icon={TrendingDown} label="Total Deductions"     value={fmtShort(summary?.totalDeductions || 0)} sub="Tax, PF, penalties"                 accent="#EF4444" isDark={isDark} />
@@ -1679,7 +1750,7 @@ const PayrollSystem = ({ currentUser }) => {
           </div>
 
           {/* Charts */}
-          <div className="pay-g2w" style={{ display: 'grid', gap: 20, marginBottom: 24 }}>
+          <div className="pay-g2w pay-charts-grid" style={{ display: 'grid', gap: 20, marginBottom: 24 }}>
             <div style={{ ...getGlass(isDark), padding: 22 }}>
               <h3 style={{ margin: '0 0 16px', fontSize: 14, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>Salary Breakdown by Employee</h3>
               <div style={{ height: 260 }}>
@@ -1744,14 +1815,14 @@ const PayrollSystem = ({ currentUser }) => {
           {/* Recent table */}
           <div style={{ ...getGlass(isDark), overflow: 'hidden' }}>
             <div style={{
-              padding: '18px 22px',
+              padding: '14px 16px sm:18px 22px',
               borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
               background: isDark ? 'transparent' : '#F8FAFC'
             }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>Recent Payroll Records</h3>
+              <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>Recent Payroll Records</h3>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 13 }}>
+              <table className="payroll-table" style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{
                     borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
@@ -1770,14 +1841,14 @@ const PayrollSystem = ({ currentUser }) => {
                       onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <td style={{ padding: '12px 14px', color: isDark ? '#FFFFFF' : '#0F172A', fontWeight: 600 }}>{r.user_name}</td>
-                      <td style={{ padding: '12px 14px' }}><span style={{ color: ROLE_COLORS[r.user_role] || '#94A3B8', fontWeight: 600, textTransform: 'capitalize', fontSize: 12 }}>{r.user_role}</span></td>
-                      <td style={{ padding: '12px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.pay_period_label || r.pay_period_start}</td>
-                      <td style={{ padding: '12px 14px', color: '#10B981', fontWeight: 700 }}>{fmt(r.gross_salary)}</td>
-                      <td style={{ padding: '12px 14px', color: '#EF4444', fontWeight: 600 }}>-{fmt(r.total_deductions)}</td>
-                      <td style={{ padding: '12px 14px', color: GOLD, fontWeight: 800 }}>{fmt(r.net_salary)}</td>
-                      <td style={{ padding: '12px 14px' }}><StatusBadge status={r.status} isDark={isDark} /></td>
-                      <td style={{ padding: '12px 14px' }}>
+                      <td data-label="Employee" style={{ padding: '12px 14px', color: isDark ? '#FFFFFF' : '#0F172A', fontWeight: 600 }}>{r.user_name}</td>
+                      <td data-label="Role" style={{ padding: '12px 14px' }}><span style={{ color: ROLE_COLORS[r.user_role] || '#94A3B8', fontWeight: 600, textTransform: 'capitalize', fontSize: 12 }}>{r.user_role}</span></td>
+                      <td data-label="Period" style={{ padding: '12px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.pay_period_label || r.pay_period_start}</td>
+                      <td data-label="Gross" style={{ padding: '12px 14px', color: '#10B981', fontWeight: 700 }}>{fmt(r.gross_salary)}</td>
+                      <td data-label="Deductions" style={{ padding: '12px 14px', color: '#EF4444', fontWeight: 600 }}>-{fmt(r.total_deductions)}</td>
+                      <td data-label="Net" style={{ padding: '12px 14px', color: GOLD, fontWeight: 800 }}>{fmt(r.net_salary)}</td>
+                      <td data-label="Status" style={{ padding: '12px 14px' }}><StatusBadge status={r.status} isDark={isDark} /></td>
+                      <td data-actions="true" data-label="" style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', gap: 6 }}>
                           <ActionBtn title="View payslip" onClick={() => setPayslipRecord(r)} color={isDark ? '#94A3B8' : '#475569'} icon={Eye} isDark={isDark} />
                           {['draft','pending','on_hold'].includes(r.status) && (
@@ -1804,18 +1875,19 @@ const PayrollSystem = ({ currentUser }) => {
       {/* ═══════════ RECORDS ═══════════ */}
       {tab === 'records' && isAdmin && (
         <>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center', rowGap: 8 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center', rowGap: 8 }}>
             <button
               onClick={() => { setEditingPayroll(null); setShowManualCreate(true); }}
               style={{
-                padding: '8px 16px', borderRadius: 10, border: 'none',
+                padding: '7px 14px', borderRadius: 10, border: 'none',
                 background: `linear-gradient(135deg,${GOLD},#A16207)`,
                 color: '#fff', cursor: 'pointer', display: 'flex',
-                alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700,
+                alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700,
                 boxShadow: '0 2px 10px rgba(212,160,23,0.25)',
+                whiteSpace: 'nowrap',
               }}
             >
-              <PlusCircle size={14} /> New Payroll Entry
+              <PlusCircle size={14} /> New Entry
             </button>
             <div style={{ position: 'relative' }}>
               <Search size={14} style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', color: isDark ? '#94A3B8' : '#64748B', pointerEvents: 'none' }} />
@@ -1864,7 +1936,7 @@ const PayrollSystem = ({ currentUser }) => {
 
           <div style={{ ...getGlass(isDark), overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table className="payroll-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{
                     borderBottom: isDark ? '1px solid rgba(255,255,255,0.07)' : '1px solid #E2E8F0',
@@ -1883,19 +1955,19 @@ const PayrollSystem = ({ currentUser }) => {
                       onMouseEnter={(e) => { e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                     >
-                      <td style={{ padding: '11px 14px' }}>
+                      <td data-label="Employee" style={{ padding: '11px 14px' }}>
                         <div style={{ fontWeight: 700, color: isDark ? '#FFFFFF' : '#0F172A' }}>{r.user_name}</div>
                         {r.department && <div style={{ fontSize: 10, color: isDark ? '#94A3B8' : '#64748B' }}>{r.department}</div>}
                       </td>
-                      <td style={{ padding: '11px 14px' }}><span style={{ color: ROLE_COLORS[r.user_role] || '#94A3B8', fontWeight: 600, textTransform: 'capitalize', fontSize: 11 }}>{r.user_role}</span></td>
-                      <td style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.pay_period_label || r.pay_period_start}</td>
-                      <td style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.days_present}/{r.total_working_days}</td>
-                      <td style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{Number(r.regular_hours || 0).toFixed(1)}h</td>
-                      <td style={{ padding: '11px 14px', color: isDark ? '#FFFFFF' : '#0F172A' }}>{fmt(r.basic_salary)}</td>
-                      <td style={{ padding: '11px 14px', color: '#10B981', fontWeight: 700 }}>{fmt(r.gross_salary)}</td>
-                      <td style={{ padding: '11px 14px', color: GOLD, fontWeight: 800 }}>{fmt(r.net_salary)}</td>
-                      <td style={{ padding: '11px 14px' }}><StatusBadge status={r.status} isDark={isDark} /></td>
-                      <td style={{ padding: '11px 14px' }}>
+                      <td data-label="Role" style={{ padding: '11px 14px' }}><span style={{ color: ROLE_COLORS[r.user_role] || '#94A3B8', fontWeight: 600, textTransform: 'capitalize', fontSize: 11 }}>{r.user_role}</span></td>
+                      <td data-label="Period" style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.pay_period_label || r.pay_period_start}</td>
+                      <td data-label="Days" style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{r.days_present}/{r.total_working_days}</td>
+                      <td data-label="Hrs" style={{ padding: '11px 14px', color: isDark ? '#94A3B8' : '#64748B', fontSize: 12 }}>{Number(r.regular_hours || 0).toFixed(1)}h</td>
+                      <td data-label="Basic" style={{ padding: '11px 14px', color: isDark ? '#FFFFFF' : '#0F172A' }}>{fmt(r.basic_salary)}</td>
+                      <td data-label="Gross" style={{ padding: '11px 14px', color: '#10B981', fontWeight: 700 }}>{fmt(r.gross_salary)}</td>
+                      <td data-label="Net" style={{ padding: '11px 14px', color: GOLD, fontWeight: 800 }}>{fmt(r.net_salary)}</td>
+                      <td data-label="Status" style={{ padding: '11px 14px' }}><StatusBadge status={r.status} isDark={isDark} /></td>
+                      <td data-actions="true" data-label="Actions" style={{ padding: '11px 14px' }}>
                         <div style={{ display: 'flex', gap: 5 }}>
                           <ActionBtn title="View Payslip" onClick={() => setPayslipRecord(r)} color={isDark ? '#94A3B8' : '#475569'} icon={Eye} isDark={isDark} />
                           {['draft','pending','on_hold'].includes(r.status) && (
