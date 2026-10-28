@@ -1224,20 +1224,20 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
           </button>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="pay-modal-tabs scrollbar-none" style={{
-          display: 'flex',
+        {/* Tab Navigation — 2x2 grid on mobile, horizontal row on desktop */}
+        <div className="pay-modal-tabs" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0,1fr))',
           borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
           background: isDark ? 'rgba(0,0,0,0.25)' : '#F1F5F9',
-          padding: '4px clamp(10px,3vw,20px)', gap: 6, overflowX: 'auto',
-          scrollbarWidth: 'none',
+          padding: '6px clamp(8px,2vw,20px)', gap: '6px',
         }}>
           {[
-            { id: 'employee',   label: '1. Staff & Period',   icon: User, badge: form.user_name || 'Select' },
-            { id: 'earnings',   label: '2. Earnings & OT',    icon: DollarSign, badge: fmtShort(grossSalary) },
-            { id: 'deductions', label: '3. Deductions',       icon: TrendingDown, badge: `-${fmtShort(totalDeductions)}` },
-            { id: 'payout',     label: '4. Status & Payout',  icon: Banknote, badge: form.status },
-          ].map((t) => {
+            { id: 'employee',   label: 'Staff & Period',   icon: User, badge: form.user_name || 'Select' },
+            { id: 'earnings',   label: 'Earnings & OT',    icon: DollarSign, badge: fmtShort(grossSalary) },
+            { id: 'deductions', label: 'Deductions',       icon: TrendingDown, badge: `-${fmtShort(totalDeductions)}` },
+            { id: 'payout',     label: 'Status & Payout',  icon: Banknote, badge: form.status },
+          ].map((t, i) => {
             const Icon = t.icon;
             const active = activeTab === t.id;
             return (
@@ -1245,22 +1245,25 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px', borderRadius: 8,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  padding: '8px 6px', borderRadius: 8,
                   border: active ? '1px solid rgba(212,160,23,0.4)' : '1px solid transparent',
-                  background: active ? (isDark ? 'rgba(212,160,23,0.15)' : '#FEF3C7') : 'transparent',
+                  background: active ? (isDark ? 'rgba(212,160,23,0.15)' : '#FEF3C7') : (isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF'),
                   color: active ? (isDark ? GOLD : '#B45309') : (isDark ? '#94A3B8' : '#64748B'),
-                  cursor: 'pointer', fontSize: 10, fontWeight: active ? 700 : 500, whiteSpace: 'nowrap',
-                  flexShrink: 0,
+                  cursor: 'pointer', fontSize: 10, fontWeight: active ? 700 : 500,
+                  whiteSpace: 'nowrap', overflow: 'hidden',
+                  minHeight: 38,
                 }}
               >
+                <span style={{ fontSize: 9, fontWeight: 800, opacity: 0.6, flexShrink: 0 }}>{i + 1}</span>
                 <Icon size={12} />
-                <span className="hidden sm:inline">{t.label}</span>
-                <span className="sm:hidden">{t.id === 'employee' ? '1' : t.id === 'earnings' ? '2' : t.id === 'deductions' ? '3' : '4'}</span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</span>
                 <span style={{
                   fontSize: 9, padding: '1px 5px', borderRadius: 6,
                   background: active ? (isDark ? 'rgba(212,160,23,0.25)' : '#FDE68A') : (isDark ? 'rgba(255,255,255,0.06)' : '#E2E8F0'),
                   color: active ? (isDark ? '#fff' : '#92400E') : (isDark ? '#94A3B8' : '#64748B'),
-                  fontWeight: 600, maxWidth: 60, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  fontWeight: 600, maxWidth: 50, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}>
                   {t.badge}
                 </span>
@@ -1268,6 +1271,20 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
             );
           })}
         </div>
+        {/* Desktop: switch to horizontal row */}
+        <style>{`
+          @media (min-width: 769px) {
+            .pay-modal-tabs {
+              grid-template-columns: none !important;
+              display: flex !important;
+              flex-wrap: nowrap;
+              overflow-x: auto;
+            }
+            .pay-modal-tabs button {
+              flex-shrink: 0;
+            }
+          }
+        `}</style>
 
         {/* Tab Body */}
         <div className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(10px,3vw,22px) clamp(10px,3vw,26px)' }}>
