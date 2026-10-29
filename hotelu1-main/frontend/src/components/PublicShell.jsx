@@ -129,7 +129,26 @@ const PublicShell = ({ active = '', children }) => {
        the reset entirely and let the hash glow below glide to the target. */
     if (prevPathRef.current === location.pathname) return undefined;
     prevPathRef.current = location.pathname;
-    window.scrollTo(0, 0);
+
+    /* BUGFIX (page loads at the bottom/footer): index.css sets
+       `html { scroll-behavior: smooth }` globally. That means
+       window.scrollTo(0,0) animates from the old (bottom) position to
+       the top instead of jumping instantly — so users see the footer
+       and then a slow scroll up. Temporarily switch to 'auto' for the
+       reset calls, then restore the original value so in-page smooth
+       scrolling (hash links, scrollIntoView) still works afterwards.
+       Every retry also toggles to 'auto' around the scrollTo call so
+       late-arriving content (lazy chunks, images) can't resurface a
+       smooth-animated scroll from a mid-page position. */
+    const html = document.documentElement;
+    const savedBehavior = html.style.scrollBehavior;
+
+    const resetScroll = () => {
+      html.style.scrollBehavior = 'auto';
+      window.scrollTo(0, 0);
+      html.style.scrollBehavior = savedBehavior;
+    };
+
     /* Re-pin on a timeline so late-arriving layout (lazy route chunks,
        images, ad banners) can't resurface the remembered viewport position.
        The tick stops as soon as the user acts by themselves — wheel, touch,
@@ -138,16 +157,21 @@ const PublicShell = ({ active = '', children }) => {
     const markUser = () => { userMoved = true; };
     const evts = ['wheel', 'touchstart', 'keydown', 'mousedown', 'click'];
     evts.forEach((ev) => window.addEventListener(ev, markUser, { passive: true, once: true }));
-    requestAnimationFrame(() => window.scrollTo(0, 0));
-    requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+    requestAnimationFrame(() => requestAnimationFrame(resetScroll));
+
     const ticks = [
-      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 250),
-      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 900),
-      setTimeout(() => { if (!userMoved) window.scrollTo(0, 0); }, 1800),
+      setTimeout(() => { if (!userMoved) resetScroll(); }, 250),
+      setTimeout(() => { if (!userMoved) resetScroll(); }, 900),
+      setTimeout(() => { if (!userMoved) resetScroll(); }, 1800),
     ];
+
     return () => {
       ticks.forEach((t) => clearTimeout(t));
       evts.forEach((ev) => window.removeEventListener(ev, markUser));
+      html.style.scrollBehavior = savedBehavior;
     };
   }, [location.pathname, location.hash]);
 
