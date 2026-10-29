@@ -655,22 +655,35 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <style>{CSS}</style>
  <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
 
- {/* Shooting star field — subtle, matches brand pink/purple palette */}
+ {/* Shooting star field — vibrant multi-color cosmic palette (NOT brand colors) */}
  <div className="sm-starfield">
- {/* Twinkling background dots */}
+ {/* Twinkling background dots — mixed colors */}
  <span className="sm-twinkle" style={{top:'12%',left:'22%',animationDelay:'0s'}} />
- <span className="sm-twinkle" style={{top:'8%',left:'68%',animationDelay:'0.5s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-gold" style={{top:'8%',left:'68%',animationDelay:'0.5s',width:'2px',height:'2px'}} />
  <span className="sm-twinkle" style={{top:'20%',left:'45%',animationDelay:'1s'}} />
- <span className="sm-twinkle" style={{top:'6%',left:'88%',animationDelay:'1.5s',width:'2.5px',height:'2.5px'}} />
- <span className="sm-twinkle" style={{top:'15%',left:'8%',animationDelay:'2s'}} />
- <span className="sm-twinkle" style={{top:'5%',left:'55%',animationDelay:'2.5s',width:'2px',height:'2px'}} />
- <span className="sm-twinkle" style={{top:'18%',left:'75%',animationDelay:'0.8s',width:'2.5px',height:'2.5px'}} />
- <span className="sm-twinkle" style={{top:'10%',left:'35%',animationDelay:'1.8s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-cyan" style={{top:'6%',left:'88%',animationDelay:'1.5s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle-gold" style={{top:'15%',left:'8%',animationDelay:'2s'}} />
+ <span className="sm-twinkle-lime" style={{top:'5%',left:'55%',animationDelay:'2.5s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-coral" style={{top:'18%',left:'75%',animationDelay:'0.8s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle-cyan" style={{top:'10%',left:'35%',animationDelay:'1.8s',width:'2px',height:'2px'}} />
  <span className="sm-twinkle" style={{top:'3%',left:'12%',animationDelay:'3s',width:'3px',height:'3px'}} />
- <span className="sm-twinkle" style={{top:'22%',left:'60%',animationDelay:'1.2s',width:'2px',height:'2px'}} />
- <span className="sm-twinkle" style={{top:'7%',left:'40%',animationDelay:'2.2s',width:'2.5px',height:'2.5px'}} />
- <span className="sm-twinkle" style={{top:'25%',left:'15%',animationDelay:'0.3s',width:'2px',height:'2px'}} />
- {/* Shooting stars */}
+ <span className="sm-twinkle-gold" style={{top:'22%',left:'60%',animationDelay:'1.2s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-lime" style={{top:'7%',left:'40%',animationDelay:'2.2s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle-coral" style={{top:'25%',left:'15%',animationDelay:'0.3s',width:'2px',height:'2px'}} />
+ {/* Extra twinkles — more density */}
+ <span className="sm-twinkle-cyan" style={{top:'30%',left:'52%',animationDelay:'1.5s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-gold" style={{top:'28%',left:'25%',animationDelay:'2.8s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle" style={{top:'35%',left:'80%',animationDelay:'0.6s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-lime" style={{top:'2%',left:'72%',animationDelay:'3.2s',width:'3px',height:'3px'}} />
+ <span className="sm-twinkle-coral" style={{top:'33%',left:'42%',animationDelay:'1.1s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-gold" style={{top:'27%',left:'92%',animationDelay:'2.4s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle-cyan" style={{top:'40%',left:'10%',animationDelay:'0.9s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle" style={{top:'42%',left:'65%',animationDelay:'3.5s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle-lime" style={{top:'38%',left:'30%',animationDelay:'1.7s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-gold" style={{top:'45%',left:'55%',animationDelay:'2.1s',width:'3px',height:'3px'}} />
+ <span className="sm-twinkle-coral" style={{top:'48%',left:'85%',animationDelay:'0.4s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle-cyan" style={{top:'50%',left:'18%',animationDelay:'2.9s',width:'2.5px',height:'2.5px'}} />
+ {/* Shooting stars — 8 total with distinct colors */}
  <div className="sm-shoot-wrap" style={{top:'6%',left:'5%'}}>
  <div className="sm-shoot-star sm-shoot-1"><span className="trail" /><span className="head" /></div>
  </div>
@@ -685,6 +698,15 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  <div className="sm-shoot-wrap" style={{top:'16%',left:'18%'}}>
  <div className="sm-shoot-star sm-shoot-5"><span className="trail" /><span className="head" /></div>
+ </div>
+ <div className="sm-shoot-wrap" style={{top:'22%',left:'75%'}}>
+ <div className="sm-shoot-star sm-shoot-6"><span className="trail" /><span className="head" /></div>
+ </div>
+ <div className="sm-shoot-wrap" style={{top:'8%',left:'88%'}}>
+ <div className="sm-shoot-star sm-shoot-7"><span className="trail" /><span className="head" /></div>
+ </div>
+ <div className="sm-shoot-wrap" style={{top:'28%',left:'35%'}}>
+ <div className="sm-shoot-star sm-shoot-8"><span className="trail" /><span className="head" /></div>
  </div>
  </div>
 
@@ -1276,7 +1298,8 @@ const CSS = `
  @keyframes paidBurst{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
 
- /* === Shooting Star — light mode uses visible pink/purple gradients === */
+ /* === Shooting Star — vibrant multi-color cosmic palette (NOT brand colors) === */
+ /* Colors: electric cyan, warm gold, lime, coral, violet — a real meteor shower feel */
  @keyframes shootStar1{
   0%{transform:translate(0,0) rotate(35deg);opacity:0}
   5%{opacity:1}
@@ -1316,26 +1339,106 @@ const CSS = `
   75%{opacity:0}
   100%{transform:translate(460px,320px) rotate(38deg);opacity:0}
  }
+ @keyframes shootStar6{
+  0%{transform:translate(0,0) rotate(25deg);opacity:0}
+  10%{opacity:1}
+  45%{opacity:1}
+  65%{opacity:0}
+  100%{transform:translate(400px,220px) rotate(25deg);opacity:0}
+ }
+ @keyframes shootStar7{
+  0%{transform:translate(0,0) rotate(40deg);opacity:0}
+  12%{opacity:0}
+  18%{opacity:1}
+  50%{opacity:1}
+  70%{opacity:0}
+  100%{transform:translate(440px,340px) rotate(40deg);opacity:0}
+ }
+ @keyframes shootStar8{
+  0%{transform:translate(0,0) rotate(30deg);opacity:0}
+  8%{opacity:1}
+  40%{opacity:1}
+  60%{opacity:0}
+  100%{transform:translate(480px,290px) rotate(30deg);opacity:0}
+ }
  @keyframes twinkleDot{
+  0%,100%{opacity:0.15;transform:scale(0.4)}
+  50%{opacity:1;transform:scale(1.3)}
+ }
+ @keyframes twinkleDotGold{
   0%,100%{opacity:0.2;transform:scale(0.5)}
   50%{opacity:0.95;transform:scale(1.1)}
  }
+ @keyframes twinkleDotCyan{
+  0%,100%{opacity:0.15;transform:scale(0.4)}
+  50%{opacity:0.9;transform:scale(1.2)}
+ }
  .sm-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
- /* Light mode: stars are pink/purple with visible glow on light bg */
- .sm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#ff3cac,rgba(255,60,172,0.2));animation:twinkleDot 3s ease-in-out infinite;box-shadow:0 0 4px rgba(255,60,172,0.3)}
+ /* Light mode: each star type has its own vibrant color */
+ .sm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#00E5FF,rgba(0,229,255,0.2));animation:twinkleDot 3s ease-in-out infinite;box-shadow:0 0 5px rgba(0,229,255,0.4)}
+ .sm-twinkle-gold{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#FFD700,rgba(255,215,0,0.2));animation:twinkleDotGold 3.5s ease-in-out infinite;box-shadow:0 0 5px rgba(255,215,0,0.4)}
+ .sm-twinkle-cyan{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#5EEAD4,rgba(94,234,212,0.2));animation:twinkleDotCyan 2.8s ease-in-out infinite;box-shadow:0 0 5px rgba(94,234,212,0.35)}
+ .sm-twinkle-lime{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#A3E635,rgba(163,230,53,0.2));animation:twinkleDot 3.2s ease-in-out infinite;box-shadow:0 0 5px rgba(163,230,53,0.35)}
+ .sm-twinkle-coral{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#FF7F50,rgba(255,127,80,0.2));animation:twinkleDotGold 4s ease-in-out infinite;box-shadow:0 0 5px rgba(255,127,80,0.35)}
  .sm-shoot-wrap{position:absolute;top:0;left:0;width:1px;height:1px}
  .sm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0}
- .sm-shoot-star .trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(255,60,172,0.08) 25%,rgba(255,60,172,0.45) 60%,rgba(255,60,172,0.85) 85%,#ff3cac 100%);filter:blur(0.4px)}
- .sm-shoot-star .head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:radial-gradient(circle,#ff3cac 20%,rgba(255,60,172,0.7) 55%,rgba(120,75,160,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,60,172,0.5),0 0 16px 4px rgba(120,75,160,0.25)}
+ /* Star 1: Electric Cyan */
+ .sm-shoot-1 .trail{background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.1) 25%,rgba(0,229,255,0.5) 60%,rgba(0,229,255,0.9) 85%,#00E5FF 100%);filter:blur(0.4px)}
+ .sm-shoot-1 .head{background:radial-gradient(circle,#00E5FF 20%,rgba(0,229,255,0.7) 55%,rgba(14,165,233,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(0,229,255,0.6),0 0 16px 4px rgba(94,234,212,0.3)}
+ /* Star 2: Warm Gold */
+ .sm-shoot-2 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,0.1) 25%,rgba(255,215,0,0.5) 60%,rgba(255,215,0,0.9) 85%,#FFD700 100%);filter:blur(0.4px)}
+ .sm-shoot-2 .head{background:radial-gradient(circle,#FFD700 20%,rgba(255,215,0,0.7) 55%,rgba(245,158,11,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,215,0,0.6),0 0 16px 4px rgba(251,191,36,0.3)}
+ /* Star 3: Lime Green */
+ .sm-shoot-3 .trail{background:linear-gradient(90deg,transparent 0%,rgba(163,230,53,0.1) 25%,rgba(163,230,53,0.5) 60%,rgba(163,230,53,0.9) 85%,#A3E635 100%);filter:blur(0.4px)}
+ .sm-shoot-3 .head{background:radial-gradient(circle,#A3E635 20%,rgba(163,230,53,0.7) 55%,rgba(132,204,22,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(163,230,53,0.6),0 0 16px 4px rgba(190,242,100,0.3)}
+ /* Star 4: Coral */
+ .sm-shoot-4 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,127,80,0.1) 25%,rgba(255,127,80,0.5) 60%,rgba(255,127,80,0.9) 85%,#FF7F50 100%);filter:blur(0.4px)}
+ .sm-shoot-4 .head{background:radial-gradient(circle,#FF7F50 20%,rgba(255,127,80,0.7) 55%,rgba(239,68,68,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,127,80,0.6),0 0 16px 4px rgba(251,146,60,0.3)}
+ /* Star 5: Violet */
+ .sm-shoot-5 .trail{background:linear-gradient(90deg,transparent 0%,rgba(167,139,250,0.1) 25%,rgba(167,139,250,0.5) 60%,rgba(167,139,250,0.9) 85%,#A78BFA 100%);filter:blur(0.4px)}
+ .sm-shoot-5 .head{background:radial-gradient(circle,#A78BFA 20%,rgba(167,139,250,0.7) 55%,rgba(139,92,246,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(167,139,250,0.6),0 0 16px 4px rgba(196,181,253,0.3)}
+ /* Star 6: Electric Cyan variant */
+ .sm-shoot-6 .trail{background:linear-gradient(90deg,transparent 0%,rgba(56,189,248,0.1) 25%,rgba(56,189,248,0.5) 60%,rgba(56,189,248,0.9) 85%,#38BDF8 100%);filter:blur(0.4px)}
+ .sm-shoot-6 .head{background:radial-gradient(circle,#38BDF8 20%,rgba(56,189,248,0.7) 55%,rgba(14,165,233,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(56,189,248,0.6),0 0 16px 4px rgba(125,211,252,0.3)}
+ /* Star 7: Warm Gold variant */
+ .sm-shoot-7 .trail{background:linear-gradient(90deg,transparent 0%,rgba(251,191,36,0.1) 25%,rgba(251,191,36,0.5) 60%,rgba(251,191,36,0.9) 85%,#FBBF24 100%);filter:blur(0.4px)}
+ .sm-shoot-7 .head{background:radial-gradient(circle,#FBBF24 20%,rgba(251,191,36,0.7) 55%,rgba(245,158,11,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(251,191,36,0.6),0 0 16px 4px rgba(253,224,71,0.3)}
+ /* Star 8: Rose Pink (distinct from brand pink — more warm/salmon) */
+ .sm-shoot-8 .trail{background:linear-gradient(90deg,transparent 0%,rgba(244,114,182,0.1) 25%,rgba(244,114,182,0.5) 60%,rgba(244,114,182,0.9) 85%,#F472B6 100%);filter:blur(0.4px)}
+ .sm-shoot-8 .head{background:radial-gradient(circle,#F472B6 20%,rgba(244,114,182,0.7) 55%,rgba(236,72,153,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(244,114,182,0.6),0 0 16px 4px rgba(251,207,232,0.3)}
+ /* Default trail/head fallback uses cyan */
+ .sm-shoot-star .trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.1) 25%,rgba(0,229,255,0.5) 60%,rgba(0,229,255,0.9) 85%,#00E5FF 100%);filter:blur(0.4px)}
+ .sm-shoot-star .head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%}
  .sm-shoot-1{animation:shootStar1 4s ease-in infinite;animation-delay:0.5s}
  .sm-shoot-2{animation:shootStar2 5s ease-in infinite;animation-delay:2.2s}
  .sm-shoot-3{animation:shootStar3 6s ease-in infinite;animation-delay:4s}
  .sm-shoot-4{animation:shootStar4 4.5s ease-in infinite;animation-delay:1.3s}
  .sm-shoot-5{animation:shootStar5 5.5s ease-in infinite;animation-delay:3.5s}
- /* Dark mode: stars switch to bright white/pink for visibility on dark bg */
- html.dark .sm-twinkle{background:radial-gradient(circle,#fff,rgba(255,60,172,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
- html.dark .sm-shoot-star .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,60,172,0.05) 30%,rgba(255,60,172,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-star .head{background:radial-gradient(circle,#fff 30%,rgba(255,60,172,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,60,172,0.6),0 0 16px 4px rgba(120,75,160,0.3)}
+ .sm-shoot-6{animation:shootStar6 5s ease-in infinite;animation-delay:0.8s}
+ .sm-shoot-7{animation:shootStar7 4.8s ease-in infinite;animation-delay:2.8s}
+ .sm-shoot-8{animation:shootStar8 5.2s ease-in infinite;animation-delay:5s}
+ /* Dark mode: stars become brighter with white-hot cores */
+ html.dark .sm-twinkle{background:radial-gradient(circle,#fff,rgba(0,229,255,0.4));box-shadow:0 0 6px rgba(255,255,255,0.5)}
+ html.dark .sm-twinkle-gold{background:radial-gradient(circle,#fff,rgba(255,215,0,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+ html.dark .sm-twinkle-cyan{background:radial-gradient(circle,#fff,rgba(94,234,212,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+ html.dark .sm-twinkle-lime{background:radial-gradient(circle,#fff,rgba(163,230,53,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+ html.dark .sm-twinkle-coral{background:radial-gradient(circle,#fff,rgba(255,127,80,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+ html.dark .sm-shoot-1 .trail{background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.05) 30%,rgba(0,229,255,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-1 .head{background:radial-gradient(circle,#fff 30%,rgba(0,229,255,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(0,229,255,0.7),0 0 16px 4px rgba(94,234,212,0.4)}
+ html.dark .sm-shoot-2 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,0.05) 30%,rgba(255,215,0,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-2 .head{background:radial-gradient(circle,#fff 30%,rgba(255,215,0,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,215,0,0.7),0 0 16px 4px rgba(251,191,36,0.4)}
+ html.dark .sm-shoot-3 .trail{background:linear-gradient(90deg,transparent 0%,rgba(163,230,53,0.05) 30%,rgba(163,230,53,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-3 .head{background:radial-gradient(circle,#fff 30%,rgba(163,230,53,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(163,230,53,0.7),0 0 16px 4px rgba(190,242,100,0.4)}
+ html.dark .sm-shoot-4 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,127,80,0.05) 30%,rgba(255,127,80,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-4 .head{background:radial-gradient(circle,#fff 30%,rgba(255,127,80,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,127,80,0.7),0 0 16px 4px rgba(251,146,60,0.4)}
+ html.dark .sm-shoot-5 .trail{background:linear-gradient(90deg,transparent 0%,rgba(167,139,250,0.05) 30%,rgba(167,139,250,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-5 .head{background:radial-gradient(circle,#fff 30%,rgba(167,139,250,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(167,139,250,0.7),0 0 16px 4px rgba(196,181,253,0.4)}
+ html.dark .sm-shoot-6 .trail{background:linear-gradient(90deg,transparent 0%,rgba(56,189,248,0.05) 30%,rgba(56,189,248,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-6 .head{background:radial-gradient(circle,#fff 30%,rgba(56,189,248,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(56,189,248,0.7),0 0 16px 4px rgba(125,211,252,0.4)}
+ html.dark .sm-shoot-7 .trail{background:linear-gradient(90deg,transparent 0%,rgba(251,191,36,0.05) 30%,rgba(251,191,36,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-7 .head{background:radial-gradient(circle,#fff 30%,rgba(251,191,36,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(251,191,36,0.7),0 0 16px 4px rgba(253,224,71,0.4)}
+ html.dark .sm-shoot-8 .trail{background:linear-gradient(90deg,transparent 0%,rgba(244,114,182,0.05) 30%,rgba(244,114,182,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-8 .head{background:radial-gradient(circle,#fff 30%,rgba(244,114,182,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(244,114,182,0.7),0 0 16px 4px rgba(251,207,232,0.4)}
 
  .sm-header{padding:12px 16px 10px}
  @media(min-width:640px){.sm-header{padding:14px 24px 12px}}
