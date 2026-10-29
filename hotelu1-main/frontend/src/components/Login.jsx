@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -47,6 +47,136 @@ const FloatingOrb = ({ size, color, opacity, top, left, delay, duration }) => (
       animation: `float-orb ${duration}s ease-in-out ${delay}s infinite alternate`,
     }}
   />
+);
+
+/* ── Twinkling starfield ──
+   Generates a field of small static stars that twinkle in/out with
+   randomized delays and durations for an organic, non-uniform feel. */
+const STAR_COUNT = 80;
+const Starfield = () => {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: STAR_COUNT }, (_, i) => ({
+        id: i,
+        top: Math.random() * 100,
+        left: Math.random() * 100,
+        size: Math.random() * 2 + 1,
+        delay: Math.random() * 5,
+        duration: Math.random() * 3 + 2,
+        opacity: Math.random() * 0.5 + 0.3,
+      })),
+    []
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+      {stars.map((s) => (
+        <div
+          key={s.id}
+          className="absolute rounded-full bg-white"
+          style={{
+            top: `${s.top}%`,
+            left: `${s.left}%`,
+            width: `${s.size}px`,
+            height: `${s.size}px`,
+            opacity: s.opacity,
+            animation: `twinkle ${s.duration}s ease-in-out ${s.delay}s infinite alternate`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+/* ── Shooting Stars ──
+   Renders multiple shooting stars that streak diagonally across the
+   screen with glowing gradient tails. Each star has randomized start
+   position, angle, speed, and delay so they never look synchronized.
+
+   The tail is built from a linear-gradient on a thin rotated bar whose
+   height is the "thickness" of the streak. The head is a bright dot
+   with a radial glow at the leading edge. */
+const ShootingStarConfig = [
+  { top: 5,  left: 70, angle: 215, delay: 0.5,  duration: 3.5, tail: 180, thickness: 2,   hue: 'white' },
+  { top: 15, left: 85, angle: 210, delay: 2.8,  duration: 4,   tail: 220, thickness: 1.5, hue: 'gold'  },
+  { top: 30, left: 95, angle: 220, delay: 5.2,  duration: 3.8, tail: 160, thickness: 2,   hue: 'navy'  },
+  { top: 8,  left: 50, angle: 225, delay: 8.1,  duration: 4.2, tail: 200, thickness: 1.5, hue: 'white' },
+  { top: 40, left: 80, angle: 215, delay: 11.3, duration: 3.6, tail: 190, thickness: 2.5, hue: 'gold'  },
+  { top: 20, left: 60, angle: 220, delay: 14.5, duration: 4.5, tail: 240, thickness: 2,   hue: 'navy'  },
+  { top: 55, left: 90, angle: 225, delay: 17.2, duration: 3.9, tail: 170, thickness: 1.5, hue: 'white' },
+  { top: 3,  left: 30, angle: 230, delay: 20.0, duration: 4.1, tail: 210, thickness: 2,   hue: 'gold'  },
+];
+
+/* Color palette matches the login page theme exactly:
+   - gold   → #D4A017 (var(--theme-gold))      — primary accent
+   - navy   → #4338CA (var(--theme-primary))   — indigo/brand
+   - white  → #FFFFFF                            — neutral highlight
+   The "head" of each star uses a white-hot core that fades into the
+   theme color, mimicking real meteor colors. */
+const HUE_GRADIENTS = {
+  white: { tail: '255, 255, 255', glow: 'rgba(255, 255, 255, 0.8)' },
+  gold:  { tail: '212, 160, 23',  glow: 'rgba(252, 211, 77, 0.8)' },
+  navy:  { tail: '99, 102, 241',  glow: 'rgba(129, 140, 248, 0.8)' },
+};
+
+const ShootingStar = ({ config }) => {
+  const { top, left, angle, delay, duration, tail, thickness, hue } = config;
+  const colors = HUE_GRADIENTS[hue] || HUE_GRADIENTS.white;
+  const cycleDuration = duration + 6; // 6s pause between launches
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        top: `${top}%`,
+        left: `${left}%`,
+        animation: `shooting-star-fly ${cycleDuration}s linear ${delay}s infinite`,
+        // The star starts fully off-screen (translateX beyond its tail length)
+        // and flies diagonally. We use CSS vars consumed by the keyframes.
+        '--fly-angle': `${angle}deg`,
+        '--fly-distance': '120vw',
+        '--tail-length': `${tail}px`,
+      }}
+    >
+      {/* The streak — a rotated bar with a gradient tail */}
+      <div
+        style={{
+          position: 'relative',
+          width: `${tail}px`,
+          height: `${thickness}px`,
+          transform: `rotate(${angle}deg)`,
+          transformOrigin: 'right center',
+          borderRadius: '999px',
+          // Tail fades from transparent (trailing edge) to bright (head)
+          background: `linear-gradient(to right, rgba(${colors.tail}, 0) 0%, rgba(${colors.tail}, 0.1) 30%, rgba(${colors.tail}, 0.4) 70%, rgba(${colors.tail}, 1) 100%)`,
+          filter: `drop-shadow(0 0 6px ${colors.glow})`,
+        }}
+      >
+        {/* Bright head dot at the leading edge */}
+        <div
+          style={{
+            position: 'absolute',
+            right: `-${thickness * 1.5}px`,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: `${thickness * 3}px`,
+            height: `${thickness * 3}px`,
+            borderRadius: '50%',
+            background: `radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(${colors.tail}, 0.8) 40%, rgba(${colors.tail}, 0) 70%)`,
+            boxShadow: `0 0 ${thickness * 4}px ${colors.glow}, 0 0 ${thickness * 8}px ${colors.glow}`,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+const ShootingStars = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none z-[1]" aria-hidden="true">
+    {ShootingStarConfig.map((config, i) => (
+      <ShootingStar key={i} config={config} />
+    ))}
+  </div>
 );
 
 const Login = ({ onLogin }) => {
@@ -112,6 +242,12 @@ const Login = ({ onLogin }) => {
         minHeight: '100dvh',
       }}
     >
+      {/* ====== Twinkling starfield (global background) ====== */}
+      <Starfield />
+
+      {/* ====== Shooting stars (global background) ====== */}
+      <ShootingStars />
+
       {/* ====== Ambient floating orbs (global background) ====== */}
       <FloatingOrb size="400px" color="var(--theme-primary, #4338CA)" opacity="0.08" top="-10%" left="-5%" delay="0" duration="20" />
       <FloatingOrb size="300px" color="var(--theme-gold, #D4A017)" opacity="0.06" top="50%" left="60%" delay="2" duration="25" />
@@ -476,6 +612,51 @@ const Login = ({ onLogin }) => {
         @keyframes shimmer {
           0%   { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
+        }
+        /* ── Twinkling stars ── */
+        @keyframes twinkle {
+          0%   { opacity: 0.15; transform: scale(0.8); }
+          100% { opacity: 1; transform: scale(1.1); }
+        }
+        /* ── Shooting star fly ──
+           The star element is positioned at a top/left anchor. It starts
+           fully offset (tail + head hidden off the anchor point), then
+           translates diagonally across the screen. Between cycles the
+           star is invisible (opacity 0) so it "respawns" from its
+           origin each loop.
+
+           We use the CSS custom properties --fly-angle and --fly-distance
+           set inline on each star to control direction and travel length.
+           The translate is split into two stages:
+             0%   — star sits at its origin, fully transparent
+             5%   — still at origin, fades in (head becomes visible)
+             100% — star has traveled --fly-distance along its angle, fades out */
+        @keyframes shooting-star-fly {
+          0% {
+            opacity: 0;
+            transform: translate(0, 0);
+          }
+          3% {
+            opacity: 1;
+          }
+          /* Travel diagonally: combine translateX/Y along the angle.
+             We approximate the diagonal by using translateX for the
+             full distance and translateY proportional to the angle.
+             For angles ~210-230°, the vertical drop is roughly
+             sin(angle) * distance. We hardcode a generic diagonal. */
+          40% {
+            opacity: 1;
+            transform: translate(calc(var(--fly-distance, 120vw) * -0.85), calc(var(--fly-distance, 120vw) * 0.7));
+          }
+          50% {
+            opacity: 0;
+            transform: translate(calc(var(--fly-distance, 120vw) * -0.9), calc(var(--fly-distance, 120vw) * 0.75));
+          }
+          /* Hold invisible until the next cycle */
+          50.01%, 100% {
+            opacity: 0;
+            transform: translate(0, 0);
+          }
         }
       `}</style>
     </div>
