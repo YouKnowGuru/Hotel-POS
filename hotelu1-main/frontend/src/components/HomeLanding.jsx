@@ -348,7 +348,7 @@ const HomeLanding = () => {
                     <span className="absolute bottom-0 inset-x-0 p-4 sm:p-5 flex items-end justify-between gap-3">
                       <span className="block min-w-0">
                         <span className="block text-white font-bold text-lg leading-snug truncate">{heroFeature.name}</span>
-                        <span className="block text-[13px] pw-muted mt-0.5">Fresh from the kitchen</span>
+                        <span className="block text-[13px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Fresh from the kitchen</span>
                       </span>
                       <span className="shrink-0 px-3 py-1.5 rounded-xl text-sm font-black"
                             style={{ background: 'var(--pw-grad)', color: 'var(--pw-ink-on-accent)' }}>
@@ -432,7 +432,7 @@ const HomeLanding = () => {
           .hl-stat-num{ font-weight:900; font-size:clamp(20px,2.4vw,26px); color:#C2410C;
             font-variant-numeric:tabular-nums; line-height:1.1; }
           .hl-stat-num small{ font-size:.55em; font-weight:800; color:#D9480F; margin-left:2px; }
-          .hl-stat-label{ font-size:10.5px; font-weight:700; color:var(--pw-muted,#96A2B6);
+          .hl-stat-label{ font-size:10.5px; font-weight:700; color:var(--pw-muted);
             margin-top:3px; letter-spacing:.02em; }
 
           /* Feature card hover lift + warm glow */

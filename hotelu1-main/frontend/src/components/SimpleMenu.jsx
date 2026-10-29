@@ -664,6 +664,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <span className="sm-twinkle" style={{top:'6%',left:'88%',animationDelay:'1.5s',width:'2.5px',height:'2.5px'}} />
  <span className="sm-twinkle" style={{top:'15%',left:'8%',animationDelay:'2s'}} />
  <span className="sm-twinkle" style={{top:'5%',left:'55%',animationDelay:'2.5s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle" style={{top:'18%',left:'75%',animationDelay:'0.8s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle" style={{top:'10%',left:'35%',animationDelay:'1.8s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle" style={{top:'3%',left:'12%',animationDelay:'3s',width:'3px',height:'3px'}} />
+ <span className="sm-twinkle" style={{top:'22%',left:'60%',animationDelay:'1.2s',width:'2px',height:'2px'}} />
+ <span className="sm-twinkle" style={{top:'7%',left:'40%',animationDelay:'2.2s',width:'2.5px',height:'2.5px'}} />
+ <span className="sm-twinkle" style={{top:'25%',left:'15%',animationDelay:'0.3s',width:'2px',height:'2px'}} />
  {/* Shooting stars */}
  <div className="sm-shoot-wrap" style={{top:'6%',left:'5%'}}>
  <div className="sm-shoot-star sm-shoot-1"><span className="trail" /><span className="head" /></div>
@@ -673,6 +679,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  <div className="sm-shoot-wrap" style={{top:'4%',left:'30%'}}>
  <div className="sm-shoot-star sm-shoot-3"><span className="trail" /><span className="head" /></div>
+ </div>
+ <div className="sm-shoot-wrap" style={{top:'10%',left:'65%'}}>
+ <div className="sm-shoot-star sm-shoot-4"><span className="trail" /><span className="head" /></div>
+ </div>
+ <div className="sm-shoot-wrap" style={{top:'16%',left:'18%'}}>
+ <div className="sm-shoot-star sm-shoot-5"><span className="trail" /><span className="head" /></div>
  </div>
  </div>
 
@@ -1264,7 +1276,7 @@ const CSS = `
  @keyframes paidBurst{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
 
- /* === Shooting Star === */
+ /* === Shooting Star — light mode uses visible pink/purple gradients === */
  @keyframes shootStar1{
   0%{transform:translate(0,0) rotate(35deg);opacity:0}
   5%{opacity:1}
@@ -1288,19 +1300,42 @@ const CSS = `
   75%{opacity:0}
   100%{transform:translate(500px,360px) rotate(42deg);opacity:0}
  }
+ @keyframes shootStar4{
+  0%{transform:translate(0,0) rotate(32deg);opacity:0}
+  10%{opacity:0}
+  15%{opacity:1}
+  50%{opacity:1}
+  70%{opacity:0}
+  100%{transform:translate(380px,250px) rotate(32deg);opacity:0}
+ }
+ @keyframes shootStar5{
+  0%{transform:translate(0,0) rotate(38deg);opacity:0}
+  15%{opacity:0}
+  20%{opacity:1}
+  55%{opacity:1}
+  75%{opacity:0}
+  100%{transform:translate(460px,320px) rotate(38deg);opacity:0}
+ }
  @keyframes twinkleDot{
-  0%,100%{opacity:0.15;transform:scale(0.6)}
-  50%{opacity:0.9;transform:scale(1)}
+  0%,100%{opacity:0.2;transform:scale(0.5)}
+  50%{opacity:0.95;transform:scale(1.1)}
  }
  .sm-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
- .sm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#fff,rgba(255,60,172,0.3));animation:twinkleDot 3s ease-in-out infinite}
+ /* Light mode: stars are pink/purple with visible glow on light bg */
+ .sm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#ff3cac,rgba(255,60,172,0.2));animation:twinkleDot 3s ease-in-out infinite;box-shadow:0 0 4px rgba(255,60,172,0.3)}
  .sm-shoot-wrap{position:absolute;top:0;left:0;width:1px;height:1px}
- .sm-shoot-star{position:absolute;width:120px;height:2px;border-radius:2px;opacity:0}
- .sm-shoot-star .trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(255,60,172,0.05) 30%,rgba(255,60,172,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%);filter:blur(0.3px)}
- .sm-shoot-star .head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:radial-gradient(circle,#fff 30%,rgba(255,60,172,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,60,172,0.6),0 0 16px 4px rgba(120,75,160,0.3)}
+ .sm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0}
+ .sm-shoot-star .trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(255,60,172,0.08) 25%,rgba(255,60,172,0.45) 60%,rgba(255,60,172,0.85) 85%,#ff3cac 100%);filter:blur(0.4px)}
+ .sm-shoot-star .head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:radial-gradient(circle,#ff3cac 20%,rgba(255,60,172,0.7) 55%,rgba(120,75,160,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,60,172,0.5),0 0 16px 4px rgba(120,75,160,0.25)}
  .sm-shoot-1{animation:shootStar1 4s ease-in infinite;animation-delay:0.5s}
  .sm-shoot-2{animation:shootStar2 5s ease-in infinite;animation-delay:2.2s}
  .sm-shoot-3{animation:shootStar3 6s ease-in infinite;animation-delay:4s}
+ .sm-shoot-4{animation:shootStar4 4.5s ease-in infinite;animation-delay:1.3s}
+ .sm-shoot-5{animation:shootStar5 5.5s ease-in infinite;animation-delay:3.5s}
+ /* Dark mode: stars switch to bright white/pink for visibility on dark bg */
+ html.dark .sm-twinkle{background:radial-gradient(circle,#fff,rgba(255,60,172,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+ html.dark .sm-shoot-star .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,60,172,0.05) 30%,rgba(255,60,172,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+ html.dark .sm-shoot-star .head{background:radial-gradient(circle,#fff 30%,rgba(255,60,172,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,60,172,0.6),0 0 16px 4px rgba(120,75,160,0.3)}
 
  .sm-header{padding:12px 16px 10px}
  @media(min-width:640px){.sm-header{padding:14px 24px 12px}}

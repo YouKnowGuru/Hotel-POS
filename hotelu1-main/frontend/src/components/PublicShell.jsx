@@ -840,6 +840,139 @@ const PublicShell = ({ active = '', children }) => {
           outline: none;
           box-shadow: 0 0 0 3px #EA580C, 0 0 0 5px rgba(245,158,11,0.3);
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           Dark mode — the global html.dark overrides flip backgrounds to
+           dark navy, but .pw-root sets its own light tokens. We need to
+           either: (a) keep pw-root light in dark mode (forces light page),
+           or (b) adapt pw-root to dark. Going with (b) — adapt to dark
+           so the public pages look good in both themes.
+           The !important is needed to beat the global html.dark !important
+           rules for body/background.
+        ════════════════════════════════════════════════════════════ */
+        html.dark .pw-root {
+          --pw-bg:#0F172A !important;
+          --pw-bg-2:#1E293B !important;
+          --pw-panel:#1E293B !important;
+          --pw-panel-2:#1A2336 !important;
+          --pw-line:rgba(255,255,255,0.1) !important;
+          --pw-ink:#F1F5F9 !important;
+          --pw-sub:#CBD5E1 !important;
+          --pw-muted:#94A3B8 !important;
+          --pw-accent:#F59E0B !important;
+          --pw-accent-2:#EA580C !important;
+          --pw-ink-on-accent:#1B0F02 !important;
+          --pw-grad:linear-gradient(135deg,#F59E0B 0%,#EA580C 100%) !important;
+          background:var(--pw-bg) !important;
+          color:var(--pw-ink) !important;
+        }
+        html.dark .pw-header {
+          background:rgba(15,23,42,0.85) !important;
+        }
+        html.dark .pw-header.is-scrolled {
+          background:rgba(15,23,42,0.97) !important;
+          box-shadow:0 10px 30px -18px rgba(0,0,0,0.5) !important;
+        }
+        html.dark .pw-cat-strip,
+        html.dark .dm-filters {
+          background:rgba(15,23,42,0.92) !important;
+          border-bottom-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .pw-card {
+          background:#1E293B !important;
+          border-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .pw-card:hover {
+          border-color:rgba(245,158,11,0.35) !important;
+          background:#243149 !important;
+        }
+        html.dark .pw-chip {
+          background:rgba(255,255,255,0.06) !important;
+          border-color:var(--pw-line) !important;
+          color:var(--pw-sub) !important;
+        }
+        html.dark .pw-btn-ghost-lg {
+          background:rgba(255,255,255,0.06) !important;
+          border-color:var(--pw-line) !important;
+          color:var(--pw-ink) !important;
+        }
+        html.dark .pw-drawer-panel {
+          background:#1E293B !important;
+          border-left-color:var(--pw-line) !important;
+        }
+        html.dark .pw-drawer-link {
+          background:rgba(255,255,255,0.04) !important;
+          color:#E2E8F0 !important;
+        }
+        html.dark .pw-drawer-link:hover {
+          background:rgba(245,158,11,0.09) !important;
+          color:#fff !important;
+        }
+        html.dark .pw-footer {
+          background:
+            radial-gradient(700px 300px at 8% -10%,rgba(245,158,11,0.1),transparent 65%),
+            radial-gradient(600px 320px at 100% 110%,rgba(234,88,12,0.08),transparent 60%),
+            linear-gradient(180deg,#1A2336 0%,#0F172A 60%,#0B1220 100%) !important;
+          border-top-color:var(--pw-line) !important;
+        }
+        html.dark .pw-eyebrow {
+          background:rgba(245,158,11,0.12) !important;
+          border-color:rgba(245,158,11,0.35) !important;
+          color:#FBBF24 !important;
+        }
+        /* DeliveryMenu form inputs */
+        html.dark .pw-root .df-input,
+        html.dark .pw-root .dm-input {
+          background:#1A2336 !important;
+          border-color:rgba(255,255,255,0.12) !important;
+          color:var(--pw-ink) !important;
+        }
+        html.dark .pw-root .df-input::placeholder,
+        html.dark .pw-root .dm-input::placeholder {
+          color:#64748B !important;
+        }
+        html.dark .pw-root .df-note-btn {
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.12) !important;
+          color:var(--pw-sub) !important;
+        }
+        html.dark .pw-root .dm-payopt {
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:var(--pw-ink) !important;
+        }
+        html.dark .pw-root .dm-payopt:hover {
+          background:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .pw-root .dm-cart-item {
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .pw-root .dm-panel {
+          background:#1E293B !important;
+          border-left-color:var(--pw-line) !important;
+        }
+        html.dark .pw-root .dm-cart-foot {
+          background:rgba(15,23,42,0.97) !important;
+          border-top-color:var(--pw-line) !important;
+        }
+        html.dark .pw-root .df-submit {
+          background:rgba(15,23,42,0.97) !important;
+          border-top-color:var(--pw-line) !important;
+        }
+        /* HomeLanding hero stage */
+        html.dark .hl-stage {
+          background:#1A2336 !important;
+          border-color:rgba(245,158,11,0.25) !important;
+        }
+        html.dark .hl-stat {
+          background:#1E293B !important;
+          border-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .hl-steps {
+          color:#CBD5E1 !important;
+        }
+        /* Dark Tomza band already has dark overrides via .tz-dark */
       `}</style>
     </div>
   );

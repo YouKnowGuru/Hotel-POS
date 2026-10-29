@@ -904,6 +904,27 @@ const DeliveryMenu = () => {
               style={{ width: 320, height: 320, top: '-8%', left: '-3%', background: 'rgba(245,158,11,0.15)' }} />
         <span aria-hidden="true" className="pw-fx-orb pw-fx-orb-b"
               style={{ width: 260, height: 260, bottom: '-12%', right: '-2%', background: 'rgba(234,88,12,0.14)' }} />
+
+        {/* Shooting star field — matches Ember amber/orange theme */}
+        <div className="dm-starfield" aria-hidden="true">
+          <span className="dm-twinkle" style={{top:'12%',left:'22%',animationDelay:'0s'}} />
+          <span className="dm-twinkle" style={{top:'8%',left:'68%',animationDelay:'0.5s',width:'2px',height:'2px'}} />
+          <span className="dm-twinkle" style={{top:'20%',left:'45%',animationDelay:'1s'}} />
+          <span className="dm-twinkle" style={{top:'6%',left:'88%',animationDelay:'1.5s',width:'2.5px',height:'2.5px'}} />
+          <span className="dm-twinkle" style={{top:'15%',left:'8%',animationDelay:'2s'}} />
+          <span className="dm-twinkle" style={{top:'5%',left:'55%',animationDelay:'2.5s',width:'2px',height:'2px'}} />
+          <span className="dm-twinkle" style={{top:'18%',left:'75%',animationDelay:'0.8s',width:'2.5px',height:'2.5px'}} />
+          <span className="dm-twinkle" style={{top:'10%',left:'35%',animationDelay:'1.8s',width:'2px',height:'2px'}} />
+          <span className="dm-twinkle" style={{top:'3%',left:'12%',animationDelay:'3s',width:'3px',height:'3px'}} />
+          <span className="dm-twinkle" style={{top:'22%',left:'60%',animationDelay:'1.2s',width:'2px',height:'2px'}} />
+          <span className="dm-twinkle" style={{top:'7%',left:'40%',animationDelay:'2.2s',width:'2.5px',height:'2.5px'}} />
+          <span className="dm-twinkle" style={{top:'25%',left:'15%',animationDelay:'0.3s',width:'2px',height:'2px'}} />
+          <div className="dm-shoot-wrap" style={{top:'6%',left:'5%'}}><div className="dm-shoot-star dm-shoot-1"><span className="dm-trail" /><span className="dm-head" /></div></div>
+          <div className="dm-shoot-wrap" style={{top:'14%',left:'48%'}}><div className="dm-shoot-star dm-shoot-2"><span className="dm-trail" /><span className="dm-head" /></div></div>
+          <div className="dm-shoot-wrap" style={{top:'4%',left:'30%'}}><div className="dm-shoot-star dm-shoot-3"><span className="dm-trail" /><span className="dm-head" /></div></div>
+          <div className="dm-shoot-wrap" style={{top:'10%',left:'65%'}}><div className="dm-shoot-star dm-shoot-4"><span className="dm-trail" /><span className="dm-head" /></div></div>
+          <div className="dm-shoot-wrap" style={{top:'16%',left:'18%'}}><div className="dm-shoot-star dm-shoot-5"><span className="dm-trail" /><span className="dm-head" /></div></div>
+        </div>
         <div className="pw-container relative px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pt-14 sm:pb-10">
           <p className="pw-eyebrow mb-4">
             <Truck size={13} aria-hidden="true" /> Delivery across Thimphu
@@ -1604,10 +1625,34 @@ const DeliveryMenu = () => {
         }
         .dm-cart-total dd{ color:#C2410C; }
 
+        /* === Shooting Stars — Ember theme (amber/orange) === */
+        @keyframes dmShoot1{0%{transform:translate(0,0) rotate(35deg);opacity:0}5%{opacity:1}40%{opacity:1}60%{opacity:0}100%{transform:translate(420px,300px) rotate(35deg);opacity:0}}
+        @keyframes dmShoot2{0%{transform:translate(0,0) rotate(28deg);opacity:0}8%{opacity:0}12%{opacity:1}45%{opacity:1}65%{opacity:0}100%{transform:translate(360px,200px) rotate(28deg);opacity:0}}
+        @keyframes dmShoot3{0%{transform:translate(0,0) rotate(42deg);opacity:0}20%{opacity:0}25%{opacity:1}55%{opacity:1}75%{opacity:0}100%{transform:translate(500px,360px) rotate(42deg);opacity:0}}
+        @keyframes dmShoot4{0%{transform:translate(0,0) rotate(32deg);opacity:0}10%{opacity:0}15%{opacity:1}50%{opacity:1}70%{opacity:0}100%{transform:translate(380px,250px) rotate(32deg);opacity:0}}
+        @keyframes dmShoot5{0%{transform:translate(0,0) rotate(38deg);opacity:0}15%{opacity:0}20%{opacity:1}55%{opacity:1}75%{opacity:0}100%{transform:translate(460px,320px) rotate(38deg);opacity:0}}
+        @keyframes dmTwinkle{0%,100%{opacity:0.2;transform:scale(0.5)}50%{opacity:0.95;transform:scale(1.1)}}
+        .dm-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+        .dm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#F59E0B,rgba(245,158,11,0.2));animation:dmTwinkle 3s ease-in-out infinite;box-shadow:0 0 4px rgba(245,158,11,0.3)}
+        .dm-shoot-wrap{position:absolute;top:0;left:0;width:1px;height:1px}
+        .dm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0}
+        .dm-shoot-star .dm-trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(245,158,11,0.08) 25%,rgba(245,158,11,0.45) 60%,rgba(245,158,11,0.85) 85%,#F59E0B 100%);filter:blur(0.4px)}
+        .dm-shoot-star .dm-head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:radial-gradient(circle,#F59E0B 20%,rgba(245,158,11,0.7) 55%,rgba(234,88,12,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(245,158,11,0.5),0 0 16px 4px rgba(234,88,12,0.25)}
+        .dm-shoot-1{animation:dmShoot1 4s ease-in infinite;animation-delay:0.5s}
+        .dm-shoot-2{animation:dmShoot2 5s ease-in infinite;animation-delay:2.2s}
+        .dm-shoot-3{animation:dmShoot3 6s ease-in infinite;animation-delay:4s}
+        .dm-shoot-4{animation:dmShoot4 4.5s ease-in infinite;animation-delay:1.3s}
+        .dm-shoot-5{animation:dmShoot5 5.5s ease-in infinite;animation-delay:3.5s}
+        /* Dark mode: brighter white/amber stars */
+        html.dark .dm-twinkle{background:radial-gradient(circle,#fff,rgba(245,158,11,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
+        html.dark .dm-shoot-star .dm-trail{background:linear-gradient(90deg,transparent 0%,rgba(245,158,11,0.05) 30%,rgba(245,158,11,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
+        html.dark .dm-shoot-star .dm-head{background:radial-gradient(circle,#fff 30%,rgba(245,158,11,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(245,158,11,0.6),0 0 16px 4px rgba(234,88,12,0.3)}
+
         @media (prefers-reduced-motion:reduce){
           .dm-in,.dm-cartbar,.dm-panel,.dm-backdrop{animation:none !important;opacity:1 !important;transform:none !important;}
           .dm-skel{animation:none !important;}
           .dm-card-pop,.dm-add-pop,.dm-badge-bounce,.dm-qty-bounce,.dm-fly-dot,.dm-cartbar-pulse::before{animation:none !important;}
+          .dm-shoot-1,.dm-shoot-2,.dm-shoot-3,.dm-shoot-4,.dm-shoot-5,.dm-twinkle{animation:none !important;}
         }
       `}</style>
     </PublicShell>
