@@ -61,7 +61,28 @@ export const setSoundVolume = (volume) => {
 
 let audioCtx = null;
 let unlocked = false;
+// Entries are { fn, at }. Orders that arrive before the first user gesture
+// are queued, but stale ones must NOT all flush at once on that first click —
+// otherwise staff hear a burst of old bells after opening the dashboard.
 let pendingPlays = [];
+const PENDING_TTL_MS = 20000;
+
+/** Browsers suspend the AudioContext when a tab is backgrounded. Resume it
+ *  before every play so an order that arrives after 20 minutes is still
+ *  audible, not silently dropped. */
+const ensureRunning = (ctx) => {
+  if (ctx && ctx.state === 'suspended') {
+    try { ctx.resume().catch(() => {}); } catch { /* noop */ }
+  }
+  return ctx;
+};
+
+export const getAudioState = () => ({
+  unlocked,
+  supported: !!(typeof window !== 'undefined' &&
+    (window.AudioContext || window.webkitAudioContext)),
+  state: audioCtx ? audioCtx.state : 'not-created',
+});
 
 const getAudioCtx = () => {
   if (typeof window === 'undefined') return null;
@@ -84,19 +105,20 @@ const getAudioCtx = () => {
 const unlockAudio = () => {
   if (unlocked) return;
   unlocked = true;
-  const ctx = getAudioCtx();
+  const ctx = ensureRunning(getAudioCtx());
   if (!ctx) return;
-  if (ctx.state === 'suspended') {
-    ctx.resume().catch(() => {});
-  }
   const queued = pendingPlays.splice(0);
-  queued.forEach((fn) => {
+  const fresh = queued.filter((p) => Date.now() - p.at < PENDING_TTL_MS);
+  // At most one queued bell is replayed — the newest. Replaying all of them
+  // would produce an alarming (and misleading) burst of duplicate alerts.
+  const latest = fresh[fresh.length - 1];
+  if (latest) {
     try {
-      fn();
+      latest.fn();
     } catch {
       /* noop */
     }
-  });
+  }
 };
 
 if (typeof window !== 'undefined') {
@@ -206,6 +228,30 @@ const playOrderReadyPattern = (settings) => {
   });
 };
 
+/**
+ * "Waiter, please come to my table" chime used when a guest taps
+ * "Call waiter" on the QR menu. Deliberately DIFFERENT from the order alarm
+ * (3 high dings) and the ready chime (G6/D6) so staff instantly know a guest
+ * needs attention rather than another order arriving:
+ *   dong-ding-dong-ding (C6 then G6, twice) — the classic concierge bell.
+ */
+const playWaiterPattern = (settings) => {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const master = ctx.createGain();
+  master.gain.value = Math.max(0.05, settings.volume);
+  master.connect(ctx.destination);
+
+  const low = 1046; // C6
+  const high = 1568; // G6
+  const interval = 0.3;
+  const duration = 0.6;
+  const sequence = [low, high, low, high];
+  sequence.forEach((freq, i) => {
+    playBellTone(ctx, master, freq, i * interval, duration);
+  });
+};
+
 /* ------------------------------------------------------------------ */
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
@@ -215,10 +261,12 @@ const schedule = (label, fn) => {
     console.warn(
       `[notificationSound] "${label}" queued — waiting for first user interaction`
     );
-    pendingPlays.push(fn);
+    pendingPlays.push({ fn, at: Date.now() });
+    if (pendingPlays.length > 3) pendingPlays.shift();
     return;
   }
   try {
+    ensureRunning(getAudioCtx());
     fn();
   } catch (e) {
     console.warn(`[notificationSound] Failed to play "${label}"`, e);
@@ -239,12 +287,23 @@ export const playOrderReadyBell = () => {
   schedule('order ready', () => playOrderReadyPattern(settings));
 };
 
+/** Ring the "waiter called" concierge chime (used by staff alert). */
+export const playWaiterBell = () => {
+  const settings = loadSettings();
+  if (!settings.enabled) return;
+  schedule('waiter', () => playWaiterPattern(settings));
+};
+
 /**
- * Explicit unlock. Call this from any visible UI button so the very
- * first audio play after page load isn't blocked by the browser's
- * autoplay policy.
+ * Warm up / resume the AudioContext WITHOUT claiming a user gesture.
+ * Called on provider mount and from visible buttons. Browsers still refuse
+ * to start audio until a real click/tap/keypress, so we deliberately do
+ * NOT flip `unlocked` here — otherwise the first bell would be silently
+ * scheduled into a suspended context and never heard.
  */
-export const primeAudio = () => unlockAudio();
+export const primeAudio = () => {
+  ensureRunning(getAudioCtx());
+};
 
 /**
  * Manual test — same sound as a new order but always plays, even if

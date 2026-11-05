@@ -37,6 +37,7 @@ const SubFranchise = require("./models/SubFranchise");
 const Attendance = require("./models/Attendance");
 const Payroll = require("./models/Payroll");
 const AuditLog = require("./models/AuditLog");
+const Notification = require("./models/Notification");
 const bcrypt = require("bcrypt");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -644,7 +645,7 @@ async function startServer() {
     console.log("Database connected successfully");
     
     // Create missing tables only (never alter:true — breaks users indexes)
-    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable, DiningFloor, AuditLog];
+    const allModels = [User, MenuItem, Order, OrderItem, Bill, Inventory, SubFranchise, Role, Permission, Settings, Attendance, Payroll, DiningTable, DiningFloor, AuditLog, Notification];
     for (const model of allModels) {
       try { await model.sync(); } catch (e) { console.warn(`Sync warning for ${model.tableName}: ${e.message}`); }
     }
@@ -868,6 +869,224 @@ function emitStaffEvent(event, payload) {
       socket.emit(event);
     }
   }
+  // "new_order" means an order was approved / dispatched to the kitchen.
+  // Persist it once, no matter which of the many approval endpoints fired.
+  if (event === 'new_order' && payload) {
+    const c = compactOrder(payload);
+    if (c.orderId) {
+      recordNotification({
+        dedupeKey: `order-kitchen-${c.orderId}`,
+        category: 'order',
+        type: 'order-ready',
+        severity: 'info',
+        title: 'Order sent to kitchen',
+        message: `Order #${c.orderId} for ${c.tableLabel} was approved and sent to the kitchen.`,
+        orderId: c.orderId,
+        tableLabel: c.tableLabel,
+        subfranchiseId: c.subfranchiseId,
+      }).catch((e) => console.warn(`[notifications] kitchen alert failed: ${e.message}`));
+    }
+  }
+}
+
+/**
+ * Staff-only broadcast. Unlike emitStaffEvent, anonymous sockets receive
+ * NOTHING at all — used for alerts that contain order/customer/staff data.
+ * Previously payroll, attendance and user records were sent with a plain
+ * io.emit(), so any tokenless socket could listen to them.
+ */
+function emitStaffOnly(event, payload) {
+  for (const socket of io.of("/").sockets.values()) {
+    if (socket.user) socket.emit(event, payload);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Persistent notification feed                                       */
+/* ------------------------------------------------------------------ */
+
+const mockNotifications = [];
+const recordedNotificationKeys = new Set();
+let mockNotificationId = 0;
+
+const parseIdList = (raw) => {
+  try {
+    const v = JSON.parse(raw || '[]');
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Write one alert to the DB (or the in-memory demo feed) and tell connected
+ * staff clients to refresh. Safe to call from any request path — failures are
+ * logged and never break the order/payment response.
+ */
+async function recordNotification({
+  dedupeKey, category = 'order', type, severity = 'info',
+  title, message, orderId = null, tableLabel = null, subfranchiseId = null,
+}) {
+  const key = String(dedupeKey || '').slice(0, 160);
+  if (!key || recordedNotificationKeys.has(key)) return null;
+  recordedNotificationKeys.add(key);
+  if (recordedNotificationKeys.size > 5000) recordedNotificationKeys.clear();
+
+  const row = {
+    dedupe_key: key,
+    category,
+    type,
+    severity,
+    title: String(title || 'Notification').slice(0, 180),
+    message: String(message || ''),
+    order_id: orderId,
+    table_label: tableLabel ? String(tableLabel).slice(0, 120) : null,
+    subfranchise_id: subfranchiseId,
+    read_by: '[]',
+    dismissed_by: '[]',
+  };
+
+  let created = null;
+  if (dbConnected) {
+    try {
+      const existing = await Notification.findOne({ where: { dedupe_key: key } });
+      if (existing) return null;
+      created = await Notification.create(row);
+    } catch (e) {
+      console.warn(`[notifications] could not persist alert: ${e.message}`);
+    }
+  }
+  if (!created) {
+    created = { id: ++mockNotificationId, ...row, created_at: new Date() };
+    mockNotifications.unshift(created);
+    if (mockNotifications.length > 300) mockNotifications.length = 300;
+  }
+  emitStaffOnly('notification_created', { id: created.id, type: row.type });
+  return created;
+}
+
+/** Small, safe projection of an order for push payloads. */
+function compactOrder(o) {
+  const plain = (o && typeof o.get === 'function') ? o.get({ plain: true }) : (o || {});
+  const type = String(plain.type || 'DINE_IN').toUpperCase();
+  return {
+    orderId: Number(plain.id) || null,
+    tableLabel: plain.table_name ||
+      (type === 'TAKEAWAY' ? 'Takeaway' : type === 'DELIVERY' ? 'Home delivery' : 'Table'),
+    type,
+    status: plain.status || 'pending',
+    paymentStatus: plain.payment_status || null,
+    total: Number(plain.total) || 0,
+    itemCount: Array.isArray(plain.items) ? plain.items.length : 0,
+    subfranchiseId: plain.subfranchise_id ?? null,
+    timestamp: plain.timestamp || plain.created_at || new Date().toISOString(),
+  };
+}
+
+/**
+ * THE canonical "an order arrived" signal. Every creation path calls this —
+ * including payment-first orders that previously emitted nothing until an
+ * admin approved the payment. One alert + one bell per order, guaranteed.
+ */
+function emitOrderPlaced(order, stage = 'placed') {
+  const c = compactOrder(order);
+  if (!c.orderId) return;
+  const isDelivery = c.type === 'DELIVERY';
+  const title = isDelivery
+    ? 'New Home Delivery Order'
+    : c.type === 'TAKEAWAY' ? 'New Takeaway Order' : 'New Table Order Placed';
+  const money = `Nu. ${c.total.toFixed(2)}`;
+  const message = stage === 'awaiting_payment'
+    ? `Order #${c.orderId} for ${c.tableLabel} is awaiting payment verification. Total: ${money}.`
+    : `Order #${c.orderId} has been placed for ${c.tableLabel}. Total: ${money}.`;
+
+  emitStaffOnly('order_placed', { ...c, stage, title, message });
+  io.emit('order_created'); // keeps existing dashboard/KDS listeners refreshing
+  recordNotification({
+    dedupeKey: `order-placed-${c.orderId}`,
+    category: 'order',
+    type: 'new-order',
+    severity: stage === 'awaiting_payment' ? 'warning' : 'success',
+    title, message,
+    orderId: c.orderId,
+    tableLabel: c.tableLabel,
+    subfranchiseId: c.subfranchiseId,
+  }).catch((e) => console.warn(`[notifications] order alert failed: ${e.message}`));
+}
+
+/** Customer uploaded a QR payment screenshot — staff must approve it. */
+function emitPaymentSubmitted(order) {
+  const c = compactOrder(order);
+  if (!c.orderId) return;
+  const title = 'Payment proof submitted';
+  const message = `Order #${c.orderId} (${c.tableLabel}) has a payment screenshot waiting for verification.`;
+  const eventKey = `payment-submitted-${c.orderId}-${Math.floor(Date.now() / 60000)}`;
+  emitStaffOnly('payment_verification_submitted', { ...c, eventKey, title, message });
+  recordNotification({
+    dedupeKey: eventKey,
+    category: 'order',
+    type: 'payment-review',
+    severity: 'warning',
+    title, message,
+    orderId: c.orderId,
+    tableLabel: c.tableLabel,
+    subfranchiseId: c.subfranchiseId,
+  }).catch((e) => console.warn(`[notifications] payment alert failed: ${e.message}`));
+}
+
+/** Customer pressed "Request bill" at the table. */
+function emitBillRequested(order) {
+  const c = compactOrder(order);
+  if (!c.orderId) return;
+  const title = 'Bill requested';
+  const message = `${c.tableLabel} (order #${c.orderId}) has asked for the bill.`;
+  emitStaffOnly('bill_requested', { ...c, title, message });
+  recordNotification({
+    dedupeKey: `bill-request-${c.orderId}`,
+    category: 'order',
+    type: 'bill-request',
+    severity: 'info',
+    title, message,
+    orderId: c.orderId,
+    tableLabel: c.tableLabel,
+    subfranchiseId: c.subfranchiseId,
+  }).catch((e) => console.warn(`[notifications] bill alert failed: ${e.message}`));
+}
+
+/**
+ * Customer pressed "Call waiter" from the QR table menu. Like a bill request
+ * this is a table-scoped, low-risk action an anonymous QR caller may trigger,
+ * so it is emitted to authenticated staff only (never broadcast to anonymous
+ * sockets). The bell rings on EVERY call (emit is unconditional) while the
+ * persisted feed entry is deduped to one per table per minute so a guest
+ * tapping repeatedly does not flood the alert centre.
+ */
+function emitWaiterCalled({ tableLabel, orderId = null, subfranchiseId = null, note = '' }) {
+  if (!tableLabel) return;
+  const title = 'Waiter called';
+  const message = note
+    ? `${tableLabel} has called the waiter — "${String(note).slice(0, 140)}".`
+    : `${tableLabel} has called the waiter.`;
+  emitStaffOnly('waiter_called', { tableLabel, orderId, title, message, note });
+  recordNotification({
+    dedupeKey: `call-waiter-${orderId || tableLabel}-${Math.floor(Date.now() / 60000)}`,
+    category: 'order',
+    type: 'call-waiter',
+    severity: 'warning',
+    title, message,
+    orderId,
+    tableLabel,
+    subfranchiseId,
+  }).catch((e) => console.warn(`[notifications] waiter alert failed: ${e.message}`));
+}
+
+/**
+ * Inventory changed — the frontend used to listen for an event nobody emitted.
+ * Low/out-of-stock is a live condition, not a one-off event, so it stays a
+ * derived alert in the client (and correctly clears when stock is topped up).
+ */
+function emitInventoryUpdated(action, item) {
+  emitStaffOnly('inventory_updated', { action, id: item?.id ?? null });
 }
 
 /** Reduce an order (plain object) to the public projection, preserving items. */
@@ -2139,8 +2358,9 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         ...totals,
       };
       mockOrders.push(newOrder);
-      // Cash orders and non-payment-first orders go straight to the kitchen.
-      if (!paymentFirst || isCashPayment) io.emit("order_created");
+      // EVERY order alerts staff instantly, including payment-first orders
+      // that are still waiting for the customer's payment proof.
+      emitOrderPlaced(newOrder, paymentFirst && !isCashPayment ? 'awaiting_payment' : 'placed');
       if (isDeliveryOrder) mailer.sendOrderPlacedEmail(newOrder);
       const responseOrder = { ...newOrder, paymentAccessToken };
       delete responseOrder.payment_access_token;
@@ -2203,10 +2423,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
       console.error("Order transaction failed:", txErr.message);
       return res.status(500).json({ message: "Could not save the order. Please try again." });
     }
-    if (!paymentFirst || isCashPayment) io.emit("order_created");
+    // Flatten the Sequelize instance before emitting so the staff alert uses
+    // exactly the same canonical totals/items projection as the API response
+    // (the raw model hides values inside dataValues and item instances).
+    const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
+    emitOrderPlaced(responseOrder, paymentFirst && !isCashPayment ? 'awaiting_payment' : 'placed');
     // Automatic customer email #1: order placed (delivery orders only).
     if (isDeliveryOrder) mailer.sendOrderPlacedEmail(orderWithItems);
-    const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
     responseOrder.paymentAccessToken = paymentAccessToken;
     delete responseOrder.payment_access_token;
     res
@@ -2290,7 +2513,7 @@ app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
       order.payment_proof_image = proofImage;
       order.payment_submitted_at = new Date();
       order.payment_status = "verification_pending";
-      io.emit("payment_verification_submitted", { orderId: order.id });
+      emitPaymentSubmitted(order);
       return res.json({ message: "Payment proof submitted for review", orderId: order.id, payment_status: order.payment_status });
     }
     const order = await Order.findByPk(req.params.id);
@@ -2301,7 +2524,7 @@ app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
     order.payment_status = "verification_pending";
     order.payment_rejection_reason = null;
     await order.save();
-    io.emit("payment_verification_submitted", { orderId: order.id });
+    emitPaymentSubmitted(order);
     io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: order.payment_status });
     res.json({ message: "Payment proof submitted for review", orderId: order.id, payment_status: order.payment_status });
   } catch (err) {
@@ -3388,6 +3611,7 @@ app.put("/api/orders/:id/request-bill", strictLimiter, optionalToken, async (req
           return res.status(409).json({ message: "This order is already closed" });
         }
         order.bill_requested = true;
+        emitBillRequested(order);
         return res.json({ message: "Bill requested", order: stripProofImages(order)[0] });
       }
       return res.status(404).json({ message: "Order not found" });
@@ -3430,11 +3654,47 @@ app.put("/api/orders/:id/request-bill", strictLimiter, optionalToken, async (req
     }
 
     io.emit('order_status_updated', { orderId: parseInt(id), status: order.status, bill_requested: true });
+    emitBillRequested(order);
     res.json({ message: "Bill requested", order: stripProofImages(order)[0], bill });
   } catch (err) {
     res
       .status(500)
       .json({ message: "Error requesting bill", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
+  }
+});
+
+/* Customer "Call waiter" from the QR table menu. Reachable without a token
+   (the QR guest is anonymous) but rate-limited, and it only notifies staff —
+   it never returns any order/customer data, so there is nothing to leak. */
+app.post("/api/call-waiter", strictLimiter, optionalToken, async (req, res) => {
+  try {
+    const tableId = req.body?.tableId;
+    const note = typeof req.body?.note === "string" ? req.body.note.slice(0, 140) : "";
+    const requestedOrderId = req.body?.orderId ? parseInt(req.body.orderId) : null;
+    if (!tableId) {
+      return res.status(400).json({ message: "tableId is required" });
+    }
+
+    // Enrich with the active order on that table when one exists (richer
+    // staff alert), but the call works even with no order yet.
+    let orderId = requestedOrderId;
+    let subfranchiseId = null;
+    if (!dbConnected) {
+      const order = mockOrders.find((o) => o.table_name === tableId);
+      if (order) { orderId = order.id; subfranchiseId = order.subfranchise_id ?? null; }
+    } else if (orderId) {
+      try {
+        const order = await Order.findByPk(orderId);
+        if (order) subfranchiseId = order.subfranchise_id ?? null;
+      } catch { /* non-fatal */ }
+    }
+
+    emitWaiterCalled({ tableLabel: tableId, orderId, subfranchiseId, note });
+    res.json({ message: "Waiter called", tableLabel: tableId });
+  } catch (err) {
+    res
+      .status(500)
+      .json({ message: "Error calling waiter", error: process.env.NODE_ENV === 'production' ? "Internal server error" : err.message });
   }
 });
 
@@ -3930,6 +4190,7 @@ app.post("/api/inventory", verifyToken, async (req, res) => {
         status 
       };
       mockInventory.push(newItem);
+      emitInventoryUpdated('created', newItem);
       return res.status(201).json(newItem);
     }
     
@@ -3945,6 +4206,7 @@ app.post("/api/inventory", verifyToken, async (req, res) => {
       last_purchase_date: last_purchase_date || null,
       status
     });
+    emitInventoryUpdated('created', newItem);
     res.status(201).json(newItem);
   } catch (err) {
     res
@@ -3990,6 +4252,7 @@ app.put("/api/inventory/:id", verifyToken, async (req, res) => {
           item.status = Number(item.current_stock) >= Number(item.min_stock) ? "In Stock" : "Out of Stock";
         }
         
+        emitInventoryUpdated('updated', item);
         return res.json({ message: "Inventory item updated", item });
       }
       return res.status(404).json({ message: "Inventory item not found" });
@@ -4029,6 +4292,7 @@ app.put("/api/inventory/:id", verifyToken, async (req, res) => {
     const [updated] = await Inventory.update(updateData, { where: { id } });
     if (updated) {
       const updatedItem = await Inventory.findByPk(id);
+      emitInventoryUpdated('updated', updatedItem);
       res.json({ message: "Inventory item updated", item: updatedItem });
     } else {
       res.status(404).json({ message: "Inventory item not found" });
@@ -4051,6 +4315,7 @@ app.delete("/api/inventory/:id", verifyToken, async (req, res) => {
       const index = mockInventory.findIndex((i) => i.id === parseInt(id));
       if (index !== -1) {
         const deletedItem = mockInventory.splice(index, 1)[0];
+        emitInventoryUpdated('deleted', { id: deletedItem?.id });
         return res.json({ message: "Inventory item deleted", item: deletedItem });
       }
       return res.status(404).json({ message: "Inventory item not found" });
@@ -4058,6 +4323,7 @@ app.delete("/api/inventory/:id", verifyToken, async (req, res) => {
 
     const deleted = await Inventory.destroy({ where: { id } });
     if (deleted) {
+      emitInventoryUpdated('deleted', { id });
       res.json({ message: "Inventory item deleted successfully" });
     } else {
       res.status(404).json({ message: "Inventory item not found" });
@@ -4170,7 +4436,7 @@ app.post("/api/users", strictLimiter, verifyToken, async (req, res) => {
         name: newUser.name,
         subfranchise_id: newUser.subfranchise_id || null,
       };
-      io.emit("user_created", created);
+      emitStaffOnly("user_created", created);
       return res.status(201).json({
         message: "User created successfully",
         user: created,
@@ -4216,7 +4482,7 @@ app.post("/api/users", strictLimiter, verifyToken, async (req, res) => {
       name: user.name,
       subfranchise_id: user.subfranchise_id,
     };
-    io.emit("user_created", created);
+    emitStaffOnly("user_created", created);
     res.status(201).json({
       message: "User created successfully",
       user: created,
@@ -4314,7 +4580,7 @@ app.put("/api/users/:id", verifyToken, async (req, res) => {
         name: user.name,
         subfranchise_id: user.subfranchise_id || null,
       };
-      io.emit("user_updated", updatedMock);
+      emitStaffOnly("user_updated", updatedMock);
       return res.json({
         message: "User updated successfully",
         user: updatedMock,
@@ -4387,7 +4653,7 @@ app.put("/api/users/:id", verifyToken, async (req, res) => {
       name: user.name,
       subfranchise_id: user.subfranchise_id,
     };
-    io.emit("user_updated", updated);
+    emitStaffOnly("user_updated", updated);
     res.json({
       message: "User updated successfully",
       user: updated,
@@ -4423,7 +4689,7 @@ app.delete("/api/users/:id", verifyToken, async (req, res) => {
       }
       
       const removed = mockUsers.splice(userIndex, 1)[0];
-      io.emit("user_deleted", { id: removed?.id });
+      emitStaffOnly("user_deleted", { id: removed?.id });
 
       return res.json({ message: "User deleted successfully" });
     }
@@ -4447,7 +4713,7 @@ app.delete("/api/users/:id", verifyToken, async (req, res) => {
     logAudit(req, "user.delete", "user", deletedId, {
       username: user.username, role: user.role,
     });
-    io.emit("user_deleted", { id: deletedId });
+    emitStaffOnly("user_deleted", { id: deletedId });
 
     res.json({ message: "User deleted successfully" });
   } catch (err) {
@@ -5213,7 +5479,7 @@ app.post("/api/subfranchises", verifyToken, franchiseManageAuth, async (req, res
           subfranchise_id: row.id,
         });
       }
-      io.emit("subfranchise_created", row);
+      emitStaffOnly("subfranchise_created", row);
       return res.status(201).json(row);
     }
 
@@ -5236,7 +5502,7 @@ app.post("/api/subfranchises", verifyToken, franchiseManageAuth, async (req, res
         name: manager_name || name,
         subfranchise_id: created.id,
       });
-      io.emit("user_created", {
+      emitStaffOnly("user_created", {
         id: sfUser.id,
         username: sfUser.username,
         role: sfUser.role,
@@ -5244,7 +5510,7 @@ app.post("/api/subfranchises", verifyToken, franchiseManageAuth, async (req, res
         subfranchise_id: sfUser.subfranchise_id,
       });
     }
-    io.emit("subfranchise_created", created);
+    emitStaffOnly("subfranchise_created", created);
     res.status(201).json(created);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -5305,7 +5571,7 @@ app.put("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (req, 
         await loginUser.update(patch);
       }
     }
-    io.emit("subfranchise_updated", row);
+    emitStaffOnly("subfranchise_updated", row);
     res.json(row);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -5317,7 +5583,7 @@ app.delete("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (re
     const id = parseInt(req.params.id, 10);
     if (!dbConnected) {
       mockSubFranchises = mockSubFranchises.filter((s) => s.id !== id);
-      io.emit("subfranchise_deleted", { id });
+      emitStaffOnly("subfranchise_deleted", { id });
       return res.json({ message: "Deleted" });
     }
     const row = await SubFranchise.findByPk(id);
@@ -5358,7 +5624,7 @@ app.delete("/api/subfranchises/:id", verifyToken, franchiseManageAuth, async (re
     } catch (_) { /* floor cleanup is best-effort */ }
     await row.destroy();
     logAudit(req, "location.delete", "location", id, { name: row.name });
-    io.emit("subfranchise_deleted", { id });
+    emitStaffOnly("subfranchise_deleted", { id });
     res.json({ message: `Branch "${row.name}" deleted` });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -5685,7 +5951,7 @@ app.post('/api/attendance/clock-in', authenticate, async (req, res) => {
       shift, expected_hours: parseFloat(expected_hours),
       notes: notes || null,
     });
-    io.emit('attendance_update', { type: 'clock_in', record });
+    emitStaffOnly('attendance_update', { type: 'clock_in', record });
     res.status(201).json({ message: 'Clocked in successfully', record, isLate });
   } catch (err) {
     console.error('Clock-in error:', err);
@@ -5714,7 +5980,7 @@ app.post('/api/attendance/clock-out', authenticate, async (req, res) => {
       overtime_hours: parseFloat(overtimeHours.toFixed(2)),
       status,
     });
-    io.emit('attendance_update', { type: 'clock_out', record });
+    emitStaffOnly('attendance_update', { type: 'clock_out', record });
     res.json({ message: 'Clocked out successfully', record, summary: { totalHours: totalHours.toFixed(2), netHours: netHours.toFixed(2), overtimeHours: overtimeHours.toFixed(2) } });
   } catch (err) {
     console.error('Clock-out error:', err);
@@ -5771,7 +6037,7 @@ app.post('/api/attendance', authenticate, async (req, res) => {
       total_hours: parseFloat(totalHours.toFixed(2)), break_hours: parseFloat(breakHours.toFixed(2)),
       net_hours: parseFloat(netHours.toFixed(2)), overtime_hours: parseFloat(overtimeHours.toFixed(2)),
     });
-    io.emit('attendance_update', { type: 'create', record });
+    emitStaffOnly('attendance_update', { type: 'create', record });
     res.status(201).json(record);
   } catch (err) {
     console.error('Attendance create error:', err);
@@ -5807,7 +6073,7 @@ app.put('/api/attendance/:id', authenticate, async (req, res) => {
     const netHours = Math.max(0, totalHours - breakHours);
     const overtimeHours = Math.max(0, netHours - exp);
     await record.update({ ...updates, total_hours: parseFloat(totalHours.toFixed(2)), break_hours: parseFloat(breakHours.toFixed(2)), net_hours: parseFloat(netHours.toFixed(2)), overtime_hours: parseFloat(overtimeHours.toFixed(2)) });
-    io.emit('attendance_update', { type: 'update', record });
+    emitStaffOnly('attendance_update', { type: 'update', record });
     res.json(record);
   } catch (err) {
     res.status(500).json({ message: 'Error updating attendance', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6015,7 +6281,7 @@ app.post('/api/payroll', authenticate, async (req, res) => {
       created_by: req.user.id,
       approved_by, approved_at, paid_by, paid_at,
     });
-    io.emit('payroll_update', { type: 'create', record });
+    emitStaffOnly('payroll_update', { type: 'create', record });
     res.status(201).json(record);
   } catch (err) {
     res.status(500).json({ message: 'Error creating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6261,7 +6527,7 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
       });
       created.push(record);
     }
-    io.emit('payroll_update', { type: 'generate', count: created.length });
+    emitStaffOnly('payroll_update', { type: 'generate', count: created.length });
     res.json({ message: `Generated ${created.length} payroll records`, created, skipped });
   } catch (err) {
     res.status(500).json({ message: 'Error generating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6295,7 +6561,7 @@ app.put('/api/payroll/:id', authenticate, async (req, res) => {
     const grossSalary = parseFloat(updates.basic_salary||record.basic_salary||0) + parseFloat(updates.overtime_pay||record.overtime_pay||0) + totalAllwc + parseFloat(updates.performance_bonus||record.performance_bonus||0) + parseFloat(updates.festival_bonus||record.festival_bonus||0) + parseFloat(updates.tips_shared||record.tips_shared||0);
     const netSalary = parseFloat((grossSalary - totalDed).toFixed(2));
     await record.update({ ...updates, total_allowances: totalAllwc, total_deductions: totalDed, gross_salary: parseFloat(grossSalary.toFixed(2)), net_salary: netSalary });
-    io.emit('payroll_update', { type: 'update', record });
+    emitStaffOnly('payroll_update', { type: 'update', record });
     res.json(record);
   } catch (err) {
     res.status(500).json({ message: 'Error updating payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6310,7 +6576,7 @@ app.put('/api/payroll/:id/approve', authenticate, async (req, res) => {
     if (!record) return res.status(404).json({ message: 'Record not found' });
     await record.update({ status: 'approved', approved_by: req.user.id, approved_at: new Date() });
     logAudit(req, "payroll.approve", "payroll", record.id, { staff: record.user_name });
-    io.emit('payroll_update', { type: 'approve', record });
+    emitStaffOnly('payroll_update', { type: 'approve', record });
     res.json({ message: 'Approved', record });
   } catch (err) {
     res.status(500).json({ message: 'Error approving payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6331,7 +6597,7 @@ app.put('/api/payroll/:id/pay', authenticate, async (req, res) => {
       payment_date: payment_date || new Date().toISOString().split('T')[0],
     });
     logAudit(req, "payroll.pay", "payroll", record.id, { method: payment_method || record.payment_method });
-    io.emit('payroll_update', { type: 'paid', record });
+    emitStaffOnly('payroll_update', { type: 'paid', record });
     res.json({ message: 'Marked as paid', record });
   } catch (err) {
     res.status(500).json({ message: 'Error marking as paid', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
@@ -6350,6 +6616,112 @@ app.delete('/api/payroll/:id', authenticate, async (req, res) => {
     res.json({ message: 'Deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting payroll', error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  Staff notification feed API                                        */
+/*                                                                     */
+/*  Read/dismiss state is stored per user id on each shared row, so one */
+/*  admin marking an alert read does not mark it read for everyone.     */
+/*  Works in both DB mode and the built-in demo (in-memory) mode.       */
+/* ------------------------------------------------------------------ */
+
+const currentStaffId = (req) =>
+  String(req.user?.id ?? req.user?.username ?? 'staff');
+
+const serializeNotification = (row, uid) => {
+  const plain = (row && typeof row.get === 'function')
+    ? row.get({ plain: true })
+    : (row || {});
+  const readBy = parseIdList(plain.read_by);
+  const dismissedBy = parseIdList(plain.dismissed_by);
+  return {
+    id: `srv-${plain.id}`,
+    serverId: plain.id,
+    dedupeKey: plain.dedupe_key,
+    category: plain.category,
+    type: plain.type,
+    severity: plain.severity,
+    title: plain.title,
+    message: plain.message,
+    orderId: plain.order_id,
+    tableLabel: plain.table_label,
+    timestamp: plain.created_at,
+    unread: !readBy.includes(uid),
+    dismissed: dismissedBy.includes(uid),
+  };
+};
+
+const getNotificationRows = async () => {
+  if (!dbConnected) return mockNotifications.slice(0, 200);
+  try {
+    return await Notification.findAll({
+      order: [['created_at', 'DESC']],
+      limit: 200,
+    });
+  } catch (e) {
+    console.warn(`[notifications] read failed: ${e.message}`);
+    return mockNotifications.slice(0, 200);
+  }
+};
+
+const applyNotificationState = async (rows, field, uid) => {
+  const column = field === 'read' ? 'read_by' : 'dismissed_by';
+  for (const row of rows) {
+    const isModel = row && typeof row.get === 'function';
+    const current = isModel ? row.get(column) : row[column];
+    const ids = parseIdList(current);
+    if (ids.includes(uid)) continue;
+    const next = JSON.stringify([...ids, uid]);
+    try {
+      if (isModel) await row.update({ [column]: next });
+      else row[column] = next;
+    } catch (e) {
+      console.warn(`[notifications] state update failed: ${e.message}`);
+    }
+  }
+};
+
+app.get('/api/notifications', verifyToken, async (req, res) => {
+  try {
+    const uid = currentStaffId(req);
+    const rows = await getNotificationRows();
+    res.json(rows.map((r) => serializeNotification(r, uid)).filter((n) => !n.dismissed));
+  } catch (err) {
+    res.status(500).json({ message: 'Could not load notifications' });
+  }
+});
+
+app.post('/api/notifications/read', verifyToken, async (req, res) => {
+  try {
+    const uid = currentStaffId(req);
+    const { id, all } = req.body || {};
+    const rows = await getNotificationRows();
+    const wanted = all
+      ? rows
+      : rows.filter((r) => String(r.id) === String(id).replace(/^srv-/, ''));
+    await applyNotificationState(wanted, 'read', uid);
+    emitStaffOnly('notification_changed', { all: !!all, field: 'read' });
+    res.json({ message: 'Marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: 'Could not update notifications' });
+  }
+});
+
+app.post('/api/notifications/dismiss', verifyToken, async (req, res) => {
+  try {
+    const uid = currentStaffId(req);
+    const { id, all } = req.body || {};
+    const rows = await getNotificationRows();
+    const wanted = all
+      ? rows
+      : rows.filter((r) => String(r.id) === String(id).replace(/^srv-/, ''));
+    await applyNotificationState(wanted, 'dismiss', uid);
+    emitStaffOnly('notification_changed', { all: !!all, field: 'dismiss' });
+    res.json({ message: 'Dismissed' });
+  } catch (err) {
+    res.status(500).json({ message: 'Could not dismiss notifications' });
   }
 });
 

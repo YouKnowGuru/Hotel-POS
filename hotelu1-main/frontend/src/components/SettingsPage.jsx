@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useViewScrollReset from '../hooks/useViewScrollReset';
 import {
  Settings as SettingsIcon,
@@ -10,10 +11,16 @@ import {
  Percent,
  Tag,
  Check,
- Image as ImageIcon,
- RefreshCw,
+  Image as ImageIcon,
+  RefreshCw,
+  Bell,
+  Volume2,
+  Wifi,
+  ShieldCheck,
 } from 'lucide-react';
 import { Sun, Moon, Monitor } from 'lucide-react';
+import { useNotifications } from '../contexts/NotificationsContext';
+import { getAudioState, primeAudio } from '../utils/notificationSound';
 import { getAPI_URL } from '../utils/api';
 import { useTheme, applyAppearance, THEME_COLORS } from '../contexts/ThemeContext';
 import {
@@ -59,6 +66,12 @@ const TABS = [
  label: 'Appearance & Layout',
  sub: 'Active color systems & grid spacing.',
  Icon: Palette,
+ },
+ {
+ id: 'notifications',
+ label: 'Alerts & Sound',
+ sub: 'Order bells, delivery status & desktop alerts.',
+ Icon: Bell,
  },
 ];
 
@@ -288,7 +301,7 @@ const SettingsPage = () => {
  <span className="flex-1 min-w-0">
  <span
  className={`block text-sm font-semibold ${
- active ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'
+ active ? 'text-indigo-800 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'
  }`}
  >
  {t.label}
@@ -352,6 +365,10 @@ const SettingsPage = () => {
  onChange={setAppearance}
  onSave={handleSaveAppearance}
  />
+ )}
+
+ {activeTab === 'notifications' && (
+ <NotificationsForm onToast={showToast} />
  )}
  </div>
  </div>
@@ -547,7 +564,7 @@ const BillingForm = ({ draft, setDraft, billing, dirty, setDirty, onSave }) => {
  {/* Current preview */}
  <div className="mt-6 bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 grid grid-cols-2 gap-4 dark:bg-indigo-950/30 dark:border-indigo-800/40">
  <div>
- <p className="text-[10px] font-bold tracking-widest text-indigo-600">
+ <p className="text-[10px] font-bold tracking-widest text-indigo-800">
  CURRENTLY APPLIED TAX
  </p>
  <p className="text-2xl font-bold text-gray-900 mt-1 dark:text-gray-100">
@@ -555,7 +572,7 @@ const BillingForm = ({ draft, setDraft, billing, dirty, setDirty, onSave }) => {
  </p>
  </div>
  <div>
- <p className="text-[10px] font-bold tracking-widest text-indigo-600">
+ <p className="text-[10px] font-bold tracking-widest text-indigo-800">
  CURRENTLY APPLIED DISCOUNT
  </p>
  <p className="text-2xl font-bold text-gray-900 mt-1 dark:text-gray-100">
@@ -1147,6 +1164,232 @@ const AppearanceForm = ({ value, onChange, onSave }) => {
  <SaveBar onSave={onSave} />
  </div>
  );
+};
+
+/* ------------------------------------------------------------------ */
+/*  Alerts & Sound                                                     */
+/*                                                                     */
+/*  Staff used to have no way to verify or control the order bell. The   */
+/*  sound utility existed but nothing ever called it, and there was no   */
+/*  UI for volume, desktop alerts or audio unlock.                       */
+/* ------------------------------------------------------------------ */
+
+const Toggle = ({ checked, onChange, label }) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    aria-label={label}
+    onClick={() => onChange(!checked)}
+    className={`relative shrink-0 w-12 h-7 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 ${
+      checked ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-slate-600'
+    }`}
+  >
+    <span
+      className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-all ${
+        checked ? 'left-6' : 'left-1'
+      }`}
+    />
+  </button>
+);
+
+const SettingRow = ({ Icon, title, desc, tint, children, action }) => (
+  <div className="flex items-start gap-3 py-4 border-b border-gray-100 last:border-0 dark:border-slate-700/50">
+    <span className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center ${tint || 'bg-indigo-50 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300'}`}>
+      <Icon className="w-[18px] h-[18px]" />
+    </span>
+    <div className="min-w-0 flex-1">
+      <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{title}</p>
+      <p className="mt-0.5 text-[12px] leading-snug text-gray-500 dark:text-slate-400">{desc}</p>
+      {children}
+    </div>
+    {action && <div className="shrink-0 pt-0.5">{action}</div>}
+  </div>
+);
+
+const CONNECTION_BADGES = {
+  live: { text: 'Live socket', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30' },
+  polling: { text: 'Fast polling fallback', cls: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' },
+  offline: { text: 'Not connected', cls: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-slate-600' },
+};
+
+const NotificationsForm = ({ onToast }) => {
+  const navigate = useNavigate();
+  const {
+    soundEnabled,
+    setSoundEnabled,
+    soundVolume,
+    setSoundVolume,
+    desktopEnabled,
+    setDesktopEnabled,
+    testBell,
+    connection,
+    lastOrderAt,
+    markAllAsRead,
+  } = useNotifications();
+  const [audio, setAudio] = useState(() => getAudioState());
+  const [busy, setBusy] = useState(false);
+
+  // The browser only allows Web Audio after a real gesture. Show that state
+  // honestly instead of silently dropping the first bell.
+  useEffect(() => {
+    const refresh = () => setAudio(getAudioState());
+    const t = setInterval(refresh, 3000);
+    window.addEventListener('pointerdown', refresh);
+    window.addEventListener('keydown', refresh);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener('pointerdown', refresh);
+      window.removeEventListener('keydown', refresh);
+    };
+  }, []);
+
+  const handleDesktop = async (on) => {
+    setBusy(true);
+    const ok = await setDesktopEnabled(on);
+    setBusy(false);
+    if (on && !ok) {
+      onToast('Browser blocked desktop alerts. Allow notifications in the address bar site settings.', 'error');
+    } else {
+      onToast(on ? 'Desktop alerts enabled' : 'Desktop alerts disabled');
+    }
+  };
+
+  const badge = CONNECTION_BADGES[connection] || CONNECTION_BADGES.offline;
+
+  return (
+    <div>
+      {/* Delivery health */}
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${badge.cls}`}>
+          <Wifi className="w-3.5 h-3.5" />
+          {badge.text}
+        </span>
+        <span className="text-[11px] text-gray-500 dark:text-slate-400">
+          {lastOrderAt
+            ? `Last order alert ${new Date(lastOrderAt).toLocaleTimeString()}`
+            : 'No order alert yet this session'}
+        </span>
+      </div>
+
+      <div className="rounded-2xl border border-gray-100 px-4 dark:border-slate-700/60">
+        <SettingRow
+          Icon={Bell}
+          title="New order alarm bell"
+          desc="Plays a 3-strike service bell the instant ANY order is placed — dine-in, takeaway, home delivery, admin POS, and payment-first orders awaiting verification."
+          action={<Toggle checked={soundEnabled} onChange={setSoundEnabled} label="Toggle new order bell" />}
+        />
+
+        <SettingRow
+          Icon={Volume2}
+          title="Bell volume"
+          desc={`Current level: ${Math.round((Number(soundVolume) || 0) * 100)}%. Applies immediately to the next order.`}
+        >
+          <div className="mt-3 flex items-center gap-3">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={soundVolume}
+              onChange={(e) => setSoundVolume(Number(e.target.value))}
+              aria-label="Bell volume"
+              className="w-full max-w-[280px] accent-indigo-600"
+            />
+            <span className="text-xs font-bold text-gray-600 dark:text-slate-300 tabular-nums">
+              {Math.round((Number(soundVolume) || 0) * 100)}%
+            </span>
+          </div>
+        </SettingRow>
+
+        <SettingRow
+          Icon={ShieldCheck}
+          title="Browser audio status"
+          desc={
+            audio.unlocked
+              ? `Audio is unlocked and ready (AudioContext: ${audio.state}).`
+              : 'Browsers block sound until you interact with the page. Click once anywhere, or use the button, to enable the very first bell.'
+          }
+          action={
+            <button
+              type="button"
+              onClick={() => { primeAudio(); setAudio(getAudioState()); onToast('Audio unlocked'); }}
+              className="px-3 py-2 rounded-xl text-xs font-bold text-indigo-800 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+            >
+              {audio.unlocked ? 'Re-check' : 'Enable audio'}
+            </button>
+          }
+        />
+
+        <SettingRow
+          Icon={Bell}
+          title="Desktop notifications"
+          desc="Shows a system notification when the POS tab is in the background. Requires browser permission."
+          tint="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
+          action={<Toggle checked={desktopEnabled} onChange={handleDesktop} label="Toggle desktop notifications" />}
+        />
+      </div>
+
+      {busy && <p className="mt-2 text-[11px] text-gray-500 dark:text-slate-400">Waiting for browser permission…</p>}
+
+      {/* Actions */}
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => { testBell(); onToast('Test bell played'); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+        >
+          <Volume2 className="w-4 h-4" />
+          Test bell
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/notifications')}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-white/5"
+        >
+          <Bell className="w-4 h-4" />
+          Open alert centre
+        </button>
+        <button
+          type="button"
+          onClick={() => { markAllAsRead(); onToast('All alerts marked as read'); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-white/5"
+        >
+          <Check className="w-4 h-4" />
+          Mark all read
+        </button>
+      </div>
+
+      {/* Coverage */}
+      <div className="mt-6 rounded-2xl bg-gray-50 p-4 dark:bg-[#1A2336]">
+        <p className="text-[11px] font-bold tracking-widest text-gray-500 uppercase dark:text-slate-400 mb-3">
+          Automatic coverage
+        </p>
+        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2 text-[12px] text-gray-700 dark:text-slate-300">
+          {[
+            'Every new order (bell + toast + persistent alert)',
+            'Payment proof awaiting verification',
+            'Bill requested from a table',
+            'Order approved / sent to kitchen',
+            'Low stock & out-of-stock (auto-clears)',
+            'Kitchen delay over 45 minutes (auto-clears)',
+            'Staff, branch, attendance & payroll changes',
+            'Shared read/dismiss state across staff devices',
+          ].map((line) => (
+            <li key={line} className="flex items-start gap-2">
+              <Check className="w-3.5 h-3.5 mt-0.5 shrink-0 text-emerald-500" />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-[11px] leading-snug text-gray-500 dark:text-slate-400">
+          Alerts arrive over a live socket with a 6-second polling fallback, so an
+          order is never missed if the connection drops. Each order rings exactly
+          once per device.
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default SettingsPage;

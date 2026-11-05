@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
- ShoppingBag, Plus, Minus, X, CheckCircle2,
+ ShoppingBag, Plus, Minus, X, CheckCircle2, BellRing,
  Search, Zap, ArrowRight, Sparkles, Timer, Utensils,
  Soup, Pizza, Coffee, Cookie, IceCream,
  Trash2, ChevronRight, Star, Flame, Receipt, Clock, Banknote, QrCode,
@@ -243,6 +243,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const [boomMsg, setBoomMsg] = useState({ title: '', sub: '' });
  // Guest count for this QR order (default 2), asked in the cart drawer.
  const [guestCount, setGuestCount] = useState(2);
+ // "Call waiter" UI state — loading / called (success, with cooldown) / error.
+ const [waiter, setWaiter] = useState({ loading: false, called: false, error: null });
  const searchRef = useRef(null);
  const cartBtnRef = useRef(null);
  // Signature of the last state pushed into `orders` — polls producing the
@@ -455,6 +457,37 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  };
 
  const toggleBill = (orderId) => setExpandedBills(p => ({ ...p, [orderId]: !p[orderId] }));
+
+ /**
+  * "Call waiter" — a table guest taps this to summon staff. It posts to the
+  * backend, which rings a distinct concierge chime + toast on the STAFF side
+  * (the notification provider only runs in the admin app, so the guest's own
+  * phone stays silent — that is intentional). The guest gets in-UI confirmation
+  * here. We keep the button disabled for 12s after a successful call so a guest
+  * cannot spam the kitchen with repeated taps.
+  */
+ const callWaiter = async () => {
+ if (waiter.loading || waiter.called) return;
+ setWaiter({ loading: true, called: false, error: null });
+ try {
+ const locId = new URLSearchParams(window.location.search).get('loc');
+ const locQs = locId ? `&loc=${encodeURIComponent(locId)}` : '';
+ // Attach the most recent active order id when one exists, for a richer
+ // staff alert, but the call works even before the first order is placed.
+ const activeId = orders.length ? orders[0].id : null;
+ const res = await fetch(`${getAPI_URL()}/api/call-waiter${locQs}`, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ tableId: formatTableName(tableId || '1'), orderId: activeId }),
+ });
+ if (!res.ok) throw new Error('failed');
+ setWaiter({ loading: false, called: true, error: null });
+ setTimeout(() => setWaiter(w => ({ ...w, called: false })), 12000);
+ } catch (_) {
+ setWaiter({ loading: false, called: false, error: 'Could not reach the kitchen' });
+ setTimeout(() => setWaiter(w => ({ ...w, error: null })), 4000);
+ }
+ };
 
  const placeOrder = async () => {
  if (!cart.length || placing) return;
@@ -817,6 +850,22 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  </div>
  </div>
+ <button
+ type="button"
+ onClick={callWaiter}
+ disabled={waiter.loading || waiter.called}
+ aria-label="Call waiter"
+ title={waiter.called ? 'Waiter notified' : (waiter.error || 'Call the waiter to your table')}
+ className="sm-callwaiter-btn"
+ style={{
+ ...s.callWaiterBtn,
+ ...(waiter.called ? s.callWaiterDone : {}),
+ ...(waiter.loading ? { opacity: 0.7, pointerEvents: 'none' } : {}),
+ }}
+ >
+ <BellRing size={16} />
+ <span className="sm-cw-label">{waiter.called ? 'Called' : 'Call Waiter'}</span>
+ </button>
  <button ref={cartBtnRef} className="sm-cart-btn" aria-label={`Open cart, ${cartCount} items`} style={{ ...s.cartBtn, ...(cartCount ? s.cartBtnActive : {}) }} onClick={() => setCartOpen(true)}>
  <ShoppingBag size={18} />
  {cartCount > 0 && <span style={s.cartCount}>{cartCount}</span>}
@@ -1909,6 +1958,22 @@ const CSS = `
     border-color: rgba(255, 255, 255, 0.08) !important;
     color: #94A3B8 !important;
   }
+  /* "Call waiter" header button: keep the label on phones >=420px,
+     icon-only below so the cart button still fits. */
+  .sm-callwaiter-btn { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
+  .sm-callwaiter-btn:active { transform: scale(0.94); }
+  .sm-callwaiter-btn:disabled { cursor: default; }
+  @media (max-width: 419px) {
+    .sm-callwaiter-btn { padding: 0 10px; }
+    .sm-cw-label { display: none; }
+  }
+  html.dark .sm-callwaiter-btn {
+    background: rgba(255,255,255,0.14) !important;
+    border-color: rgba(255,255,255,0.28) !important;
+    color: #F8FAFC !important;
+  }
+  html.dark .sm-cw-label { color: #F8FAFC !important; }
+
   /* Tracker cards in dark mode */
   html.dark .sm-tracker-card {
     background: #141C2E !important;
@@ -2127,6 +2192,10 @@ const s = {
  brandSub: { margin: '1px 0 0', fontSize: 11, color: '#64748b', fontWeight: 500 },
  cartBtn: { position: 'relative', width: 42, height: 42, borderRadius: 13, border: '1.5px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.02)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
  cartBtnActive: { background: 'rgba(255,60,172,0.08)', borderColor: 'rgba(255,60,172,0.2)', color: '#ff3cac', transform: 'scale(1.05)', animation: 'catBounce 0.4s ease' },
+ // "Call waiter" header button — sits on the gradient header, so it uses
+ // translucent white surfaces that read well on both light and dark states.
+ callWaiterBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 999, fontSize: 12.5, fontWeight: 800, letterSpacing: '0.01em', color: '#fff', background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.32)', cursor: 'pointer', flexShrink: 0, transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' },
+ callWaiterDone: { background: 'rgba(16,185,129,0.28)', borderColor: 'rgba(16,185,129,0.65)', color: '#d1fae5', boxShadow: '0 2px 10px rgba(16,185,129,0.25)' },
  cartCount: { position: 'absolute', top: -5, right: -5, minWidth: 20, height: 20, borderRadius: 10, background: 'linear-gradient(135deg,#ff3cac,#784ba0)', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,60,172,0.5)', padding: '0 5px' },
  searchWrap: { display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.025)', border: '1.5px solid rgba(0,0,0,0.04)', borderRadius: 12, padding: '10px 12px', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
  searchWrapFocus: { background: 'rgba(255,60,172,0.03)', borderColor: 'rgba(255,60,172,0.2)', boxShadow: '0 0 0 3px rgba(255,60,172,0.08)' },

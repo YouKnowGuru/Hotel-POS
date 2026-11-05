@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useViewScrollReset from '../hooks/useViewScrollReset';
-import { UtensilsCrossed, Sparkles } from 'lucide-react';
+import { UtensilsCrossed, Sparkles, ClipboardList, ArrowLeft } from 'lucide-react';
 import SimpleMenu from './SimpleMenu';
 import CustomerOrderTracker from './CustomerOrderTracker';
 import Notification from './Notification';
@@ -506,6 +506,42 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  )}
  </div>
  </div>
+ <div className="flex items-center gap-2 shrink-0">
+ {/* CustomerOrderTracker used to be unreachable: setShowTracker(true) was
+     never called anywhere, so the whole live-status/ready-chime screen was
+     dead code. Expose it once an order exists, without interrupting the
+     payment QR flow (onOrderPlaced fires after that flow completes). */}
+ {currentOrderId && !showTracker && (
+ <button
+ type="button"
+ onClick={() => setShowTracker(true)}
+ className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold"
+ style={{
+ background: 'rgba(255,255,255,0.12)',
+ border: '1px solid rgba(255,255,255,0.28)',
+ color: '#fff',
+ }}
+ >
+ <ClipboardList className="w-3.5 h-3.5" />
+ <span className="hidden sm:inline">Track order</span>
+ <span className="sm:hidden">Track</span>
+ </button>
+ )}
+ {showTracker && (
+ <button
+ type="button"
+ onClick={handleNewOrder}
+ className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold"
+ style={{
+ background: 'rgba(255,255,255,0.12)',
+ border: '1px solid rgba(255,255,255,0.28)',
+ color: '#fff',
+ }}
+ >
+ <ArrowLeft className="w-3.5 h-3.5" />
+ Menu
+ </button>
+ )}
  <span
  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-bold shrink-0"
  style={{
@@ -517,6 +553,7 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  {isTakeaway ? <Sparkles className="w-3.5 h-3.5" /> : <UtensilsCrossed className="w-3.5 h-3.5" />}
  {tableLabel}
  </span>
+ </div>
  </div>
  <div className="h-px" style={{ background:'linear-gradient(90deg,transparent,rgba(212,160,23,0.55),transparent)' }} />
  </header>

@@ -395,7 +395,10 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <NotificationsProvider>
+      {/* `user` is passed in so the provider re-connects the staff socket the
+          instant an SPA login happens. Before, it read the token once at mount
+          and never re-ran, so staff saw no alerts until a hard reload. */}
+      <NotificationsProvider user={currentUser}>
         <Suspense fallback={<SiteLoader />}>
           <Routes>
             {/* Public Routes */}
