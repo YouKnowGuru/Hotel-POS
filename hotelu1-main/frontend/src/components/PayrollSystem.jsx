@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import {
   DollarSign, FileText, Settings, CheckCircle, Search,
   Trash2, Eye, Banknote, ArrowUpRight, ArrowDownRight, Zap, RefreshCw,
@@ -971,6 +972,10 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
   const defaultDates = getDates(now.getFullYear(), now.getMonth() + 1);
 
   const [activeTab, setActiveTab] = useState('employee');
+  /* Wizard steps swap the whole modal body — reset its own scroll container
+     (not the page behind it) so each step starts at the top. */
+  const wizardBodyRef = useRef(null);
+  useViewScrollReset(activeTab, wizardBodyRef);
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
   const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
   const [busy, setBusy] = useState(false);
@@ -1287,7 +1292,7 @@ const ManualPayrollModal = ({ users, staffConfig, initialData, onSave, onClose, 
         `}</style>
 
         {/* Tab Body */}
-        <div className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(10px,3vw,22px) clamp(10px,3vw,26px)' }}>
+        <div ref={wizardBodyRef} className="pay-modal-body" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(10px,3vw,22px) clamp(10px,3vw,26px)' }}>
 
           {/* TAB 1: EMPLOYEE & PERIOD */}
           {activeTab === 'employee' && (
@@ -1717,6 +1722,9 @@ const PayrollSystem = ({ currentUser }) => {
 
   /* ── state ── */
   const [tab, setTab] = useState(isAdmin ? 'overview' : 'myslips');
+  /* Tab switches are in-component state, not route changes — reset the
+     admin shell's inner <main> so the new panel doesn't open at the footer. */
+  useViewScrollReset(tab);
   const [records,     setRecords]     = useState([]);
   const [mySlips,     setMySlips]     = useState([]);
   const [users,       setUsers]       = useState([]);

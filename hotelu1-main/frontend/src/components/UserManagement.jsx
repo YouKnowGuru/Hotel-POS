@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import Notification from './Notification';
 import { getAPI_URL } from '../utils/api';
 import { savePermissionsMatrix } from '../utils/permissions';
@@ -209,6 +210,9 @@ const UserManagement = ({ token }) => {
  const [loading, setLoading] = useState(false);
  const [notification, setNotification] = useState(null);
  const [activeTab, setActiveTab] = useState('users');
+ /* Tab switches are in-component state, not route changes — reset the
+    admin shell's inner <main> so the new panel doesn't open at the footer. */
+ useViewScrollReset(activeTab);
  const [search, setSearch] = useState('');
  const [isLoaded, setIsLoaded] = useState(false);
 

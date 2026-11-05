@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import Notification from './Notification';
 import {
  Users,
@@ -97,6 +98,9 @@ const PERMISSION_GROUPS = {
 
 const PermissionManagementNew = ({ token }) => {
  const [activeTab, setActiveTab] = useState('roles');
+ /* Tab switches are in-component state, not route changes — reset the
+    admin shell's inner <main> so the new panel doesn't open at the footer. */
+ useViewScrollReset(activeTab);
  const [users, setUsers] = useState([]);
  const [permissions, setPermissions] = useState([]);
  const [notification, setNotification] = useState(null);

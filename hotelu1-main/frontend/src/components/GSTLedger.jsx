@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import {
  FileText,
  Download,
@@ -199,6 +200,9 @@ const GSTLedger = ({ locationSettings }) => {
 
  /* navigation tabs: 'overview' | 'output' | 'input' */
  const [activeTab, setActiveTab] = useState('overview');
+ /* Tab switches are in-component state, not route changes — reset the
+    admin shell's inner <main> so the new panel doesn't open at the footer. */
+ useViewScrollReset(activeTab);
 
  /* filters for orders */
  const [selectedYear, setSelectedYear] = useState('all');

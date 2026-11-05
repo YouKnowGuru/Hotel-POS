@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import { UtensilsCrossed, Sparkles } from 'lucide-react';
 import SimpleMenu from './SimpleMenu';
 import CustomerOrderTracker from './CustomerOrderTracker';
@@ -391,6 +392,9 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  const [currentOrderId, setCurrentOrderId] = useState(null);
  const [notification, setNotification] = useState(null);
  const [showTracker, setShowTracker] = useState(false);
+ /* SimpleMenu ↔ tracker is an in-component swap on a page with no
+    PublicShell route reset. Keep the viewport at the top on either branch. */
+ useViewScrollReset(showTracker);
  const [branding, setBranding] = useState(() => loadBranding());
  const [splashDone, setSplashDone] = useState(false);
 

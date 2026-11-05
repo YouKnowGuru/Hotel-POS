@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import {
   Clock,
   CheckCircle2,
@@ -741,6 +742,9 @@ const AttendanceSystem = ({ currentUser }) => {
   const isAdmin = ['admin', 'manager', 'franchise'].includes(user.role);
 
   const [tab, setTab] = useState('dashboard');
+  /* Tab switches are in-component state, not route changes — reset the
+     admin shell's inner <main> so the new panel doesn't open at the footer. */
+  useViewScrollReset(tab);
   const [records, setRecords] = useState([]);
   const [todayRecords, setTodayRecords] = useState([]);
   const [summary, setSummary] = useState({});

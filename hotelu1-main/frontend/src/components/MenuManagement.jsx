@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/api';
 import Notification from './Notification';
@@ -43,6 +44,8 @@ const MenuManagement = ({ locationSettings }) => {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('All');
   const [view, setView] = useState('grid');
+  /* Grid/list is an in-component view swap — keep the viewport at the top. */
+  useViewScrollReset(view);
   const [sort, setSort] = useState('name');
   const scrollRef = useRef(null);
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 import {
  Settings as SettingsIcon,
  Sliders,
@@ -96,6 +97,9 @@ const saveExtended = (obj) => {
 
 const SettingsPage = () => {
  const [activeTab, setActiveTab] = useState('general');
+ /* Tab switches are in-component state, not route changes — reset the
+    admin shell's inner <main> so the new panel doesn't open at the footer. */
+ useViewScrollReset(activeTab);
  const [isLoaded, setIsLoaded] = useState(false);
  const [toast, setToast] = useState(null);
 

@@ -27,6 +27,7 @@ import PublicShell from './PublicShell';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
 import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
+import useViewScrollReset from '../hooks/useViewScrollReset';
 
 const CURRENCY = 'Nu. ';
 
@@ -113,6 +114,12 @@ const DeliveryMenu = () => {
 
   /* Order flow states */
   const [step,       setStep]       = useState('menu');   // 'menu' | 'checkout' | 'placed'
+
+  /* Scroll to top on every view change. These are in-component state
+     changes, NOT route changes, so PublicShell's pathname-keyed reset
+     never fires and the new (shorter) screen opens parked at the footer. */
+  useViewScrollReset(step);
+
   const [name,       setName]       = useState('');
   const [phone,      setPhone]      = useState('');
   const [email,      setEmail]      = useState('');
@@ -1028,7 +1035,7 @@ const DeliveryMenu = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" aria-hidden="true">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4" aria-hidden="true">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="rounded-2xl overflow-hidden animate-pulse dm-skel" style={{ height: 260 }} />
             ))}
@@ -1045,7 +1052,7 @@ const DeliveryMenu = () => {
 
         {/* Dishes grid */}
         {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {visible.map((item, i) => {
               const qty = cartQty(item.id);
               return (
@@ -1432,6 +1439,11 @@ const DeliveryMenu = () => {
         }
         .dm-cat:hover{ background:rgba(63,32,4,0.1);color:var(--pw-ink); }
 
+        /* Force 2-col grid on the smallest screens — cards stay narrow but readable */
+        @media (max-width:359px){
+          .pw-root .grid.grid-cols-2{ gap:6px !important; }
+        }
+
         .dm-add{
           flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;
           min-height:44px;border-radius:13px;cursor:pointer;
@@ -1743,6 +1755,262 @@ const DeliveryMenu = () => {
           .dm-card-pop,.dm-add-pop,.dm-badge-bounce,.dm-qty-bounce,.dm-fly-dot,.dm-cartbar-pulse::before{animation:none !important;}
           .dm-shoot-1,.dm-shoot-2,.dm-shoot-3,.dm-shoot-4,.dm-shoot-5,.dm-shoot-6,.dm-shoot-7,.dm-shoot-8,.dm-twinkle,.dm-twinkle-gold,.dm-twinkle-cyan,.dm-twinkle-lime,.dm-twinkle-coral{animation:none !important;}
         }
+
+        /* ════════════════════════════════════════════════════════════ */
+        /* ── DARK MODE OVERRIDES — html.dark ──                         */
+        /* ════════════════════════════════════════════════════════════ */
+
+        /* Sticky filter bar */
+        html.dark .dm-filters{
+          background:rgba(20,16,12,0.92) !important;
+          border-bottom-color:rgba(255,255,255,0.08) !important;
+        }
+
+        /* Inputs — search, delivery form */
+        html.dark .pw-root .dm-input{
+          background:#1E1A16 !important;
+          border-color:rgba(255,255,255,0.15) !important;
+          color:#F1E9E0 !important;
+        }
+        html.dark .pw-root .dm-input::placeholder{ color:#8A7E6E !important; }
+
+        html.dark .pw-root .df-input{
+          background:#1E1A16 !important;
+          border-color:rgba(255,255,255,0.15) !important;
+          color:#F1E9E0 !important;
+        }
+        html.dark .pw-root .df-input::placeholder{ color:#8A7E6E !important; }
+
+        /* Filter category pills */
+        html.dark .dm-cat{
+          background:rgba(255,255,255,0.06) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#D6CBBE !important;
+        }
+        html.dark .dm-cat:hover{
+          background:rgba(255,255,255,0.12) !important;
+          color:#F1E9E0 !important;
+        }
+
+        /* Back button */
+        html.dark .dm-back{ color:#B0A598 !important; }
+        html.dark .dm-back:hover{ color:#F1E9E0 !important; }
+
+        /* Delivery form head chip */
+        html.dark .df-head-chip{
+          background:rgba(255,255,255,0.06) !important;
+          border-color:rgba(245,158,11,0.4) !important;
+          color:#FBBF24 !important;
+        }
+
+        /* Labels & badges */
+        html.dark .df-label{ color:#F1E9E0 !important; }
+        html.dark .df-badge{
+          background:rgba(255,255,255,0.05) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#A89B8C !important;
+        }
+        html.dark .df-badge.is-req{ color:#FBBF24 !important; }
+
+        /* Form icons */
+        html.dark .df-icon{ color:#8A7E6E !important; }
+        html.dark .df-control:focus-within .df-icon{ color:#FBBF24 !important; }
+        html.dark .df-control.has-error .df-icon{ color:#F87171 !important; }
+
+        /* Error text */
+        html.dark .df-error{ color:#FCA5A5 !important; }
+        html.dark .df-alert{
+          background:rgba(239,68,68,0.15) !important;
+          border-color:rgba(239,68,68,0.35) !important;
+          color:#FCA5A5 !important;
+        }
+
+        /* Note button */
+        html.dark .df-note-btn{
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.12) !important;
+          color:#D6CBBE !important;
+        }
+        html.dark .df-note-btn:hover{
+          background:rgba(245,158,11,0.1) !important;
+          color:#F1E9E0 !important;
+        }
+        html.dark .df-note-btn svg:first-child{ color:#FBBF24 !important; }
+
+        /* Count & hint text */
+        html.dark .df-count{ color:#A89B8C !important; }
+        html.dark .df-fineprint{ color:#A89B8C !important; }
+        html.dark .df-fineprint a{ color:#FBBF24 !important; }
+        html.dark .df-fineprint a:hover{ color:#FDE68A !important; }
+        html.dark .pw-root .df-hint{ color:#A89B8C !important; }
+
+        /* Submit bar */
+        html.dark .df-submit{
+          background:rgba(20,16,12,0.97) !important;
+          border-top-color:rgba(255,255,255,0.08) !important;
+        }
+
+        /* Payment options */
+        html.dark .dm-payopt{
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#F1E9E0 !important;
+        }
+        html.dark .dm-payopt:hover{ background:rgba(255,255,255,0.08) !important; }
+        html.dark .dm-paydesc{ color:#A89B8C !important; }
+        html.dark .dm-payhint{
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#D6CBBE !important;
+        }
+        html.dark .dm-paylegend{ color:#F1E9E0 !important; }
+
+        /* Stepper & mini buttons */
+        html.dark .dm-stepper{
+          background:rgba(255,255,255,0.06) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+        }
+        html.dark .dm-stepper button{ color:#F1E9E0 !important; }
+        html.dark .dm-stepper button:hover{ background:rgba(255,255,255,0.1) !important; }
+        html.dark .dm-stepper span{ color:#F1E9E0 !important; }
+        html.dark .dm-mini{
+          background:rgba(255,255,255,0.06) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#D6CBBE !important;
+        }
+        html.dark .dm-mini:hover{ background:rgba(255,255,255,0.12) !important; color:#F1E9E0 !important; }
+
+        /* Cart panel & drawer */
+        html.dark .dm-panel{
+          background:#181410 !important;
+          border-left-color:rgba(255,255,255,0.08) !important;
+          box-shadow:-30px 0 60px -30px rgba(0,0,0,0.5) !important;
+        }
+        html.dark .dm-cart-foot{
+          background:rgba(20,16,12,0.96) !important;
+          border-top-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .dm-cart-total{ color:#F1E9E0 !important; }
+        html.dark .dm-cart-total dd{ color:#FBBF24 !important; }
+
+        /* Cart items */
+        html.dark .dm-cart-item{
+          background:rgba(255,255,255,0.04) !important;
+          border-color:rgba(255,255,255,0.08) !important;
+        }
+        html.dark .dm-cart-item:hover{ border-color:rgba(245,158,11,0.4) !important; }
+
+        /* Empty cart icon */
+        html.dark .dm-cart-empty-icon{
+          background:rgba(245,158,11,0.1) !important;
+          color:#FBBF24 !important;
+          border-color:rgba(245,158,11,0.3) !important;
+        }
+
+        /* Skeleton */
+        html.dark .dm-skel{
+          background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.09) 37%,rgba(255,255,255,0.04) 63%) !important;
+          background-size:400% 100%;
+          border-color:rgba(255,255,255,0.08) !important;
+        }
+
+        /* Sheet handle */
+        html.dark .dm-sheet-handle span{ background:rgba(255,255,255,0.2) !important; }
+
+        /* File input */
+        html.dark .dm-file{ color:#D6CBBE !important; }
+        html.dark .dm-file::file-selector-button{
+          background:rgba(245,158,11,0.14) !important;
+          color:#FBBF24 !important;
+        }
+
+        /* Error alert box */
+        html.dark .dm-err{
+          background:rgba(239,68,68,0.15) !important;
+          border-color:rgba(239,68,68,0.35) !important;
+          color:#FCA5A5 !important;
+        }
+
+        /* ═══ Inline style overrides — prices, pay-notes, icons ═══ */
+        /* Price color #C2410C → amber in dark mode */
+        html.dark .pw-root [style*="color: #C2410C"],
+        html.dark .pw-root [style*="color:'#C2410C'"],
+        html.dark .pw-root [style*="color: #C2410C;"]{ color:#FBBF24 !important; }
+
+        /* Service charge green #047857 → bright green in dark */
+        html.dark .pw-root [style*="color: #047857"],
+        html.dark .pw-root [style*="color:'#047857'"]{ color:#34D399 !important; }
+
+        /* Error red #B91C1C → light red in dark */
+        html.dark .pw-root [style*="color: #B91C1C"],
+        html.dark .pw-root [style*="color:'#B91C1C'"]{ color:#FCA5A5 !important; }
+
+        /* Warning amber #92400E → lighter amber in dark */
+        html.dark .pw-root [style*="color: #92400E"],
+        html.dark .pw-root [style*="color:'#92400E'"]{ color:#FBBF24 !important; }
+
+        /* Blue #1D4ED8 → light blue in dark */
+        html.dark .pw-root [style*="color: #1D4ED8"],
+        html.dark .pw-root [style*="color:'#1D4ED8'"]{ color:#60A5FA !important; }
+
+        /* Tracker stage colors — make them brighter in dark mode */
+        html.dark .pw-root [style*="color: #2563EB"],
+        html.dark .pw-root [style*="color:'#2563EB'"]{ color:#60A5FA !important; }
+        html.dark .pw-root [style*="color: #059669"],
+        html.dark .pw-root [style*="color:'#059669'"]{ color:#34D399 !important; }
+        html.dark .pw-root [style*="color: #7C3AED"],
+        html.dark .pw-root [style*="color:'#7C3AED'"]{ color:#A78BFA !important; }
+        html.dark .pw-root [style*="color: #D97706"],
+        html.dark .pw-root [style*="color:'#D97706'"]{ color:#FBBF24 !important; }
+
+        /* Placeholder grey #A3846A → lighter in dark */
+        html.dark .pw-root [style*="color: #A3846A"],
+        html.dark .pw-root [style*="color:'#A3846A'"]{ color:#8A7E6E !important; }
+
+        /* Label grey #7A6553 → lighter in dark */
+        html.dark .pw-root [style*="color: #7A6553"],
+        html.dark .pw-root [style*="color:'#7A6553'"]{ color:#A89B8C !important; }
+
+        /* Body text grey #5C4B3A → lighter in dark */
+        html.dark .pw-root [style*="color: #5C4B3A"],
+        html.dark .pw-root [style*="color:'#5C4B3A'"]{ color:#D6CBBE !important; }
+
+        /* Light backgrounds — #FFFDFB, #FFF8F1, rgba(255,251,246,...) → dark */
+        html.dark .pw-root [style*="background: #FFFDFB"],
+        html.dark .pw-root [style*="background:'#FFFDFB'"]{ background:#1E1A16 !important; }
+        html.dark .pw-root [style*="background: #FFF8F1"],
+        html.dark .pw-root [style*="background:'#FFF8F1'"]{ background:#181410 !important; }
+
+        /* Dark gradient backgrounds with rgba(63,32,4,...) → use white alpha instead */
+        html.dark .pw-root [style*="background: rgba(63,32,4,0.04)"],
+        html.dark .pw-root [style*="background:'rgba(63,32,4,0.04)'"]{ background:rgba(255,255,255,0.04) !important; }
+        html.dark .pw-root [style*="background: rgba(63,32,4,0.05)"],
+        html.dark .pw-root [style*="background:'rgba(63,32,4,0.05)'"]{ background:rgba(255,255,255,0.05) !important; }
+        html.dark .pw-root [style*="background: rgba(63,32,4,0.08)"],
+        html.dark .pw-root [style*="background:'rgba(63,32,4,0.08)'"]{ background:rgba(255,255,255,0.08) !important; }
+
+        /* pay-note backgrounds with light rgba values → dark equivalents */
+        html.dark .pay-note[style*="background: rgba(248,113,113"],
+        html.dark .pay-note[style*="background:'rgba(248,113,113"]{ background:rgba(248,113,113,0.12) !important; }
+        html.dark .pay-note[style*="background: rgba(245,158,11"],
+        html.dark .pay-note[style*="background:'rgba(245,158,11"]{ background:rgba(245,158,11,0.12) !important; }
+        html.dark .pay-note[style*="background: rgba(52,211,153"],
+        html.dark .pay-note[style*="background:'rgba(52,211,153"]{ background:rgba(52,211,153,0.12) !important; }
+        html.dark .pay-note[style*="background: rgba(16,185,129"],
+        html.dark .pay-note[style*="background:'rgba(16,185,129"]{ background:rgba(16,185,129,0.12) !important; }
+        html.dark .pay-note[style*="background: rgba(96,165,250"],
+        html.dark .pay-note[style*="background:'rgba(96,165,250"]{ background:rgba(96,165,250,0.12) !important; }
+
+        /* Tracker badge */
+        html.dark .dm-trk-badge{
+          background:rgba(255,255,255,0.06) !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          color:#D6CBBE !important;
+        }
+
+        /* Tracker progress bar track */
+        html.dark .pw-root [style*="background: rgba(63,32,4,0.08)"]{ background:rgba(255,255,255,0.08) !important; }
+
       `}</style>
     </PublicShell>
   );
@@ -1931,6 +2199,80 @@ const checkoutCSS = `
     background:rgba(63,32,4,0.04);border:1px solid var(--pw-line);
   }
   .pw-root .dm-payhint svg{ flex-shrink:0;margin-top:1px; }
+
+  /* ── Dark mode overrides for checkout screen ── */
+  html.dark .pw-root .df-hint{ color:#A89B8C !important; }
+  html.dark .pw-root .df-label{ color:#F1E9E0 !important; }
+  html.dark .pw-root .df-badge{
+    background:rgba(255,255,255,0.05) !important;
+    border-color:rgba(255,255,255,0.1) !important;
+    color:#A89B8C !important;
+  }
+  html.dark .pw-root .df-badge.is-req{ color:#FBBF24 !important; }
+  html.dark .pw-root .df-icon{ color:#8A7E6E !important; }
+  html.dark .pw-root .df-control:focus-within .df-icon{ color:#FBBF24 !important; }
+  html.dark .pw-root .df-input{
+    background:#1E1A16 !important;
+    border-color:rgba(255,255,255,0.15) !important;
+    color:#F1E9E0 !important;
+  }
+  html.dark .pw-root .df-input::placeholder{ color:#8A7E6E !important; }
+  html.dark .pw-root .df-control.has-error .df-icon{ color:#F87171 !important; }
+  html.dark .pw-root .df-error{ color:#FCA5A5 !important; }
+  html.dark .pw-root .df-count{ color:#A89B8C !important; }
+  html.dark .pw-root .df-note-btn{
+    background:rgba(255,255,255,0.04) !important;
+    border-color:rgba(255,255,255,0.12) !important;
+    color:#D6CBBE !important;
+  }
+  html.dark .pw-root .df-note-btn:hover{
+    background:rgba(245,158,11,0.1) !important;
+    color:#F1E9E0 !important;
+  }
+  html.dark .pw-root .df-note-btn svg:first-child{ color:#FBBF24 !important; }
+  html.dark .pw-root .df-alert{
+    background:rgba(239,68,68,0.15) !important;
+    border-color:rgba(239,68,68,0.35) !important;
+    color:#FCA5A5 !important;
+  }
+  html.dark .pw-root .df-head-chip{
+    background:rgba(255,255,255,0.06) !important;
+    border-color:rgba(245,158,11,0.4) !important;
+    color:#FBBF24 !important;
+  }
+  html.dark .pw-root .dm-back{ color:#B0A598 !important; }
+  html.dark .pw-root .dm-back:hover{ color:#F1E9E0 !important; }
+  html.dark .pw-root .df-submit{
+    background:rgba(20,16,12,0.97) !important;
+    border-top-color:rgba(255,255,255,0.08) !important;
+  }
+  html.dark .pw-root .df-fineprint{ color:#A89B8C !important; }
+  html.dark .pw-root .df-fineprint a{ color:#FBBF24 !important; }
+  html.dark .pw-root .df-fineprint a:hover{ color:#FDE68A !important; }
+  html.dark .pw-root .dm-payopt{
+    background:rgba(255,255,255,0.04) !important;
+    border-color:rgba(255,255,255,0.1) !important;
+    color:#F1E9E0 !important;
+  }
+  html.dark .pw-root .dm-payopt:hover{ background:rgba(255,255,255,0.08) !important; }
+  html.dark .pw-root .dm-paydesc{ color:#A89B8C !important; }
+  html.dark .pw-root .dm-paylegend{ color:#F1E9E0 !important; }
+  html.dark .pw-root .dm-payhint{
+    background:rgba(255,255,255,0.04) !important;
+    border-color:rgba(255,255,255,0.1) !important;
+    color:#D6CBBE !important;
+  }
+  /* Checkout inline color overrides */
+  html.dark .pw-root [style*="color: #C2410C"],
+  html.dark .pw-root [style*="color:'#C2410C'"]{ color:#FBBF24 !important; }
+  html.dark .pw-root [style*="color: #047857"],
+  html.dark .pw-root [style*="color:'#047857'"]{ color:#34D399 !important; }
+  html.dark .pw-root [style*="color: #B91C1C"],
+  html.dark .pw-root [style*="color:'#B91C1C'"]{ color:#FCA5A5 !important; }
+  html.dark .pw-root [style*="color: #5C4B3A"],
+  html.dark .pw-root [style*="color:'#5C4B3A'"]{ color:#D6CBBE !important; }
+  html.dark .pw-root [style*="color: #7A6553"],
+  html.dark .pw-root [style*="color:'#7A6553'"]{ color:#A89B8C !important; }
 `;
 
 const placedCSS = `
@@ -1979,6 +2321,38 @@ const placedCSS = `
     background:rgba(245,158,11,0.14);color:#C2410C;font-weight:800;font-size:13px;
   }
   .dm-err{ background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#B91C1C; }
+
+  /* ── Dark mode overrides for placed/tracking screen ── */
+  html.dark .dm-trk-badge{
+    background:rgba(255,255,255,0.06) !important;
+    border-color:rgba(255,255,255,0.1) !important;
+    color:#D6CBBE !important;
+  }
+  html.dark .dm-pm-head{
+    background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(234,88,12,0.04)) !important;
+  }
+  html.dark .dm-trk-head{
+    background:linear-gradient(135deg,rgba(52,211,153,0.1),rgba(16,185,129,0.04)) !important;
+  }
+  html.dark .dm-file{ color:#D6CBBE !important; }
+  html.dark .dm-file::file-selector-button{
+    background:rgba(245,158,11,0.14) !important;
+    color:#FBBF24 !important;
+  }
+  html.dark .dm-err{
+    background:rgba(239,68,68,0.15) !important;
+    border-color:rgba(239,68,68,0.35) !important;
+    color:#FCA5A5 !important;
+  }
+  /* pay-note inline color overrides in dark mode */
+  html.dark .pay-note[style*="color: #B91C1C"],
+  html.dark .pay-note[style*="color:'#B91C1C'"]{ color:#FCA5A5 !important; }
+  html.dark .pay-note[style*="color: #92400E"],
+  html.dark .pay-note[style*="color:'#92400E'"]{ color:#FBBF24 !important; }
+  html.dark .pay-note[style*="color: #047857"],
+  html.dark .pay-note[style*="color:'#047857'"]{ color:#34D399 !important; }
+  html.dark .pay-note[style*="color: #1D4ED8"],
+  html.dark .pay-note[style*="color:'#1D4ED8'"]{ color:#60A5FA !important; }
   @media (prefers-reduced-motion:reduce){
     .dm-trk,.dm-pm{animation:none !important;opacity:1 !important;transform:none !important;}
     .dm-trk-bar{animation:none !important;}

@@ -602,10 +602,10 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  justifyContent: 'center', minHeight: '60vh', padding: 24, textAlign: 'center',
  }}>
  <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
- <p style={{ fontSize: 17, fontWeight: 600, color: '#333', marginBottom: 8 }}>
+ <p className="sm-error-title" style={{ fontSize: 17, fontWeight: 600, color: '#333', marginBottom: 8 }}>
  Menu Unavailable
  </p>
- <p style={{ fontSize: 14, color: '#888', maxWidth: 320, lineHeight: 1.5, marginBottom: 20 }}>
+ <p className="sm-error-desc" style={{ fontSize: 14, color: '#888', maxWidth: 320, lineHeight: 1.5, marginBottom: 20 }}>
  {menuError}
  </p>
  <button
@@ -817,20 +817,20 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  </div>
  </div>
- <button ref={cartBtnRef} aria-label={`Open cart, ${cartCount} items`} style={{ ...s.cartBtn, ...(cartCount ? s.cartBtnActive : {}) }} onClick={() => setCartOpen(true)}>
+ <button ref={cartBtnRef} className="sm-cart-btn" aria-label={`Open cart, ${cartCount} items`} style={{ ...s.cartBtn, ...(cartCount ? s.cartBtnActive : {}) }} onClick={() => setCartOpen(true)}>
  <ShoppingBag size={18} />
  {cartCount > 0 && <span style={s.cartCount}>{cartCount}</span>}
  </button>
  </div>
- <div className={searchFocused ? 'sm-search-focus' : ''} style={{ ...s.searchWrap, ...(searchFocused ? s.searchWrapFocus : {}) }}>
+ <div className={`sm-search-wrap ${searchFocused ? 'sm-search-focus' : ''}`} style={{ ...s.searchWrap, ...(searchFocused ? s.searchWrapFocus : {}) }}>
  <Search size={15} color={searchFocused ? '#ff3cac' : '#94a3b8'} style={{ transition: 'color 0.2s', flexShrink: 0 }} />
  <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)}
  onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)}
- placeholder="Search for dishes..." style={s.searchInput} />
+ placeholder="Search for dishes..." className="sm-search-input" style={s.searchInput} />
  {q && (
- <button onClick={() => setQ('')} style={s.clearBtn}><X size={13} /></button>
+ <button onClick={() => setQ('')} className="sm-clear-btn" style={s.clearBtn}><X size={13} /></button>
  )}
- {q && <span style={s.searchCount}>{filtered.length} found</span>}
+ {q && <span className="sm-search-count" style={s.searchCount}>{filtered.length} found</span>}
  </div>
  </header>
 
@@ -838,11 +838,11 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  order. The guest who just ordered never sees this on their phone. */}
  {tableStatus === 'occupied' && !tableMine && (
  <div className="sm-tracker" style={s.trackerSection}>
- <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 16, padding: '12px 14px' }}>
+ <div className="sm-table-occupied" style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 16, padding: '12px 14px' }}>
  <span style={{ fontSize: 22 }}>🪑</span>
  <div>
- <p style={{ margin: 0, color: '#1d4ed8', fontSize: 13, fontWeight: 700 }}>This table is currently occupied</p>
- <p style={{ margin: 0, color: '#3b82f6', fontSize: 11.5, marginTop: 2 }}>
+ <p className="sm-table-occupied-title" style={{ margin: 0, color: '#1d4ed8', fontSize: 13, fontWeight: 700 }}>This table is currently occupied</p>
+ <p className="sm-table-occupied-desc" style={{ margin: 0, color: '#3b82f6', fontSize: 11.5, marginTop: 2 }}>
  Guests are still seated here. Please wait for the table to be freed, or speak to our staff — they will be happy to help.
  </p>
  </div>
@@ -852,7 +852,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
 
  {orders.length > 0 && (
  <div className="sm-tracker" style={s.trackerSection}>
- <div style={s.trackerLabel}>
+ <div className="sm-tracker-label" style={s.trackerLabel}>
  <span style={s.trackerDot} /> Active Orders
  </div>
  {orders.map((o, oi) => {
@@ -938,11 +938,11 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </button>
  ) : (
  <div className="sm-bill-reveal" style={s.billReveal}>
- <button className="sm-bill-toggle" style={s.billReceiptHeader} onClick={() => toggleBill(o.id)}>
+ <button className="sm-bill-toggle sm-bill-receipt-header" style={s.billReceiptHeader} onClick={() => toggleBill(o.id)}>
  <div style={s.billReceiptIcon}>🧾</div>
  <div style={s.billReceiptInfo}>
- <p style={s.billReceiptTitle}>Your Bill</p>
- <p style={s.billReceiptSub}>Order #{o.id} · {(o.items || []).length} items</p>
+ <p className="sm-bill-receipt-title" style={s.billReceiptTitle}>Your Bill</p>
+ <p className="sm-bill-receipt-sub" style={s.billReceiptSub}>Order #{o.id} · {(o.items || []).length} items</p>
  </div>
  <div style={s.billToggleRight}>
  {expandedBills[o.id] !== false && o.bill && (
@@ -955,19 +955,19 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <div className="sm-bill-body" style={s.billReceiptBody}>
  {(o.items || []).map((it, ii) => (
  <div key={ii} className="sm-bill-row" style={{ ...s.billItemRow, animationDelay: `${ii * 40}ms` }}>
- <span style={s.billItemQty}>{it.quantity}×</span>
- <span style={s.billItemName}>{it.name}</span>
+ <span className="sm-bill-item-qty" style={s.billItemQty}>{it.quantity}×</span>
+ <span className="sm-bill-item-name" style={s.billItemName}>{it.name}</span>
  <span style={s.billItemDots} />
- <span style={s.billItemPrice}>{fmt(it.price * it.quantity)}</span>
+ <span className="sm-bill-item-price" style={s.billItemPrice}>{fmt(it.price * it.quantity)}</span>
  </div>
  ))}
- <div style={s.billDivider} />
+ <div className="sm-bill-divider" style={s.billDivider} />
  <div style={s.billTotalRow}>
  <div>
- <p style={s.billTotalLabel}>Total Amount</p>
- <p style={s.billTotalHint}>Please pay at the counter</p>
+ <p className="sm-bill-total-label" style={s.billTotalLabel}>Total Amount</p>
+ <p className="sm-bill-total-hint" style={s.billTotalHint}>Please pay at the counter</p>
  </div>
- <span style={s.billTotalValue}>{fmt(o.bill.total || o.total)}</span>
+ <span className="sm-bill-total-value" style={s.billTotalValue}>{fmt(o.bill.total || o.total)}</span>
  </div>
  </div>
  )}
@@ -981,22 +981,22 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <CheckCircle2 size={20} color="#fff" />
  </div>
  <div style={s.paidInfo}>
- <p style={s.paidTitle}>Payment Complete</p>
- <p style={s.paidSub}>Thank you for dining with us!</p>
+ <p className="sm-paid-title" style={s.paidTitle}>Payment Complete</p>
+ <p className="sm-paid-sub" style={s.paidSub}>Thank you for dining with us!</p>
  </div>
  </div>
  )}
  {paymentApproved && !isCashOrder && !isPaid && !isDelivered && (
- <div style={{ marginTop: 10, color: '#047857', fontSize: 12, fontWeight: 600 }}>
+ <div className="sm-payment-approved" style={{ marginTop: 10, color: '#047857', fontSize: 12, fontWeight: 600 }}>
  ✓ Payment approved — your order is sent to the waiter.
  </div>
  )}
  {o.payment_status === 'cash_pending' && (
- <div style={{ marginTop: 10, background: 'rgba(245,158,11,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+ <div className="sm-cash-info" style={{ marginTop: 10, background: 'rgba(245,158,11,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
  <span style={{ fontSize: 20 }}>💵</span>
  <div>
- <p style={{ margin: 0, color: '#92400e', fontSize: 13, fontWeight: 700 }}>Pay with Cash</p>
- <p style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>
+ <p className="sm-cash-info-title" style={{ margin: 0, color: '#92400e', fontSize: 13, fontWeight: 700 }}>Pay with Cash</p>
+ <p className="sm-cash-info-desc" style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>
  {isDelivered
  ? <>Your food has been served. Please pay <b>{fmt(o.total)}</b> in cash to our staff.</>
  : <>Your order is being prepared. Please pay <b>{fmt(o.total)}</b> to our staff when you settle the bill.</>}
@@ -1005,11 +1005,11 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  )}
  {o.payment_status === 'paid' && o.payment_method === 'cash' && (
- <div style={{ marginTop: 10, background: 'rgba(16,185,129,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+ <div className="sm-cash-paid" style={{ marginTop: 10, background: 'rgba(16,185,129,0.08)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
  <span style={{ fontSize: 20 }}>✓</span>
  <div>
- <p style={{ margin: 0, color: '#065f46', fontSize: 13, fontWeight: 700 }}>Cash Payment Received</p>
- <p style={{ margin: 0, color: '#047857', fontSize: 11, marginTop: 2 }}>Cash payment of <b>{fmt(o.total)}</b> has been collected. Thank you!</p>
+ <p className="sm-cash-paid-title" style={{ margin: 0, color: '#065f46', fontSize: 13, fontWeight: 700 }}>Cash Payment Received</p>
+ <p className="sm-cash-paid-desc" style={{ margin: 0, color: '#047857', fontSize: 11, marginTop: 2 }}>Cash payment of <b>{fmt(o.total)}</b> has been collected. Thank you!</p>
  </div>
  </div>
  )}
@@ -1019,7 +1019,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </button>
  )}
  {o.payment_status === 'verification_pending' && (
- <p style={{ marginTop: 10, color: '#b45309', fontSize: 12, fontWeight: 600 }}>Your payment screenshot is awaiting admin review.</p>
+ <p className="sm-verification-pending" style={{ marginTop: 10, color: '#b45309', fontSize: 12, fontWeight: 600 }}>Your payment screenshot is awaiting admin review.</p>
  )}
  </div>
  </div>
@@ -1061,8 +1061,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <div style={s.empty}>
  <div style={s.emptyOrb} />
  <div style={s.emptyIcon}>🔍</div>
- <p style={s.emptyTitle}>No dishes found</p>
- <p style={s.emptyDesc}>Try a different search or browse another category</p>
+<p className="sm-empty-title" style={s.emptyTitle}>No dishes found</p>
+<p className="sm-empty-desc" style={s.emptyDesc}>Try a different search or browse another category</p>
  <button style={s.emptyBtn} onClick={() => { setQ(''); setCat(''); }}>
  <Sparkles size={13} /> View All Items
  </button>
@@ -1087,49 +1087,49 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  {cartOpen && (
  <div style={s.overlay} onClick={() => setCartOpen(false)}>
  <div className="sm-drawer" style={s.drawer} onClick={e => e.stopPropagation()}>
- <div style={s.drawerHandle} />
- <div style={s.drawerHead}>
+ <div className="sm-drawer-handle" style={s.drawerHandle} />
+ <div className="sm-drawer-head" style={s.drawerHead}>
  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
  <div style={s.drawerIcon}><ShoppingBag size={18} color="#fff" /></div>
  <div>
- <p style={s.drawerTitle}>Your Order</p>
- <p style={s.drawerSub}>{cartCount} item{cartCount !== 1 ? 's' : ''} in cart</p>
+ <p className="sm-drawer-title" style={s.drawerTitle}>Your Order</p>
+ <p className="sm-drawer-sub" style={s.drawerSub}>{cartCount} item{cartCount !== 1 ? 's' : ''} in cart</p>
  </div>
  </div>
- <button style={s.drawerClose} onClick={() => setCartOpen(false)}><X size={18} color="#64748b" /></button>
+ <button className="sm-drawer-close" style={s.drawerClose} onClick={() => setCartOpen(false)}><X size={18} color="#64748b" /></button>
  </div>
 
  {paymentError && (
- <div style={{ margin: '10px 16px 0', padding: '10px 12px', borderRadius: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>
+ <div className="sm-payment-error" style={{ margin: '10px 16px 0', padding: '10px 12px', borderRadius: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#b91c1c', fontSize: 13, fontWeight: 600 }}>
  {paymentError}
  </div>
  )}
 
- <div style={s.drawerScroll}>
+ <div className="sm-drawer-scroll" style={s.drawerScroll}>
  {!cart.length ? (
  <div style={{ textAlign: 'center', padding: '60px 24px' }}>
  <div style={{ fontSize: 56, marginBottom: 12, opacity: 0.2, animation: 'float 3s ease-in-out infinite' }}>🛒</div>
- <p style={{ color: '#0f172a', fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>Cart is empty</p>
- <p style={{ color: '#94a3b8', fontSize: 12, margin: 0 }}>Browse the menu and tap + to add items</p>
+ <p className="sm-empty-cart-title" style={{ color: '#0f172a', fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>Cart is empty</p>
+ <p className="sm-empty-cart-desc" style={{ color: '#94a3b8', fontSize: 12, margin: 0 }}>Browse the menu and tap + to add items</p>
  </div>
  ) : cart.map((item, i) => {
  const { g1, g2, emoji } = catOf(item.category);
  return (
- <div key={item.id} style={{ ...s.cartItem, animationDelay: `${i * 40}ms`, opacity: removingId === item.id ? 0 : 1, transform: removingId === item.id ? 'translateX(100px)' : 'none', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+ <div key={item.id} className="sm-cart-item" style={{ ...s.cartItem, animationDelay: `${i * 40}ms`, opacity: removingId === item.id ? 0 : 1, transform: removingId === item.id ? 'translateX(100px)' : 'none', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
  <div style={{ ...s.cartAccent, background: `linear-gradient(135deg,${g1},${g2})` }} />
  <span style={{ fontSize: 20, width: 34, height: 34, borderRadius: 10, background: `${g1}08`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{emoji}</span>
- <div style={{ flex: 1, minWidth: 0 }}>
+ <div className="sm-cart-item-info" style={{ flex: 1, minWidth: 0 }}>
  <p className="sm-cart-item-name" style={s.cartItemName}>{item.name}</p>
  <p className="sm-cart-item-price" style={s.cartItemPrice}>{fmt(item.price)} × {item.qty}</p>
  </div>
- <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+ <div className="sm-cart-item-controls" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
  <div style={s.qtyRowSm}>
- <button style={{ ...s.qtyBtnSm, borderColor: 'rgba(0,0,0,0.06)', color: '#64748b' }} onClick={() => updQty(item.id, item.qty - 1)}><Minus size={12} /></button>
- <span style={{ ...s.qtyNumSm, color: '#0f172a' }}>{item.qty}</span>
- <button style={{ ...s.qtyBtnSm, borderColor: 'rgba(0,0,0,0.06)', color: '#64748b' }} onClick={() => updQty(item.id, item.qty + 1)}><Plus size={12} /></button>
+ <button className="sm-qty-btn-sm" style={{ ...s.qtyBtnSm, borderColor: 'rgba(0,0,0,0.06)', color: '#64748b' }} onClick={() => updQty(item.id, item.qty - 1)}><Minus size={12} /></button>
+ <span className="sm-qty-num-sm" style={{ ...s.qtyNumSm, color: '#0f172a' }}>{item.qty}</span>
+ <button className="sm-qty-btn-sm" style={{ ...s.qtyBtnSm, borderColor: 'rgba(0,0,0,0.06)', color: '#64748b' }} onClick={() => updQty(item.id, item.qty + 1)}><Plus size={12} /></button>
  </div>
  <span className="sm-cart-item-total" style={s.cartItemTotal}>{fmt(item.price * item.qty)}</span>
- <button style={s.cartRemoveBtn} onClick={() => removeItem(item.id)}><Trash2 size={12} /></button>
+ <button className="sm-cart-remove-btn" style={s.cartRemoveBtn} onClick={() => removeItem(item.id)}><Trash2 size={12} /></button>
  </div>
  </div>
  );
@@ -1137,34 +1137,34 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
 
  {cart.length > 0 && (
- <div style={s.drawerFoot}>
- <div style={s.bill}>
- <div style={s.billRow}><span style={s.billLabel}>Subtotal</span><span style={s.billVal}>{fmt(totals.subtotal)}</span></div>
+ <div className="sm-drawer-foot" style={s.drawerFoot}>
+ <div className="sm-bill" style={s.bill}>
+ <div style={s.billRow}><span className="sm-bill-label" style={s.billLabel}>Subtotal</span><span className="sm-bill-val" style={s.billVal}>{fmt(totals.subtotal)}</span></div>
  {totals.discountAmount > 0 && (
- <div style={s.billRow}><span style={s.billLabel}>Discount</span><span style={{ ...s.billVal, color: '#ef4444' }}>-{fmt(totals.discountAmount)}</span></div>
+ <div style={s.billRow}><span className="sm-bill-label" style={s.billLabel}>Discount</span><span className="sm-bill-val" style={{ ...s.billVal, color: '#ef4444' }}>-{fmt(totals.discountAmount)}</span></div>
  )}
  {/* Service Charge — shown always, separate from GST */}
- <div style={{ ...s.billRow, color: '#1a5c3e' }}>
- <span style={{ ...s.billLabel, color: '#1a5c3e', fontWeight: 700 }}>Service Charge ({SERVICE_CHARGE_PERCENT}%)</span>
- <span style={{ ...s.billVal, color: '#1a5c3e', fontWeight: 700 }}>+{fmt(totals.serviceCharge)}</span>
+ <div className="sm-service-charge-row" style={{ ...s.billRow, color: '#1a5c3e' }}>
+ <span className="sm-bill-label sm-service-charge-label" style={{ ...s.billLabel, color: '#1a5c3e', fontWeight: 700 }}>Service Charge ({SERVICE_CHARGE_PERCENT}%)</span>
+ <span className="sm-bill-val sm-service-charge-val" style={{ ...s.billVal, color: '#1a5c3e', fontWeight: 700 }}>+{fmt(totals.serviceCharge)}</span>
  </div>
  {totals.taxPercent > 0 && (
  <div style={s.billRow}>
- <span style={s.billLabel}>GST ({totals.taxPercent}%)</span>
- <span style={s.billVal}>{fmt(totals.taxAmount)}</span>
+ <span className="sm-bill-label" style={s.billLabel}>GST ({totals.taxPercent}%)</span>
+ <span className="sm-bill-val" style={s.billVal}>{fmt(totals.taxAmount)}</span>
  </div>
  )}
  <div style={{ ...s.billRow, borderTop: '1px solid rgba(0,0,0,0.05)', paddingTop: 12, marginTop: 6 }}>
- <span style={s.billTotal}>Grand Total</span>
- <span style={s.billTotalVal}>{fmt(totals.total)}</span>
+ <span className="sm-bill-total" style={s.billTotal}>Grand Total</span>
+ <span className="sm-bill-total-val" style={s.billTotalVal}>{fmt(totals.total)}</span>
  </div>
- <p style={{ margin: '6px 0 0', fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+ <p className="sm-bill-hint" style={{ margin: '6px 0 0', fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
  Incl. {SERVICE_CHARGE_PERCENT}% service charge + {totals.taxPercent}% GST
  </p>
  </div>
 
  {/* Guests at this table */}
- <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, padding: '10px 14px', marginBottom: 14 }}>
+ <div className="sm-guest-counter" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 14, padding: '10px 14px', marginBottom: 14 }}>
  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#1e40af' }}>
  <Utensils size={14} /> Guests at table
  </span>
@@ -1197,7 +1197,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
 
  {/* ── Payment method selector ── */}
- <p style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
+ <p className="sm-pay-heading" style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
  <div className="sm-pay-grid" style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
  {[
  { id: 'cash', label: 'Pay with Cash', sub: 'Pay our staff directly', Icon: Banknote, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
@@ -1218,9 +1218,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  >
  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
  <Icon size={15} color={active ? color : '#94a3b8'} />
- <span style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
+ <span className="sm-pay-label" style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
  </div>
- <span style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
+ <span className="sm-pay-sub" style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
  {active && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color }}>✓</span>}
  </button>
  );
@@ -1245,21 +1245,21 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
 
  {cartCount > 0 && !cartOpen && (
  <div className="sm-float-bar" style={s.floatBar} onClick={() => setCartOpen(true)}>
- <div style={s.floatLeft}>
- <div style={s.floatCartIcon}><ShoppingBag size={16} color="#fff" /></div>
+ <div className="sm-float-left" style={s.floatLeft}>
+ <div className="sm-float-cart-icon" style={s.floatCartIcon}><ShoppingBag size={16} color="#fff" /></div>
  <div style={{ display: 'flex', flexDirection: 'column' }}>
- <span style={s.floatCount}>{cartCount} item{cartCount !== 1 ? 's' : ''}</span>
- <div style={s.floatThumbs}>
+ <span className="sm-float-count" style={s.floatCount}>{cartCount} item{cartCount !== 1 ? 's' : ''}</span>
+ <div className="sm-float-thumbs" style={s.floatThumbs}>
  {cart.slice(0, 4).map((ci, ti) => {
  const ce = catOf(ci.category).emoji;
- return <span key={ci.id} style={{ ...s.floatThumb, animationDelay: `${ti * 50}ms` }}>{ce}</span>;
+ return <span key={ci.id} className="sm-float-thumb" style={{ ...s.floatThumb, animationDelay: `${ti * 50}ms` }}>{ce}</span>;
  })}
- {cart.length > 4 && <span style={{ ...s.floatThumb, background: 'rgba(255,255,255,0.15)', fontSize: 9 }}>+{cart.length - 4}</span>}
+ {cart.length > 4 && <span className="sm-float-thumb" style={{ ...s.floatThumb, background: 'rgba(255,255,255,0.15)', fontSize: 9 }}>+{cart.length - 4}</span>}
  </div>
  </div>
  </div>
- <div style={s.floatRight}>
- <span style={s.floatTotal}>{fmt(totals.total)}</span>
+ <div className="sm-float-right" style={s.floatRight}>
+ <span className="sm-float-total" style={s.floatTotal}>{fmt(totals.total)}</span>
  <div style={s.floatArrow}><ChevronRight size={18} color="#fff" /></div>
  </div>
  </div>
@@ -1561,8 +1561,46 @@ const CSS = `
 
  .sm-drawer{animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1)}
 
+ /* ── Cart Drawer Responsive ── */
+ /* On very small screens, cart items can overflow because all the
+    controls (emoji + name + qty + total + remove) are on one row.
+    Stack the name/price above the qty/total/remove row below 420px. */
+ @media(max-width:419px){
+  .sm-drawer{max-width:100vw!important;border-radius:20px 20px 0 0!important}
+  .sm-drawer-head{padding:12px 14px!important}
+  .sm-drawer-scroll{padding:4px 14px!important}
+  .sm-drawer-foot{padding:12px 14px 24px!important}
+  /* Cart item: wrap the right-side controls to a new row */
+  .sm-cart-item{flex-wrap:wrap;gap:6px!important;padding:10px 0!important}
+  .sm-cart-item-info{flex:1 1 100%;min-width:0!important}
+  .sm-cart-item-controls{flex:1 1 100%;justify-content:space-between;padding-left:44px}
+  .sm-cart-item-total{font-size:12px!important;min-width:48px!important}
+  .sm-qty-btn-sm{width:28px!important;height:28px!important}
+ }
+ @media(max-width:359px){
+  .sm-drawer{max-height:90vh!important}
+  .sm-drawer-title{font-size:14px!important}
+  .sm-drawer-sub{font-size:10px!important}
+  /* Compact the bill rows */
+  .sm-bill-label,.sm-bill-val{font-size:11px!important}
+  .sm-bill-total{font-size:13px!important}
+  .sm-bill-total-val{font-size:18px!important}
+  /* Payment buttons: stack instead of 2-col */
+  .sm-pay-grid{grid-template-columns:minmax(0,1fr)!important}
+  /* Guest counter: slightly smaller */
+  .sm-guest-counter{padding:8px 10px!important}
+ }
+
  .sm-float-bar{transition:transform 0.2s}
  .sm-float-bar:active{transform:scale(0.97)}
+ /* Float bar: more compact on tiny screens */
+ @media(max-width:374px){
+  .sm-float-bar{padding:10px 12px!important}
+  .sm-float-total{font-size:14px!important}
+  .sm-float-count{font-size:11px!important}
+  .sm-float-thumb{width:14px!important;height:14px!important;font-size:8px!important}
+  .sm-float-cart-icon{width:28px!important;height:28px!important}
+ }
 
  .sm-section-head{position:relative}
  .sm-section-head::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;border-radius:2px;opacity:0}
@@ -1670,12 +1708,286 @@ const CSS = `
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
+  /* Cart item border + qty buttons in dark mode */
+  html.dark .sm-cart-item {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  html.dark .sm-cart-item .sm-qty-btn-sm {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #CBD5E1 !important;
+    background: transparent !important;
+  }
+  html.dark .sm-cart-item .sm-qty-num-sm {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-cart-remove-btn {
+    background: rgba(239, 68, 68, 0.12) !important;
+    color: #F87171 !important;
+  }
+  /* Drawer handle + close button in dark mode */
+  html.dark .sm-drawer-handle {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
+  html.dark .sm-drawer-close {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #94A3B8 !important;
+  }
+  /* Drawer footer border in dark mode */
+  html.dark .sm-drawer-foot {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  /* Bill rows top divider in dark mode */
+  html.dark .sm-bill .sm-bill-row {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  /* Guest counter in dark mode */
+  html.dark .sm-guest-counter {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+  }
+  html.dark .sm-guest-counter span,
+  html.dark .sm-guest-counter button {
+    color: #93C5FD !important;
+  }
+  html.dark .sm-guest-counter input {
+    color: #F1F5F9 !important;
+    background: #1E293B !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+  }
+  html.dark .sm-guest-counter button {
+    background: #1E293B !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+  }
+  /* Payment method buttons in dark mode */
+  html.dark .sm-pay-grid button {
+    background: #1E293B !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-pay-grid button .sm-pay-label {
+    color: #E2E8F0 !important;
+  }
+  html.dark .sm-pay-grid button .sm-pay-sub {
+    color: #64748B !important;
+  }
+  /* Empty cart state in dark mode — only the empty-cart paragraphs,
+     NOT all <p> in the drawer (cart item names have their own override) */
+  html.dark .sm-empty-cart-title {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-empty-cart-desc {
+    color: #64748B !important;
+  }
+  /* Search bar in dark mode */
+  html.dark .sm-search-wrap,
+  html.dark .sm-header .sm-search-wrap {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  html.dark .sm-search-input,
+  html.dark .sm-header input {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-search-count {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #94A3B8 !important;
+  }
+  html.dark .sm-clear-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #94A3B8 !important;
+  }
+  /* Cart button in dark mode */
+  html.dark .sm-cart-btn {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #94A3B8 !important;
+  }
+  /* Tracker cards in dark mode */
   html.dark .sm-tracker-card {
     background: #141C2E !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
   }
   html.dark .sm-tracker-order {
     color: #FFFFFF !important;
+  }
+  /* Spotlight in dark mode */
+  html.dark .sm-spotlight {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    background: #141C2E !important;
+  }
+  /* Empty state in dark mode */
+  html.dark .sm-empty-title {
+    color: #F8FAFC !important;
+  }
+  html.dark .sm-empty-desc {
+    color: #64748B !important;
+  }
+  /* Bill reveal in dark mode */
+  html.dark .sm-bill-reveal {
+    background: #1E293B !important;
+    border-color: rgba(249, 115, 22, 0.2) !important;
+  }
+  html.dark .sm-bill-receipt-header {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(245, 158, 11, 0.06)) !important;
+    border-bottom-color: rgba(249, 115, 22, 0.2) !important;
+  }
+  html.dark .sm-bill-receipt-title {
+    color: #F8FAFC !important;
+  }
+  html.dark .sm-bill-receipt-sub {
+    color: #64748B !important;
+  }
+  html.dark .sm-bill-item-name {
+    color: #CBD5E1 !important;
+  }
+  html.dark .sm-bill-item-price {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-bill-item-qty {
+    color: #64748B !important;
+  }
+  html.dark .sm-bill-divider {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent) !important;
+  }
+  /* Payment error banner in dark mode */
+  html.dark .sm-payment-error {
+    background: rgba(239, 68, 68, 0.1) !important;
+    border-color: rgba(239, 68, 68, 0.2) !important;
+    color: #FCA5A5 !important;
+  }
+
+  /* === Additional dark mode text visibility fixes === */
+
+  /* Table occupied banner */
+  html.dark .sm-table-occupied {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+  }
+  html.dark .sm-table-occupied-title {
+    color: #93C5FD !important;
+  }
+  html.dark .sm-table-occupied-desc {
+    color: #60A5FA !important;
+  }
+
+  /* Empty cart state — targeted overrides (not all <p> in drawer) */
+  html.dark .sm-empty-cart-title {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-empty-cart-desc {
+    color: #64748B !important;
+  }
+
+  /* Payment heading + labels */
+  html.dark .sm-pay-heading {
+    color: #94A3B8 !important;
+  }
+  html.dark .sm-pay-grid button .sm-pay-label {
+    color: #E2E8F0 !important;
+  }
+  html.dark .sm-pay-grid button .sm-pay-sub {
+    color: #64748B !important;
+  }
+
+  /* Tracker label */
+  html.dark .sm-tracker-label {
+    color: #94A3B8 !important;
+  }
+
+  /* Service charge row — dark green #1a5c3e is invisible on dark bg */
+  html.dark .sm-service-charge-row,
+  html.dark .sm-service-charge-label,
+  html.dark .sm-service-charge-val {
+    color: #4ADE80 !important;
+  }
+
+  /* Bill hint text */
+  html.dark .sm-bill-hint {
+    color: #64748B !important;
+  }
+
+  /* Bill item dots separator */
+  html.dark .sm-bill-row .sm-bill-item-dots,
+  html.dark .sm-bill-item-dots {
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
+  /* Bill total label/hint inside bill reveal (on orange gradient bg — keep light) */
+  html.dark .sm-bill-total-label {
+    color: rgba(255, 255, 255, 0.85) !important;
+  }
+  html.dark .sm-bill-total-hint {
+    color: rgba(255, 255, 255, 0.55) !important;
+  }
+
+  /* Cash payment info boxes — amber text on dark bg */
+  html.dark .sm-cash-info {
+    background: rgba(245, 158, 11, 0.1) !important;
+  }
+  html.dark .sm-cash-info-title {
+    color: #FCD34D !important;
+  }
+  html.dark .sm-cash-info-desc {
+    color: #FBBF24 !important;
+  }
+
+  /* Cash paid confirmation — green text on dark bg */
+  html.dark .sm-cash-paid {
+    background: rgba(16, 185, 129, 0.1) !important;
+  }
+  html.dark .sm-cash-paid-title {
+    color: #6EE7B7 !important;
+  }
+  html.dark .sm-cash-paid-desc {
+    color: #34D399 !important;
+  }
+
+  /* Payment approved note */
+  html.dark .sm-payment-approved {
+    color: #34D399 !important;
+  }
+
+  /* Verification pending note */
+  html.dark .sm-verification-pending {
+    color: #FBBF24 !important;
+  }
+
+  /* Paid burst */
+  html.dark .sm-paid-burst {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.06)) !important;
+    border-color: rgba(34, 197, 94, 0.2) !important;
+  }
+  html.dark .sm-paid-title {
+    color: #6EE7B7 !important;
+  }
+  html.dark .sm-paid-sub {
+    color: #34D399 !important;
+  }
+
+  /* Menu error screen */
+  html.dark .sm-error-title {
+    color: #F1F5F9 !important;
+  }
+  html.dark .sm-error-desc {
+    color: #94A3B8 !important;
+  }
+
+  /* Skeleton elements in dark mode */
+  html.dark .sm-skel-card {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border-color: rgba(255, 255, 255, 0.04) !important;
+  }
+  html.dark .sm-skel-circle {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Search placeholder in dark mode */
+  html.dark .sm-search-input::placeholder {
+    color: rgba(148, 163, 184, 0.5) !important;
+  }
+
+  /* Bill total row divider inside drawer bill */
+  html.dark .sm-bill > div[style*="borderTop"] {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
   }
 
 `;
