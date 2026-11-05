@@ -14,7 +14,6 @@ import {
  FileText,
  Utensils,
  ShoppingBag,
- QrCode,
  Truck,
  Phone,
  Mail,
@@ -67,14 +66,14 @@ const STATUS_COLORS = {
  paid: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
 };
 
-const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, QR_CODE: QrCode, DELIVERY: Truck };
-const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', QR_CODE: 'QR Order', DELIVERY: 'Home Delivery' };
+const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, DELIVERY: Truck };
+const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', DELIVERY: 'Home Delivery' };
 
 const TYPE_FILTER_OPTIONS = [
  { id: 'all', label: 'All Types' },
  { id: 'DINE_IN', label: 'Dine-In' },
+ { id: 'DELIVERY', label: 'Home Delivery' },
  { id: 'TAKEAWAY', label: 'Takeaway' },
- { id: 'QR_CODE', label: 'QR Order' },
 ];
 
 /* =================================================================
@@ -839,7 +838,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
  <div>
  <p className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-slate-500 font-semibold">
- Table / Customer
+ {typeKey === 'DELIVERY' ? 'Customer' : 'Table / Customer'}
  </p>
  <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">
  {order.table_name || order.customer_name || 'Counter'}
@@ -933,10 +932,12 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/60 dark:bg-emerald-950/40">
  <div className="flex items-center gap-2 mb-1">
  <span className="text-xl">💵</span>
- <p className="font-bold text-emerald-900 dark:text-emerald-200">Cash on Delivery — not collected yet</p>
+ <p className="font-bold text-emerald-900 dark:text-emerald-200">
+ {typeKey === 'DELIVERY' ? 'Cash on Delivery — not collected yet' : 'Cash Payment — not collected yet'}
+ </p>
  </div>
  <p className="text-sm text-emerald-800 dark:text-emerald-300">
- Approving sends this order to the <b>Waiter Panel</b> for delivery but keeps it <b>UNPAID</b>. The delivery staff marks it paid only after they receive the cash and confirm collection.
+ Approving sends this order to the <b>Waiter Panel</b> for {typeKey === 'DELIVERY' ? 'delivery' : 'serving'} but keeps it <b>UNPAID</b>. The {typeKey === 'DELIVERY' ? 'delivery staff' : 'waiter'} marks it paid only after they receive the cash and confirm collection.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
  {(status === 'pending' || status === 'preparing') && (
@@ -946,7 +947,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
  >
  <CheckCircle2 className="w-4 h-4" />
- {reviewing ? 'Approving…' : 'Approve & Send to Waiter (stays unpaid)'}
+ {reviewing ? 'Approving…' : typeKey === 'DELIVERY' ? 'Approve & Send for Delivery (stays unpaid)' : 'Approve & Send to Waiter (stays unpaid)'}
  </button>
  )}
  <button
@@ -961,28 +962,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  </div>
  )}
 
- {/* Legacy: cash marked by staff, waiting for an admin sign-off. */}
- {isAdmin && order.payment_status === 'cash_pending_admin' && (
- <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/60 dark:bg-amber-950/40">
- <div className="flex items-center gap-2 mb-1">
- <span className="text-xl">🧾</span>
- <p className="font-bold text-amber-900 dark:text-amber-200">Cash collected by staff — awaiting your approval</p>
- </div>
- <p className="text-sm text-amber-800 dark:text-amber-300">
- The delivery staff marked the cash ({fmt(order.total)}) as received. Approving records it as paid revenue (GST &amp; service charge). Legacy orders only — new deliveries are marked paid directly by the collecting staff member.
- </p>
- {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
- <button
- disabled={reviewing}
- onClick={approveCashPayment}
- className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 text-sm transition shadow-sm disabled:opacity-50"
- >
- <CheckCircle2 className="w-4 h-4" />
- {reviewing ? 'Approving…' : `Approve Cash Payment (${fmt(order.total)})`}
- </button>
- </div>
- )}
-
+ {/* Cash collected and marked as paid by staff. */}
  {order.payment_method === 'cash' && order.payment_status === 'paid' && (
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 dark:border-emerald-800/60 dark:bg-emerald-950/40">
  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -1025,7 +1005,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800/60 dark:bg-emerald-950/40">
  <p className="font-bold text-emerald-900 dark:text-emerald-200">Order Awaiting Approval</p>
  <p className="mt-1 text-sm text-emerald-800 dark:text-emerald-300">
- Approve this order to dispatch it directly to the waiter for serving.
+ Approve this order to dispatch it directly to the {typeKey === 'DELIVERY' ? 'delivery staff for home delivery' : 'waiter for serving'}.
  </p>
  {reviewError && <p className="mt-2 text-sm text-rose-600">{reviewError}</p>}
  <button
@@ -1034,7 +1014,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  className="mt-3 w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 transition disabled:opacity-50 shadow-sm"
  >
  <CheckCircle2 className="w-4 h-4" />
- {reviewing ? 'Approving…' : 'Approve & Send to Waiter'}
+ {reviewing ? 'Approving…' : typeKey === 'DELIVERY' ? 'Approve & Send for Delivery' : 'Approve & Send to Waiter'}
  </button>
  </div>
  )}
@@ -1042,7 +1022,7 @@ const OrderDetailPanel = ({ order, fmt, totals, onPaymentReviewed }) => {
  {status === 'ready' && (
  <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center gap-2">
  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
- <span>✓ Order approved — currently with the waiter to serve.</span>
+ <span>{typeKey === 'DELIVERY' ? '✓ Order approved — out for home delivery.' : '✓ Order approved — currently with the waiter to serve.'}</span>
  </div>
  )}
 

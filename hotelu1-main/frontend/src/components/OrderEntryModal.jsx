@@ -279,7 +279,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  
  // For existing orders, identify new items vs existing items
  let newOrder = {
- table_name: table && table.id ? table.id : (orderType === 'TAKEAWAY' ? 'Takeaway' : 'Unknown'),
+ table_name: table && table.id ? table.id : (orderType === 'TAKEAWAY' ? 'Takeaway' : orderType === 'DELIVERY' ? 'Delivery' : 'Unknown'),
  items: orderItems,
  subtotal: subtotal,
  discount: discountPercent,
@@ -294,7 +294,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  };
 
  // Guest count rides along with dine-in orders only.
- if (orderType !== 'TAKEAWAY') {
+ if (orderType !== 'TAKEAWAY' && orderType !== 'DELIVERY') {
  newOrder.guests = Math.max(1, Math.min(50, Math.round(Number(guests) || 1)));
  }
 
@@ -486,7 +486,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Modal Header - Orange Theme */}
  <div className="flex justify-between items-center px-3 py-2 sm:p-6 border-b border-indigo-100 bg-indigo-600 flex-shrink-0">
  <h3 className="text-xs sm:text-2xl font-bold text-white truncate pr-2">
- New {orderType === 'TAKEAWAY' ? 'Takeaway' : 'Dine-In'} Order{table && table.id === 'Takeaway' ? '' : table && table.id ? ` — Table ${table.id}` : ''}
+ New {orderType === 'TAKEAWAY' ? 'Takeaway' : orderType === 'DELIVERY' ? 'Delivery' : 'Dine-In'} Order{table && table.id === 'Takeaway' ? '' : table && table.id ? ` — Table ${table.id}` : ''}
  </h3>
  <button 
  onClick={onClose} 
@@ -974,7 +974,7 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  </div>
 
  {/* Guests seated at this table (dine-in only) */}
- {orderType !== 'TAKEAWAY' && (
+ {orderType !== 'TAKEAWAY' && orderType !== 'DELIVERY' && (
  <div className="flex items-center justify-between bg-blue-50/70 rounded-xl px-3 py-2.5 mb-3 dark:bg-blue-950/40">
  <span className="flex items-center gap-1.5 text-sm font-semibold text-gray-700 dark:text-slate-300">
  <Users className="w-4 h-4 text-blue-500" />

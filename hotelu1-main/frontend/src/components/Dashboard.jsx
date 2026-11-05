@@ -16,7 +16,7 @@ import {
   Crown,
   Utensils,
   ShoppingBag,
-  QrCode,
+  Truck,
   Building2,
   Sparkles,
   Activity,
@@ -377,8 +377,8 @@ const StatusPill = ({ status }) => {
   );
 };
 
-const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, QR_CODE: QrCode };
-const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', QR_CODE: 'QR Order' };
+const TYPE_ICON = { DINE_IN: Utensils, TAKEAWAY: ShoppingBag, DELIVERY: Truck };
+const TYPE_LABEL = { DINE_IN: 'Dine-In', TAKEAWAY: 'Takeaway', DELIVERY: 'Home Delivery' };
 
 /* =================================================================
    Dashboard
@@ -395,7 +395,7 @@ const Dashboard = ({ locationSettings }) => {
   const GOLD_HEX = themeHex.gold;
   const GOLD_LIGHT_HEX = themeHex.goldLight;
   const GOLD_DARK_HEX = themeHex.goldDark;
-  const PIE_HEX = [NAVY_HEX, GOLD_HEX, '#3B82F6'];
+  const PIE_HEX = [NAVY_HEX, GOLD_HEX, '#3B82F6', '#8B5CF6'];
   const currentUser = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || 'null');
@@ -569,8 +569,8 @@ const Dashboard = ({ locationSettings }) => {
   const orderTypeData = [
     { name: 'Dine-In', value: byTypeRaw.DINE_IN || 0, color: NAVY_HEX },
     { name: 'Takeaway', value: byTypeRaw.TAKEAWAY || 0, color: GOLD_HEX },
-    { name: 'QR Order', value: byTypeRaw.QR_CODE || 0, color: '#3B82F6' },
-  ];
+    { name: 'Delivery', value: byTypeRaw.DELIVERY || 0, color: '#3B82F6' },
+  ].filter((t) => t.value > 0);
   const totalTypeCount = orderTypeData.reduce((s, t) => s + t.value, 0);
 
   /* ---------------- top selling items ---------------- */
@@ -967,7 +967,9 @@ const Dashboard = ({ locationSettings }) => {
               const displayLabel = o.table_name
                 ? typeKey === 'TAKEAWAY'
                   ? `Takeaway ${o.table_name}`
-                  : o.table_name
+                  : typeKey === 'DELIVERY'
+                    ? (o.customer_name || 'Home delivery')
+                    : o.table_name
                 : typeLabel;
               return (
                 <div

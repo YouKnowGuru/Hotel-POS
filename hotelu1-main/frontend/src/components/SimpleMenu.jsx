@@ -134,12 +134,12 @@ const SectionBlock = React.memo(function SectionBlock({
  ) : (
  <span style={{ fontSize: 52, opacity: 0.32, transition: 'transform 0.3s', filter: 'saturate(1.3)' }} className="sm-card-emoji">{emoji}</span>
  )}
- <span style={{ ...s.cardCat, background: `linear-gradient(135deg,${g1},${g2})` }}>{item.category}</span>
+ <span className="sm-card-cat" style={{ ...s.cardCat, background: `linear-gradient(135deg,${g1},${g2})` }}>{item.category}</span>
  </div>
- <div style={s.cardBody}>
+ <div className="sm-card-body" style={s.cardBody}>
  <h4 className="sm-card-name" style={s.cardName}>{item.name}</h4>
  {item.description && <p className="sm-card-desc" style={s.cardDesc}>{item.description}</p>}
- <div style={s.cardFoot}>
+ <div className="sm-card-foot" style={s.cardFoot}>
  <span className="sm-card-price" style={{ ...s.cardPrice, color: (g1 === '#eab308' || g1 === '#f59e0b') ? '#b45309' : g1 }}>{fmt(item.price)}</span>
  {inCart ? (
  <div style={s.qtyRowSm}>
@@ -636,7 +636,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <div style={{ height: 180, borderRadius: 24, margin: '0 16px 16px', background: 'rgba(0,0,0,0.03)', overflow: 'hidden', position: 'relative' }}>
  <div style={s.skelShimmer} />
  </div>
- <div style={s.skelGrid}>{[1, 2, 3, 4, 5, 6].map(i => (
+ <div className="sm-grid sm-skel-grid" style={s.skelGrid}>{[1, 2, 3, 4, 5, 6].map(i => (
  <div key={i} style={{ ...s.skelCard, animationDelay: `${i * 100}ms` }}>
  <div style={{ ...s.skelCardImg }}><div style={s.skelShimmer} /></div>
  <div style={{ padding: '10px 12px' }}>
@@ -866,7 +866,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  const showBillStatus = isDelivered || isPaid;
  const paymentWaiting = ['awaiting_payment', 'verification_pending', 'rejected'].includes(o.payment_status);
  const cfg = o.payment_status === 'cash_pending'
- ? { label: 'Cash Order — Cooking', Icon: Banknote, c: '#10b981', bg: 'rgba(16,185,129,0.08)', pct: 30 }
+ // Cash is collected AFTER the food, so the tracker must keep following the
+ // real kitchen/serve status. The old fixed "Cash Order — Cooking" label
+ // stayed on screen even after the food had been served.
+ ? (isDelivered
+ ? { label: 'Served — pay at the table', Icon: CheckCircle2, c: '#22c55e', bg: 'rgba(34,197,94,0.08)', pct: 100 }
+ : (STATUS[o.status] || STATUS.pending))
  : o.payment_status === 'awaiting_payment'
  ? { label: 'Payment Required', Icon: Receipt, c: '#f97316', bg: 'rgba(249,115,22,0.08)', pct: 5 }
  : o.payment_status === 'verification_pending'
@@ -981,7 +986,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  </div>
  )}
- {paymentApproved && !isPaid && !isDelivered && (
+ {paymentApproved && !isCashOrder && !isPaid && !isDelivered && (
  <div style={{ marginTop: 10, color: '#047857', fontSize: 12, fontWeight: 600 }}>
  ✓ Payment approved — your order is sent to the waiter.
  </div>
@@ -991,7 +996,11 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <span style={{ fontSize: 20 }}>💵</span>
  <div>
  <p style={{ margin: 0, color: '#92400e', fontSize: 13, fontWeight: 700 }}>Pay with Cash</p>
- <p style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>Your order is being prepared. Please pay <b>{fmt(o.total)}</b> to our staff.</p>
+ <p style={{ margin: 0, color: '#b45309', fontSize: 11, marginTop: 2 }}>
+ {isDelivered
+ ? <>Your food has been served. Please pay <b>{fmt(o.total)}</b> in cash to our staff.</>
+ : <>Your order is being prepared. Please pay <b>{fmt(o.total)}</b> to our staff when you settle the bill.</>}
+ </p>
  </div>
  </div>
  )}
@@ -1189,7 +1198,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
 
  {/* ── Payment method selector ── */}
  <p style={{ fontSize: 12, fontWeight: 700, color: '#475569', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>How would you like to pay?</p>
- <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+ <div className="sm-pay-grid" style={{ display: 'grid', gap: 8, marginBottom: 14 }}>
  {[
  { id: 'cash', label: 'Pay with Cash', sub: 'Pay our staff directly', Icon: Banknote, color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)' },
  { id: 'qr', label: 'Pay Online', sub: 'Scan QR & upload proof', Icon: QrCode, color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.3)' },
@@ -1468,16 +1477,53 @@ const CSS = `
  @media(min-width:640px){.sm-content{padding:0 24px 100px}}
  @media(min-width:1024px){.sm-content{max-width:1200px;margin:0 auto;padding:0 24px 100px}}
 
- .sm-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
- @media(min-width:400px){.sm-grid{gap:12px}}
- @media(min-width:480px){.sm-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
- @media(min-width:640px){.sm-grid{grid-template-columns:repeat(3,1fr);gap:16px}}
- @media(min-width:1024px){.sm-grid{grid-template-columns:repeat(3,1fr);gap:18px}}
- @media(min-width:1280px){.sm-grid{grid-template-columns:repeat(4,1fr);gap:18px}}
+ /* ── Menu grid: mobile first ───────────────────────────────────────────
+    The old BASE rule forced repeat(2,1fr) at every width, so even a 320px
+    phone got two ~138px cards and the price + qty controls wrapped/overlapped.
+    Now: 1 compact horizontal card < 400px, 2 columns from 400px,
+    3 from 640px, 4 from 1280px. minmax(0,1fr) on every explicit track stops
+    a long dish name from pushing a column wider than the viewport. */
+ .sm-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+ @media(min-width:400px){.sm-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+ @media(min-width:480px){.sm-grid{gap:14px}}
+ @media(min-width:640px){.sm-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+ @media(min-width:1024px){.sm-grid{gap:18px}}
+ @media(min-width:1280px){.sm-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}}
+
+ /* Skeleton + payment grids follow the same responsive tracks */
+ .sm-skel-grid{padding:0 16px}
+ @media(min-width:640px){.sm-skel-grid{padding:0 24px}}
+ .sm-pay-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ @media(max-width:340px){.sm-pay-grid{grid-template-columns:minmax(0,1fr)}}
+
  /* Bigger food imagery: taller image area on phones, more on desktop */
  .sm-card-top{height:132px}
  @media(min-width:480px){.sm-card-top{height:150px}}
  @media(min-width:1024px){.sm-card-top{height:170px}}
+ .sm-card-body{padding:11px 13px 13px;min-width:0}
+ .sm-card-name{min-height:34px}
+
+ /* Narrow phones: single column, but laid out HORIZONTALLY so the card is
+    a compact 116px tile instead of one huge full-width block. */
+ @media(max-width:399px){
+  .sm-card{display:flex;align-items:stretch;min-height:116px}
+  .sm-card-top{width:116px;min-width:116px;height:auto;min-height:116px;flex:0 0 116px}
+  .sm-card-img{position:absolute;inset:0;width:100%!important;height:100%!important}
+  .sm-card-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 12px}
+  .sm-card-name{min-height:0;margin-bottom:2px}
+  .sm-card-desc{margin-bottom:6px}
+  .sm-card-foot{margin-top:auto}
+  .sm-card-cat{max-width:88%!important;font-size:8px!important}
+ }
+
+ /* 400–479px: two tight columns. Trim the controls so price + qty/plus
+    always fit on one row instead of wrapping to a second line. */
+ @media(min-width:400px) and (max-width:479px){
+  .sm-card-body{padding:10px 11px 11px}
+  .sm-card-price{font-size:14px!important}
+  .sm-add-btn{width:30px!important;height:30px!important}
+  .sm-qty-btn{width:24px!important;height:24px!important}
+ }
 
  .sm-card-hover{transition:transform 0.25s cubic-bezier(0.4,0,0.2,1),box-shadow 0.25s}
  .sm-card-hover:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,0.07)}
@@ -1648,7 +1694,7 @@ const s = {
  skelCatRow: { display: 'flex', gap: 8, padding: '12px 16px', overflow: 'hidden', position: 'relative', zIndex: 1 },
  skelCard: { borderRadius: 18, overflow: 'hidden', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(0,0,0,0.03)', animation: 'fadeUp 0.4s ease both' },
  skelCardImg: { height: 100, background: 'rgba(0,0,0,0.03)', position: 'relative', overflow: 'hidden' },
- skelGrid: { display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10, padding: '0 16px', position: 'relative', zIndex: 1 },
+ skelGrid: { position: 'relative', zIndex: 1 },
  skelShimmer: { position: 'absolute', inset: 0, background: 'linear-gradient(90deg,transparent 25%,rgba(255,255,255,0.6) 50%,transparent 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' },
 
  toastWrap: { position: 'fixed', top: 16, left: 0, right: 0, zIndex: 200, display: 'flex', justifyContent: 'center', pointerEvents: 'none' },
@@ -1762,16 +1808,18 @@ const s = {
  spotlightDots: { position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 2 },
  spotDot: { height: 6, borderRadius: 3, transition: 'all 0.3s', flexShrink: 0 },
 
- grid: { display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 10 },
+ // NOTE: the .sm-grid track counts/layout live in the <style> CSS block below
+ // (.sm-grid + @media rules), not here. The grid is intentionally NOT driven by
+ // an inline style so breakpoints can change column count responsively.
  card: { background: '#fff', border: '1px solid rgba(15,23,42,0.05)', borderRadius: 20, overflow: 'hidden', animation: 'fadeUp 0.4s ease both', boxShadow: '0 2px 10px rgba(15,23,42,0.05)' },
- cardTop: { height: 132, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+ cardTop: { position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' },
  cardImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
  // Category chip: absolute top-left. Width-capped so a long category
  // name can never collide with a ribbon/badge on the right side of the
  // narrow two-column card (the old 'Popular' badge overlap bug).
  cardCat: { position: 'absolute', top: 8, left: 8, padding: '3px 9px', borderRadius: 50, fontSize: 9, fontWeight: 800, color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.18)', maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
- cardBody: { padding: '11px 13px 13px', minWidth: 0 },
- cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: 34 },
+ cardBody: { minWidth: 0 },
+ cardName: { margin: '0 0 3px', fontSize: 13.5, fontWeight: 800, color: '#0f172a', lineHeight: 1.25, letterSpacing: '-0.2px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
  cardDesc: { margin: '0 0 9px', fontSize: 11, color: '#64748b', lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' },
  cardFoot: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, rowGap: 6, flexWrap: 'wrap', minWidth: 0 },
  cardPrice: { fontSize: 15, fontWeight: 900, letterSpacing: '-0.3px', whiteSpace: 'nowrap' },

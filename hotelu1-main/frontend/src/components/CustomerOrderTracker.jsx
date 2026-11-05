@@ -128,9 +128,10 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
  return <div className="text-center py-8 text-gray-600">Order not found</div>;
  }
 
+ const isCash = String(order?.payment_method || '').toLowerCase() === 'cash' || order?.payment_status === 'cash_pending';
  const statusConfig = {
- pending: { color: 'bg-indigo-50', textColor: 'text-indigo-700', icon: '⏳', label: 'Order Received', nextStep: 'Awaiting admin approval' },
- preparing: { color: 'bg-emerald-50', textColor: 'text-emerald-800', icon: '✅', label: 'Approved', nextStep: 'Your order is approved and with the waiter' },
+ pending: { color: 'bg-indigo-50', textColor: 'text-indigo-700', icon: '⏳', label: 'Order Received', nextStep: isCash ? 'Sent to the kitchen — pay in cash when you settle the bill.' : 'Awaiting admin approval' },
+ preparing: { color: 'bg-emerald-50', textColor: 'text-emerald-800', icon: '✅', label: 'In the kitchen', nextStep: 'Your order is being prepared.' },
  ready: { color: 'bg-green-100', textColor: 'text-green-800', icon: '✅', label: 'Ready to Serve', nextStep: 'Your order is ready! A waiter is coming to deliver it.' },
  delivered: { color: 'bg-purple-100', textColor: 'text-purple-800', icon: '🚚', label: 'On the Way', nextStep: 'Your order is being delivered to your table!' },
  completed: { color: 'bg-purple-100', textColor: 'text-purple-800', icon: '🎉', label: 'Completed', nextStep: 'Thank you for your order!' }

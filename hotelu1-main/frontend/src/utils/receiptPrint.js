@@ -241,10 +241,14 @@ export const buildCustomerReceiptHtml = (order, totals, info, options = {}) => {
     hour: '2-digit',
     minute: '2-digit',
   });
-  const isTakeaway = String(order.type).toUpperCase() === 'TAKEAWAY';
-  const orderTypeLabel = isTakeaway ? 'Pick Up' : 'Dine-In';
+  const upperType = String(order.type).toUpperCase();
+  const isTakeaway = upperType === 'TAKEAWAY';
+  const isDelivery = upperType === 'DELIVERY';
+  const orderTypeLabel = isTakeaway ? 'Pick Up' : isDelivery ? 'Home Delivery' : 'Dine-In';
   const tokenOrTable = isTakeaway
     ? `Token No.: ${order.token || order.id}`
+    : isDelivery
+    ? `Customer: ${order.customer_name || order.table_name || '-'}`
     : `Table: ${order.table_name || '-'}`;
 
   const itemsRowsHtml = grouped
@@ -293,6 +297,15 @@ export const buildCustomerReceiptHtml = (order, totals, info, options = {}) => {
         <span>${tokenOrTable}</span>
         <span></span>
       </div>
+      ${
+        isDelivery && (order.delivery_address || order.customer_phone)
+          ? `<div class="row small"><span>${escapeHtml(order.delivery_address || '')}</span></div>${
+              order.customer_phone
+                ? `<div class="row small"><span>Phone: ${escapeHtml(order.customer_phone)}</span></div>`
+                : ''
+            }`
+          : ''
+      }
       <div class="dashed"></div>
 
       <table class="items">

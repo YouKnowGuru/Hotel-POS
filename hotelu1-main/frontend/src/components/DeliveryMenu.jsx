@@ -478,12 +478,13 @@ const DeliveryMenu = () => {
               )}
 
               {(() => {
-                // Finished = delivered/completed AND no payment still being
-                // resolved. Active orders render first so a long history
-                // of past deliveries can never bury the live one.
+                // Finished = delivered/completed AND nothing left to resolve
+                // (payment approved, and no cash still owed to the rider).
+                // Active orders render first so a long history of past
+                // deliveries can never bury the live one.
                 const isFinished = (o) =>
                   ['delivered', 'completed'].includes((o.status || '').toLowerCase()) &&
-                  !['awaiting_payment', 'rejected'].includes(o.payment_status || '');
+                  !['awaiting_payment', 'rejected', 'cash_pending', 'verification_pending'].includes(o.payment_status || '');
                 const activeOrders = orders.filter(o => !isFinished(o));
                 const pastOrders   = orders.filter(isFinished);
                 const offset = activeOrders.length;
@@ -502,19 +503,29 @@ const DeliveryMenu = () => {
                   ps === 'awaiting_payment'      ? { label: 'Payment required',     Icon: QrCode,      c: '#C2410C' } :
                   ps === 'verification_pending'  ? { label: 'Payment under review', Icon: Hourglass,   c: '#B45309' } :
                   ps === 'rejected'              ? { label: 'Payment rejected — try again', Icon: Ban, c: '#DC2626' } :
-                  ps === 'cash_pending_admin'    ? { label: 'Cash collected — admin sign-off', Icon: Banknote, c: '#059669' } :
                   isPaid || o.payment_method === 'qr_payment'
                                                  ? { label: 'Payment approved ✓',   Icon: CheckCircle, c: '#059669' } :
                   ps === 'cash_pending'          ? { label: 'Cash on delivery',     Icon: Banknote,    c: '#059669' } :
                                                    { label: o.payment_method === 'cash' ? 'Cash on delivery' : '—', Icon: Banknote, c: '#7A6553' };
 
-                /* Order stage chip + progress */
+                /* Order stage chip + progress.
+                   Cash (COD) orders never wait for a payment approval — they go
+                   straight to the kitchen — so the old generic
+                   "Awaiting admin approval" label was wrong for them. QR
+                   orders likewise have distinct pre-approval states. */
+                const pendingStage =
+                  ps === 'rejected'             ? { label: 'Payment needs attention',     Icon: Ban,    c: '#DC2626', pct: 12 } :
+                  ps === 'awaiting_payment'     ? { label: 'Waiting for your payment',    Icon: QrCode, c: '#C2410C', pct: 15 } :
+                  ps === 'verification_pending' ? { label: 'Payment under review',        Icon: Hourglass, c: '#B45309', pct: 25 } :
+                  o.payment_method === 'cash'   ? { label: 'Order received — sent to the kitchen', Icon: Flame, c: '#7C3AED', pct: 30 } :
+                                                  { label: 'Order received',              Icon: Clock,  c: '#D97706', pct: 22 };
+
                 const stageCfg =
                   st === 'delivered'           ? { label: 'Delivered — enjoy!',        Icon: PackageCheck, c: '#2563EB', pct: 95 } :
                   st === 'completed'           ? { label: 'Completed',                 Icon: PackageCheck, c: '#059669', pct: 100 } :
-                  st === 'ready'               ? { label: 'Approved — out for delivery', Icon: Truck, c: '#047857', pct: 75 } :
+                  st === 'ready'               ? { label: 'Out for delivery',          Icon: Truck,        c: '#047857', pct: 75 } :
                   st === 'preparing'           ? { label: 'In the kitchen',            Icon: Flame,        c: '#7C3AED', pct: 45 } :
-                                                 { label: 'Awaiting admin approval',   Icon: Clock,        c: '#D97706', pct: 22 };
+                                                 pendingStage;
 
                 const needsPayment = ['awaiting_payment', 'rejected'].includes(ps);
                 const PayIcon = payCfg.Icon;
@@ -594,7 +605,12 @@ const DeliveryMenu = () => {
                           Pay <strong>{CURRENCY}{Number(o.total).toFixed(2)}</strong> in cash when your order arrives at your door.
                         </p>
                       )}
-                      {st === 'delivered' && (
+                      {st === 'delivered' && ps === 'cash_pending' && (
+                        <p className="pay-note" style={{ color: '#92400E', borderColor: 'rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.1)' }}>
+                          Your food has been delivered. Please hand <strong>{CURRENCY}{Number(o.total).toFixed(2)}</strong> in cash to the delivery staff.
+                        </p>
+                      )}
+                      {st === 'delivered' && ps !== 'cash_pending' && (
                         <p className="pay-note" style={{ color: '#1D4ED8', borderColor: 'rgba(96,165,250,0.35)', background: 'rgba(96,165,250,0.1)' }}>
                           Your food has been delivered. Bon appétit — thanks for ordering with us!
                         </p>

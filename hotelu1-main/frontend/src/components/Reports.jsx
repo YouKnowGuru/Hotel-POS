@@ -355,7 +355,7 @@ const Reports = ({ locationSettings }) => {
  return [
  { name: 'Dine-In', value: currStats.byType.DINE_IN, color: '#F97316' },
  { name: 'Takeaway', value: currStats.byType.TAKEAWAY, color: '#10B981' },
- { name: 'QR Order', value: currStats.byType.QR_CODE, color: '#3B82F6' },
+ { name: 'Home Delivery', value: currStats.byType.DELIVERY, color: '#3B82F6' },
  ].filter((d) => d.value > 0);
  }, [currStats]);
 
@@ -838,7 +838,7 @@ function buildStats(orders) {
 
  const itemMapObj = {};
  let totalItems = 0;
- const byType = { DINE_IN: 0, TAKEAWAY: 0, QR_CODE: 0 };
+ const byType = { DINE_IN: 0, TAKEAWAY: 0, DELIVERY: 0 };
  const uniqueCustomers = new Set();
 
  safe.forEach((o) => {

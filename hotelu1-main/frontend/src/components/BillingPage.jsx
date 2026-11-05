@@ -158,15 +158,16 @@ const BillingPage = ({ locationSettings, currentUser }) => {
 
  /* --------------------------- fetch orders --------------------------- */
  const fetchAllOrders = useCallback(() => {
- // Billing only cares about dine-in orders that can still be settled.
- // Pulling every order ever placed (with items and bills) on a 3s poll
- // would eventually saturate the DB connection pool.
- authFetch('/api/orders?type=DINE_IN&status=pending,preparing,ready,delivered,completed&limit=300')
+ // Billing needs both dine-in and delivery orders that can still be
+ // settled. Previously hardcoded to type=DINE_IN which made all
+ // delivery orders invisible in the billing page.
+ authFetch('/api/orders?status=pending,preparing,ready,delivered,completed&limit=300')
  .then((res) => res.json())
  .then((data) => {
  const all = Array.isArray(data) ? data : [];
+ // Only exclude takeaway (counter sales handled separately).
  const filtered = all.filter(
- (o) => o.type !== 'TAKEAWAY' && o.table_name !== 'Takeaway'
+ (o) => String(o.type || 'DINE_IN').toUpperCase() !== 'TAKEAWAY'
  );
  setOrders(filtered);
  })
@@ -611,9 +612,19 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <span className="text-sm font-bold text-gray-900">
  #{order.id}
  </span>
- {order.table_name && (
+ {order.table_name && String(order.type || 'DINE_IN').toUpperCase() !== 'DELIVERY' && (
  <span className="text-xs text-gray-500">
  Table {tableShort(order.table_name)}
+ </span>
+ )}
+ {String(order.type || 'DINE_IN').toUpperCase() === 'DELIVERY' && order.customer_name && (
+ <span className="text-xs text-gray-500">
+ {order.customer_name}
+ </span>
+ )}
+ {String(order.type || 'DINE_IN').toUpperCase() === 'DELIVERY' && (
+ <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
+ Delivery
  </span>
  )}
  </div>
@@ -660,8 +671,10 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  Invoice #{selectedOrder.id}
  </h3>
  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
- {selectedOrder.table_name
+ {selectedOrder.table_name && String(selectedOrder.type || 'DINE_IN').toUpperCase() !== 'DELIVERY'
  ? `Table ${tableShort(selectedOrder.table_name)} · `
+ : String(selectedOrder.type || 'DINE_IN').toUpperCase() === 'DELIVERY' && selectedOrder.customer_name
+ ? `${selectedOrder.customer_name} · Delivery · `
  : ''}
  {formatTime(
  selectedOrder.created_at ||
@@ -673,6 +686,17 @@ const BillingPage = ({ locationSettings, currentUser }) => {
  <StatusPill status={selectedStatus} />
  </div>
  </div>
+
+ {/* Delivery address for home delivery orders */}
+ {String(selectedOrder.type || 'DINE_IN').toUpperCase() === 'DELIVERY' && selectedOrder.delivery_address && (
+ <div className="mx-5 sm:mx-6 mt-3 rounded-xl border border-violet-100 bg-violet-50/60 p-3 dark:border-violet-800/60 dark:bg-violet-950/40">
+ <p className="text-[10px] font-bold uppercase tracking-wide text-violet-500 mb-1">Delivery Address</p>
+ <p className="text-sm text-gray-800 dark:text-slate-200 break-words leading-snug">{selectedOrder.delivery_address}</p>
+ {selectedOrder.customer_phone && (
+ <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">📞 {selectedOrder.customer_phone}</p>
+ )}
+ </div>
+ )}
 
  <div className="p-5 sm:p-6 flex-1 overflow-y-auto custom-scroll">
  <div className="space-y-4">

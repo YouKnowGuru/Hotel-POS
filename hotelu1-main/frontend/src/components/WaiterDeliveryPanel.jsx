@@ -166,6 +166,14 @@ const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
               <span className="text-xs text-gray-400 font-medium">+{items.length - 3} more</span>
             )}
           </div>
+          {/* Riders must see the drop-off address without expanding every
+              card. The full details still live in the expanded body. */}
+          {isDelivery && order.delivery_address && (
+            <p className="mt-2 flex items-start gap-1.5 text-xs font-semibold text-indigo-700">
+              <MapPin className="w-3.5 h-3.5 shrink-0 mt-px" />
+              <span className="line-clamp-2">{order.delivery_address}</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -246,7 +254,7 @@ const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
           <div className="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 mb-1">
             <span className="flex items-center gap-2 text-sm font-semibold text-amber-700">
               <Banknote className="w-4 h-4" />
-              Collect cash at the door
+              {isDelivery ? 'Collect cash at the door' : 'Collect cash at table'}
             </span>
             <span className="text-sm font-bold text-amber-700">
               {fmt(order.total)}
@@ -269,7 +277,7 @@ const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
               className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-60 text-sm font-semibold transition"
             >
               <CheckCircle2 className="w-4 h-4" />
-              Mark delivered · pay later
+              {isDelivery ? 'Mark delivered · pay later' : 'Mark served · pay later'}
             </button>
           </>
         ) : (
@@ -279,7 +287,7 @@ const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
             className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white text-sm font-semibold shadow-sm transition"
           >
             <CheckCircle2 className="w-4 h-4" />
-            {isDelivering ? 'Marking…' : 'Mark as Served'}
+            {isDelivering ? 'Marking…' : isDelivery ? 'Mark Delivered' : 'Mark as Served'}
           </button>
         )}
       </div>
@@ -417,11 +425,13 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
         }),
       });
       if (!res.ok) throw new Error('Failed');
+      const ord = readyOrders.find((o) => o.id === orderId);
+      const isDelivery = String(ord?.type || '').toUpperCase() === 'DELIVERY';
       setReadyOrders((p) => p.filter((o) => o.id !== orderId));
       showToast(
         collectCash
-          ? `Order #${orderId} — cash collected & served ✓`
-          : `Order #${orderId} marked as served ✓`
+          ? `Order #${orderId} — cash collected & ${isDelivery ? 'delivered' : 'served'} ✓`
+          : `Order #${orderId} marked as ${isDelivery ? 'delivered' : 'served'} ✓`
       );
       fetchServedToday();
     } catch {
@@ -438,7 +448,13 @@ const WaiterDeliveryPanel = ({ locationSettings }) => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
 
-  const dineInCount = readyOrders.filter((o) => String(o.type || '').toUpperCase() !== 'DELIVERY').length;
+  // Dine-in = QR table-side orders (DINE_IN). Delivery = home delivery.
+  // TAKEAWAY is excluded upstream in fetchReadyOrders. QR_CODE was a legacy
+  // type that the backend no longer accepts, so it must not be counted here.
+  const dineInCount = readyOrders.filter((o) => {
+    const t = String(o.type || 'DINE_IN').toUpperCase();
+    return t === 'DINE_IN';
+  }).length;
   const deliveryCount = readyOrders.length - dineInCount;
   const cashDue = readyOrders.filter((o) => o.payment_method === 'cash' && o.payment_status === 'cash_pending');
   const cashDueTotal = cashDue.reduce((s, o) => s + (Number(o.total) || 0), 0);

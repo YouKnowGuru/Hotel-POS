@@ -262,7 +262,7 @@ const mockOrders = [
     status: "completed",
     total: 22.98,
     timestamp: new Date("2026-02-12T15:30:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 1, name: "Classic Burger", quantity: 1, price: 19.99 },
       { id: 4, name: "Coca Cola", quantity: 1, price: 3.0 },
@@ -310,7 +310,7 @@ const mockOrders = [
     status: "completed",
     total: 29.97,
     timestamp: new Date("2026-02-12T19:00:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 2, name: "French Fries", quantity: 2, price: 4.99 },
       { id: 3, name: "Margherita Pizza", quantity: 1, price: 15.5 },
@@ -359,7 +359,7 @@ const mockOrders = [
     status: "completed",
     total: 18.49,
     timestamp: new Date("2026-02-08T14:20:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 2, name: "French Fries", quantity: 1, price: 4.99 },
       { id: 4, name: "Coca Cola", quantity: 4, price: 3.0 },
@@ -421,7 +421,7 @@ const mockOrders = [
     status: "completed",
     total: 52.96,
     timestamp: new Date("2026-02-13T14:20:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 1, name: "Classic Burger", quantity: 2, price: 19.99 },
       { id: 2, name: "French Fries", quantity: 3, price: 4.99 },
@@ -483,7 +483,7 @@ const mockOrders = [
     status: "completed",
     total: 125.95,
     timestamp: new Date("2025-10-20T18:45:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 1, name: "Classic Burger", quantity: 4, price: 19.99 },
       { id: 3, name: "Margherita Pizza", quantity: 2, price: 15.5 },
@@ -520,11 +520,51 @@ const mockOrders = [
     status: "completed",
     total: 92.94,
     timestamp: new Date("2024-03-15T19:30:00"),
-    type: "QR_CODE",
+    type: "DINE_IN",
     items: [
       { id: 1, name: "Classic Burger", quantity: 3, price: 19.99 },
       { id: 3, name: "Margherita Pizza", quantity: 2, price: 15.5 },
       { id: 2, name: "French Fries", quantity: 4, price: 4.99 },
+    ],
+  },
+  // Home-delivery demo orders. DELIVERY never used QR_CODE as a type, so
+  // without these the admin/waiter/billing panels had nothing to render in
+  // demo mode and the delivery-specific UI could not be exercised at all.
+  {
+    id: 28,
+    table_name: "Anita Sharma",
+    customer_name: "Anita Sharma",
+    customer_phone: "+975 17 123 456",
+    customer_email: "anita@example.com",
+    delivery_address: "House 12, Norzin Lam, Thimphu — Note: ring the bell twice",
+    status: "ready",
+    total: 46.73,
+    timestamp: new Date(),
+    type: "DELIVERY",
+    payment_method: "cash",
+    payment_status: "cash_pending",
+    items: [
+      { id: 3, name: "Margherita Pizza", quantity: 2, price: 15.5 },
+      { id: 4, name: "Coca Cola", quantity: 2, price: 3.0 },
+    ],
+  },
+  {
+    id: 29,
+    table_name: "Karma Dorji",
+    customer_name: "Karma Dorji",
+    customer_phone: "+975 17 654 321",
+    customer_email: "karma@example.com",
+    delivery_address: "Flat 4B, Changlam Plaza, Thimphu",
+    status: "ready",
+    total: 63.47,
+    timestamp: new Date(),
+    type: "DELIVERY",
+    payment_method: "qr",
+    payment_status: "paid",
+    paid_at: new Date(),
+    items: [
+      { id: 1, name: "Classic Burger", quantity: 2, price: 19.99 },
+      { id: 2, name: "French Fries", quantity: 2, price: 4.99 },
     ],
   },
 ];
@@ -1597,8 +1637,16 @@ app.get("/api/orders", optionalToken, async (req, res) => {
 
       if (anonIds.length > 0)
         filteredOrders = filteredOrders.filter((o) => anonIds.includes(Number(o.id)));
-      if (status)
-        filteredOrders = filteredOrders.filter((o) => o.status === status);
+      if (status) {
+        // Match the DB path: live panels pass comma-separated lists such as
+        // "pending,preparing,ready,delivered,completed". An exact equality
+        // check here silently hid every order in demo mode.
+        const statuses = String(status)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        filteredOrders = filteredOrders.filter((o) => statuses.includes(o.status));
+      }
       if (type) filteredOrders = filteredOrders.filter((o) => o.type === type);
       if (table_name)
         filteredOrders = filteredOrders.filter(
@@ -3549,22 +3597,42 @@ app.put("/api/orders/:id/confirm-delivery", verifyToken, async (req, res) => {
     // Customer email #3: food delivered (COD or prepaid).
     mailer.sendDeliveredEmail(order);
 
-    // Auto-generate bill using globally configured Tax & Discount
+    // Upsert the bill. Delivered orders used to always get a NEW bill with
+    // bill_status "pending", even when the staff member had just collected
+    // the cash — so a paid order showed as unpaid in Billing, and re-running
+    // the endpoint produced duplicate bills. Reuse an existing bill when
+    // present and derive its status from the order's payment state.
     const settings = await getTaxDiscountSettings();
     const subtotal = (order.items || []).reduce(
       (sum, item) => sum + item.price * item.quantity,
       0,
     );
     const totals = calculateOrderTotals(subtotal, settings);
+    const isPaid = String(order.payment_status || "").toLowerCase() === "paid";
 
-    const bill = await Bill.create({
-      orderId: order.id,
-      subtotal: totals.subtotal,
-      tax: totals.taxAmount,
-      total: totals.total,
-      bill_status: "pending",
-      generated_at: new Date(),
-    });
+    let bill = await Bill.findOne({ where: { orderId: order.id } });
+    if (bill) {
+      bill.subtotal = totals.subtotal;
+      bill.tax = totals.taxAmount;
+      bill.total = totals.total;
+      if (isPaid) {
+        bill.bill_status = "paid";
+        bill.paid_at = order.paid_at || new Date();
+        bill.payment_method = order.payment_method || "cash";
+      }
+      await bill.save();
+    } else {
+      bill = await Bill.create({
+        orderId: order.id,
+        subtotal: totals.subtotal,
+        tax: totals.taxAmount,
+        total: totals.total,
+        bill_status: isPaid ? "paid" : "pending",
+        payment_method: isPaid ? (order.payment_method || "cash") : null,
+        paid_at: isPaid ? (order.paid_at || new Date()) : null,
+        generated_at: new Date(),
+      });
+    }
 
     res.json({
       message: collect_cash
@@ -3593,13 +3661,26 @@ app.put("/api/orders/:id/approve-cash", verifyToken, async (req, res) => {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === Number(req.params.id));
       if (!order || !(await assertOrderInScope(req, order, res))) return;
-      if (order.payment_status !== "cash_pending_admin") {
+      // Accept both the legacy cash_pending_admin and the standard cash_pending
+      // status. Nothing in the system ever sets cash_pending_admin, so the old
+      // check made this endpoint permanently unreachable.
+      if (!["cash_pending", "cash_pending_admin"].includes(order.payment_status)) {
         return res.status(409).json({ message: "This order is not waiting for cash approval" });
       }
       order.payment_status = "paid";
       order.paid_at = new Date().toISOString();
       order.payment_verified_by = req.user.id;
       order.payment_verified_at = new Date();
+      // Dispatch to waiter if still pending (same as collect-cash).
+      if (String(order.status || "").toLowerCase() === "pending") {
+        if (String(order.type || "").toUpperCase() === "TAKEAWAY") {
+          order.status = "completed";
+          order.completed_at = new Date().toISOString();
+        } else {
+          order.status = "ready";
+          order.ready_at = new Date().toISOString();
+        }
+      }
       const strippedOrder = stripProofImages(order)[0];
       io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: "paid" });
       io.emit("payment_verified", { orderId: order.id, payment_status: "paid" });
@@ -3609,13 +3690,23 @@ app.put("/api/orders/:id/approve-cash", verifyToken, async (req, res) => {
     const order = await Order.findByPk(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
-    if (order.payment_status !== "cash_pending_admin") {
+    if (!["cash_pending", "cash_pending_admin"].includes(order.payment_status)) {
       return res.status(409).json({ message: "This order is not waiting for cash approval" });
     }
     order.payment_status = "paid";
     order.paid_at = new Date();
     order.payment_verified_by = req.user.id;
     order.payment_verified_at = new Date();
+    // Dispatch to waiter if still pending (same as collect-cash).
+    if (String(order.status || "").toLowerCase() === "pending") {
+      if (String(order.type || "").toUpperCase() === "TAKEAWAY") {
+        order.status = "completed";
+        order.completed_at = new Date();
+      } else {
+        order.status = "ready";
+        order.ready_at = new Date();
+      }
+    }
     await order.save();
 
     const bill = await Bill.findOne({ where: { orderId: order.id } });
