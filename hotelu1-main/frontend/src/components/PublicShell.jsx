@@ -997,6 +997,76 @@ const PublicShell = ({ active = '', children }) => {
           color:#CBD5E1 !important;
         }
         /* Dark Tomza band already has dark overrides via .tz-dark */
+
+        /* ═══════════════════════════════════════════════════════════
+           Shared public-page dark-mode text fixes
+           ───────────────────────────────────────────────────────────
+           index.css has a blanket  html.dark p, html.dark span { color:inherit }
+           rule. Its specificity (0,2,2) beats .pw-sub / .pw-muted (0,1,0),
+           so every secondary label collapses into the primary ink colour.
+           Re-assert the dark tokens with a higher-specificity selector.
+        ═══════════════════════════════════════════════════════════ */
+        html.dark .pw-root .pw-sub{ color:var(--pw-sub) !important; }
+        html.dark .pw-root .pw-muted{ color:var(--pw-muted) !important; }
+        /* Skip link used --pw-ink as its background, which flips to near-white
+           in dark mode while its text stays cream. */
+        html.dark .pw-root .pw-skip{
+          background:#1E293B !important;color:#F8FAFC !important;
+          border:1px solid rgba(255,255,255,0.2) !important;
+        }
+        html.dark .pw-root .tz-dark .pw-ink{ color:#F8FAFC !important; }
+        html.dark .pw-root .tz-dark .pw-sub{ color:#C6CFDC !important; }
+        html.dark .pw-root .tz-dark .pw-muted{ color:#A89C8E !important; }
+
+        /* Inline warm / brown / blue accents are authored for light cards.
+           React serialises inline hex colours as rgb(), so match the
+           serialised form and only target the color property (never a
+           background gradient that happens to contain the same value). */
+        html.dark .pw-root [style*="color: rgb(194, 65, 12)"]{ color:#FBBF24 !important; }
+        html.dark .pw-root [style*="color: rgb(217, 72, 15)"]{ color:#FCD34D !important; }
+        html.dark .pw-root [style*="color: rgb(154, 52, 18)"]{ color:#FCD34D !important; }
+        html.dark .pw-root [style*="color: rgb(92, 75, 58)"]{ color:#CBD5E1 !important; }
+        html.dark .pw-root [style*="color: rgb(122, 101, 83)"]{ color:#94A3B8 !important; }
+        html.dark .pw-root [style*="color: rgb(34, 18, 7)"]{ color:#F1F5F9 !important; }
+        html.dark .pw-root [style*="color: rgb(37, 99, 235)"]{ color:#60A5FA !important; }
+        html.dark .pw-root [style*="color: rgb(220, 38, 38)"]{ color:#FCA5A5 !important; }
+        /* The live-clock pill keeps a white surface in dark mode, so its
+           orange text must stay dark rather than flipping to amber. */
+        html.dark .pw-root .hl-clock{ color:#C2410C !important; }
+
+        /* HomeLanding warm numerals / step badges */
+        html.dark .hl-rating-pill{
+          background:#1E293B !important;
+          border-color:rgba(255,255,255,0.1) !important;
+          box-shadow:0 12px 28px -18px rgba(0,0,0,0.6) !important;
+        }
+        html.dark .hl-stat-num{ color:#FBBF24 !important; }
+        html.dark .hl-stat-num small{ color:#FCD34D !important; }
+        html.dark .hl-step-n{ color:#FBBF24 !important; }
+        html.dark .hl-step-sep{ color:#FCD34D !important; }
+
+        /* Legal pages (Privacy / Terms) share the .lg-* stylesheet.
+           Their body copy is hardcoded dark brown and becomes unreadable
+           once .pw-card turns navy. */
+        html.dark .lg-body{ color:#CBD5E1 !important; }
+        html.dark .lg-body strong{ color:#F1F5F9 !important; }
+        html.dark .lg-body a,
+        html.dark .lg-inline-link{ color:#FBBF24 !important; }
+        html.dark .lg-body a:hover,
+        html.dark .lg-inline-link:hover{ color:#FCD34D !important; }
+        html.dark .lg-body li::marker{ color:#FBBF24 !important; }
+        html.dark .lg-section + .lg-section{
+          border-top-color:rgba(255,255,255,0.1) !important;
+        }
+        html.dark .lg-toc-link{ color:#94A3B8 !important; }
+        html.dark .lg-toc-link .opacity-60{ color:#94A3B8 !important; opacity:1; }
+        html.dark .lg-toc-link:hover{
+          color:#F1F5F9 !important;background:rgba(255,255,255,0.06) !important;
+        }
+        html.dark .lg-toc-link.is-active{
+          color:#FBBF24 !important;background:rgba(245,158,11,0.12) !important;
+          border-left-color:#FBBF24 !important;
+        }
       `}</style>
     </div>
   );

@@ -545,7 +545,7 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  </main>
  )}
 
- <footer className="py-4 text-center text-[10px]" style={{ color:'var(--text-muted,#94A3B8)' }}>
+ <footer className="py-4 text-center text-[10px]" style={{ color:'#94A3B8' }}>
  Powered by {branding.siteName}
  </footer>
  </div>

@@ -31,6 +31,37 @@ import useViewScrollReset from '../hooks/useViewScrollReset';
 
 const CURRENCY = 'Nu. ';
 
+/* React writes inline colours through element.style, and the browser then
+   serialises the style attribute as `rgb(r, g, b)` / `rgba(r, g, b, a)` —
+   NOT as the original `#RRGGBB`. Attribute selectors written against the hex
+   form therefore never match and the dark-mode colour overrides silently do
+   nothing. This block targets the real serialised values and is injected into
+   all three style sheets in this file (menu, checkout, placed). */
+const darkInlineColorCSS = `
+  html.dark .pw-root [style*="rgb(194, 65, 12)"]{ color:#FBBF24 !important; }
+  html.dark .pw-root [style*="rgb(4, 120, 87)"]{ color:#34D399 !important; }
+  html.dark .pw-root [style*="rgb(185, 28, 28)"]{ color:#FCA5A5 !important; }
+  html.dark .pw-root [style*="rgb(146, 64, 14)"]{ color:#FBBF24 !important; }
+  html.dark .pw-root [style*="rgb(29, 78, 216)"]{ color:#60A5FA !important; }
+  html.dark .pw-root [style*="rgb(37, 99, 235)"]{ color:#60A5FA !important; }
+  html.dark .pw-root [style*="rgb(5, 150, 105)"]{ color:#34D399 !important; }
+  html.dark .pw-root [style*="rgb(124, 58, 237)"]{ color:#A78BFA !important; }
+  html.dark .pw-root [style*="rgb(217, 119, 6)"]{ color:#FBBF24 !important; }
+  html.dark .pw-root [style*="rgb(163, 132, 106)"]{ color:#8A7E6E !important; }
+  html.dark .pw-root [style*="rgb(122, 101, 83)"]{ color:#A89B8C !important; }
+  html.dark .pw-root [style*="rgb(92, 75, 58)"]{ color:#D6CBBE !important; }
+  html.dark .pw-root [style*="rgb(255, 253, 251)"]{ background:#1E1A16 !important; }
+  html.dark .pw-root [style*="rgb(255, 248, 241)"]{ background:#181410 !important; }
+  html.dark .pw-root [style*="rgba(63, 32, 4, 0.04)"]{ background:rgba(255,255,255,0.04) !important; }
+  html.dark .pw-root [style*="rgba(63, 32, 4, 0.05)"]{ background:rgba(255,255,255,0.05) !important; }
+  html.dark .pw-root [style*="rgba(63, 32, 4, 0.08)"]{ background:rgba(255,255,255,0.08) !important; }
+  html.dark .pay-note[style*="rgba(248, 113, 113"]{ background:rgba(248,113,113,0.12) !important; }
+  html.dark .pay-note[style*="rgba(245, 158, 11"]{ background:rgba(245,158,11,0.12) !important; }
+  html.dark .pay-note[style*="rgba(52, 211, 153"]{ background:rgba(52,211,153,0.12) !important; }
+  html.dark .pay-note[style*="rgba(16, 185, 129"]{ background:rgba(16,185,129,0.12) !important; }
+  html.dark .pay-note[style*="rgba(96, 165, 250"]{ background:rgba(96,165,250,0.12) !important; }
+`;
+
 /* Orders this device placed (device-scoped session, like the QR menu). */
 const ORDERS_KEY = 'dmDeliveryOrders';
 
@@ -708,9 +739,9 @@ const DeliveryMenu = () => {
               </h2>
               <ul className="space-y-2.5">
                 {cart.map(item => (
-                  <li key={item.id} className="flex justify-between items-center gap-3 py-2 border-b pw-line last:border-0">
-                    <span className="flex items-center gap-3 min-w-0">
-                      <span className="pw-ink text-sm font-semibold truncate">{item.name}</span>
+                  <li key={item.id} className="dm-summary-row flex justify-between items-center gap-3 py-2 border-b pw-line last:border-0">
+                    <span className="dm-summary-left flex items-center gap-3 min-w-0 flex-1">
+                      <span className="dm-summary-name pw-ink text-sm font-semibold truncate min-w-0">{item.name}</span>
                       <span className="shrink-0 text-[12px] font-bold px-2 py-0.5 rounded-md"
                             style={{ background: 'rgba(234,88,12,0.12)', color: '#C2410C' }}>× {item.qty}</span>
                     </span>
@@ -1011,7 +1042,7 @@ const DeliveryMenu = () => {
 
             {/* BUGFIX: previously role="tab"/"tablist" with no tabpanel — broken
                 semantics for assistive tech. Plain filter buttons + aria-pressed. */}
-            <div className="flex gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 scrollbar-hide" aria-label="Menu categories">
+            <div className="flex flex-nowrap gap-2 overflow-x-auto pb-0.5 -mx-1 px-1 scrollbar-hide" aria-label="Menu categories">
               {categories.map(cat => {
                 const on = activeCat === cat;
                 return (
@@ -1035,9 +1066,9 @@ const DeliveryMenu = () => {
 
         {/* Loading */}
         {loading && (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4" aria-hidden="true">
+          <div className="dm-dish-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4" aria-hidden="true">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden animate-pulse dm-skel" style={{ height: 260 }} />
+              <div key={i} className="dm-dish-skel rounded-2xl overflow-hidden animate-pulse dm-skel" />
             ))}
           </div>
         )}
@@ -1052,16 +1083,18 @@ const DeliveryMenu = () => {
 
         {/* Dishes grid */}
         {!loading && !error && (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="dm-dish-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {visible.map((item, i) => {
               const qty = cartQty(item.id);
               return (
                 <article key={item.id}
                          ref={el => { cardRefs.current[item.id] = el; }}
-                         className={`pw-card pw-fx-tilt pw-fx-sheen overflow-hidden flex flex-col dm-in${addedId === item.id ? ' dm-card-pop' : ''}`}
+                         className={`pw-card pw-fx-tilt pw-fx-sheen overflow-hidden flex flex-col dm-food-card dm-in${addedId === item.id ? ' dm-card-pop' : ''}`}
                          style={{ animationDelay: `${Math.min(i, 11) * 40}ms` }}>
-                  {/* Image */}
-                  <div className="relative overflow-hidden" style={{ height: 'clamp(112px,16vw,170px)' }}>
+                  {/* Image — aspect-ratio keeps a 158px phone card and a 292px
+                      desktop card in the same proportion (was a fixed clamp
+                      height, which turned wide cards into flat slabs). */}
+                  <div className={`dm-food-img relative overflow-hidden${item.image ? '' : ' is-empty'}`}>
                     {item.image
                       ? <img src={item.image} alt={item.name} loading="lazy" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center"
@@ -1084,13 +1117,14 @@ const DeliveryMenu = () => {
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 sm:p-4 flex flex-col flex-1 min-w-0">
-                    <p className="pw-ink font-semibold leading-snug mb-1 text-[13.5px] sm:text-[14.5px] line-clamp-2">{item.name}</p>
-                    {item.description && <p className="pw-muted text-[12px] line-clamp-2 mb-3">{item.description}</p>}
-                    <div className="mt-auto">                       <p className="font-black text-[15px] sm:text-[16px] tabular-nums" style={{ color: '#C2410C' }}>
+                  <div className="dm-food-body flex flex-col flex-1 min-w-0">
+                    <p className="pw-ink font-semibold dm-food-name">{item.name}</p>
+                    {item.description && <p className="pw-muted dm-food-desc">{item.description}</p>}
+                    <div className="dm-food-foot mt-auto">
+                      <p className="dm-food-price font-black tabular-nums" style={{ color: '#C2410C' }}>
                         {CURRENCY}{Number(item.price).toFixed(2)}
                       </p>
-                      <div className="mt-2.5 flex items-center gap-2">
+                      <div className="dm-food-actions">
                         {qty === 0 ? (
                           <button type="button" onClick={(e) => addToCart(item, e)} className={`dm-add${addedId === item.id ? ' dm-add-pop' : ''}`}>
                             <Plus size={15} aria-hidden="true" /> Add
@@ -1203,7 +1237,7 @@ const DeliveryMenu = () => {
             </div>
 
             {/* Items */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
+            <div className="dm-cart-list flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
               {cart.length === 0 && (
                 <div className="dm-cart-empty">
                   <div className="dm-cart-empty-icon" aria-hidden="true"><ShoppingCart size={26} /></div>
@@ -1227,14 +1261,14 @@ const DeliveryMenu = () => {
                         <Flame size={17} style={{ color: grad(item.category)[0], opacity: 0.6 }} />
                       </div>
                   }
-                  <div className="flex-1 min-w-0">
+                  <div className="dm-cart-item-info flex-1 min-w-0">
                     <p className="pw-ink text-[14px] font-bold line-clamp-1 leading-tight">{item.name}</p>
                     <p className="text-[12.5px] font-extrabold tabular-nums mt-0.5" style={{ color: '#C2410C' }}>
                       {CURRENCY}{Number(item.price).toFixed(2)}
                       {item.qty > 1 && <span className="pw-muted font-semibold"> · {CURRENCY}{(Number(item.price) * item.qty).toFixed(2)}</span>}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="dm-cart-item-controls flex items-center gap-1.5 shrink-0">
                     <button type="button" onClick={() => removeFromCart(item.id)}
                             className="dm-mini" aria-label={`Remove one ${item.name}`}>
                       <Minus size={13} />
@@ -1439,9 +1473,82 @@ const DeliveryMenu = () => {
         }
         .dm-cat:hover{ background:rgba(63,32,4,0.1);color:var(--pw-ink); }
 
-        /* Force 2-col grid on the smallest screens — cards stay narrow but readable */
+        /* ── Responsive dish cards ──────────────────────────────────────
+           Tailwind owns the column count (2 on phones / 3 from md / 4 from
+           lg). Everything here owns the card's INTERNAL proportions so a
+           158px phone card and a 292px desktop card read as the same
+           component — previously a fixed clamp() image height turned wide
+           desktop cards into flat, empty slabs. */
+        .dm-dish-grid{ align-items:stretch; }
+        .dm-dish-grid > *{ min-width:0; }
+        .dm-food-card{ border-radius:18px; }
+
+        .dm-food-img{
+          position:relative;width:100%;height:auto;flex:none;
+          aspect-ratio:4 / 3;overflow:hidden;
+        }
+        .dm-food-img > img,
+        .dm-food-img > div{
+          position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+        }
+        /* Menu items without a photo get a compact banner instead of a tall
+           empty gradient slab; real photos keep the full 4:3 frame. */
+        .dm-food-img.is-empty{ aspect-ratio:16 / 9; }
+        .dm-food-img.is-empty svg{ width:34px;height:34px; }
+
+        .dm-food-body{ padding:10px 11px 11px; }
+        .dm-food-name{
+          margin:0 0 3px;font-size:13px;line-height:1.32;
+          display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+        }
+        .dm-food-desc{
+          margin:0 0 8px;font-size:11px;line-height:1.4;
+          display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;
+        }
+        .dm-food-foot{
+          display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;
+        }
+        .dm-food-price{ margin:0;font-size:14.5px;line-height:1.1;white-space:nowrap; }
+        .dm-food-actions{ display:flex;align-items:center;gap:8px;flex:0 0 auto; }
+        .dm-food-actions .dm-add{
+          flex:0 0 auto;min-width:72px;min-height:38px;padding:0 10px;
+          border-radius:11px;font-size:12.5px;gap:4px;
+        }
+        .dm-food-actions .dm-stepper{ flex:0 0 auto;width:96px;min-height:38px; }
+        .dm-food-actions .dm-stepper button{ width:32px;height:38px; }
+        .dm-food-actions .dm-stepper span{ font-size:13px; }
+
+        /* Skeleton follows the same silhouette as a real card */
+        .dm-dish-grid > .dm-skel{
+          height:auto !important;aspect-ratio:5 / 6;min-height:200px;border-radius:18px;
+        }
+
+        @media (min-width:640px){
+          .dm-food-body{ padding:13px 14px 14px; }
+          .dm-food-name{ font-size:14.5px; }
+          .dm-food-desc{ font-size:11.5px;-webkit-line-clamp:2; }
+          .dm-food-price{ font-size:16px; }
+        }
+
+        /* Narrow phones: price above, full-width control below — no cramped wrap.
+           Touch targets stay at 44px (iOS HIG / Material minimum) even though the
+           cards themselves get compact. */
+        @media (max-width:639px){
+          .dm-food-foot{ flex-direction:column;align-items:stretch;gap:8px;margin-top:9px; }
+          .dm-food-price{ font-size:14px; }
+          .dm-cat{ min-height:44px; }
+          .dm-food-actions .dm-add{ width:100%;min-height:44px; }
+          .dm-food-actions .dm-stepper{ width:100%; }
+          .dm-food-actions .dm-stepper button{ width:44px;height:44px; }
+        }
+
+        /* Tiny phones: tighter gutters + smaller type */
         @media (max-width:359px){
-          .pw-root .grid.grid-cols-2{ gap:6px !important; }
+          .pw-root .dm-dish-grid{ gap:8px !important; }
+          .dm-food-body{ padding:9px; }
+          .dm-food-name{ font-size:12.5px; }
+          .dm-food-desc{ font-size:10.5px; }
+          .dm-food-price{ font-size:13.5px; }
         }
 
         .dm-add{
@@ -1669,6 +1776,51 @@ const DeliveryMenu = () => {
           border-top:1px dashed rgba(63,32,4,0.22);
         }
         .dm-cart-total dd{ color:#C2410C; }
+
+        /* ── Cart item readability on phones ──
+           Long dish names were clamped to a single line even when the row
+           had vertical room. Show the whole name instead of an ellipsis. */
+        @media (max-width:639px){
+          .dm-cart-item-info .line-clamp-1{
+            -webkit-line-clamp:unset;
+            display:block;
+            overflow:visible;
+            overflow-wrap:break-word;
+          }
+        }
+
+        /* ── Narrow phones (<=389px) ──
+           The four mini-buttons plus the thumbnail used to consume the
+           whole row, squeezing the item name down to about 10px. Move the
+           quantity controls onto their own line so the name is readable. */
+        @media (max-width:389px){
+          .dm-cart-item{ flex-wrap:wrap;gap:8px;padding:10px 10px 10px 0; }
+          .dm-cart-thumb{ width:40px;height:40px; }
+          .dm-cart-item-info{ flex:1 1 calc(100% - 80px) !important;min-width:0; }
+          .dm-cart-item-controls{ flex:0 0 100% !important;justify-content:flex-end;gap:6px; }
+          .dm-cart-foot{ padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px)); }
+          .dm-cart-head{ margin:4px 10px 10px;padding:10px 12px;gap:8px; }
+          .dm-cart-head-icon{ width:34px;height:34px;border-radius:11px; }
+          .dm-cart-head h2{ font-size:15px; }
+          .dm-head-ghost{ padding:6px 9px;font-size:11px; }
+        }
+
+        /* ── Short / landscape viewports ──
+           Keep the item list from collapsing under the totals footer and
+           keep the checkout button reachable at all times. */
+        @media (max-height:700px){
+          .dm-cart-head{ margin:4px 10px 8px;padding:8px 12px; }
+          .dm-cart-head-icon{ width:32px;height:32px; }
+          .dm-cart-list{ min-height:100px; }
+          .dm-cart-foot{
+            max-height:38vh;overflow-y:auto;overscroll-behavior:contain;
+            padding:8px 14px 10px;
+          }
+          .dm-cart-foot dl{ margin-bottom:6px; }
+          .dm-cart-foot > p{ display:none; }
+          .dm-cart-foot .pw-btn-primary{ position:sticky;bottom:0;z-index:2; }
+        }
+
 
         /* === Shooting Stars — vibrant multi-color cosmic palette (NOT UI brand colors) === */
         /* Colors: electric cyan, warm gold, lime, coral, violet, sky blue — a real meteor shower feel */
@@ -2011,6 +2163,16 @@ const DeliveryMenu = () => {
         /* Tracker progress bar track */
         html.dark .pw-root [style*="background: rgba(63,32,4,0.08)"]{ background:rgba(255,255,255,0.08) !important; }
 
+        /* Explicit hook for the card price (belt-and-braces) */
+        html.dark .dm-food-price{ color:#FBBF24 !important; }
+
+        /* index.css has a blanket html.dark p / html.dark span color:inherit
+           rule which beats .pw-muted on specificity and flattens ALL secondary
+           text to the same white as the item name. Restore the muted token so
+           name / description / hint keep their typographic hierarchy. */
+        html.dark .pw-root .pw-muted{ color:var(--pw-muted) !important; }
+
+${darkInlineColorCSS}
       `}</style>
     </PublicShell>
   );
@@ -2273,7 +2435,21 @@ const checkoutCSS = `
   html.dark .pw-root [style*="color:'#5C4B3A'"]{ color:#D6CBBE !important; }
   html.dark .pw-root [style*="color: #7A6553"],
   html.dark .pw-root [style*="color:'#7A6553'"]{ color:#A89B8C !important; }
-`;
+
+  /* Order summary on phones: show the full dish name instead of an ellipsis.
+     This lives in checkoutCSS because the checkout step renders its own
+     stylesheet and does not mount the menu-step page styles. */
+  @media (max-width:639px){
+    .dm-summary-row{ align-items:flex-start; }
+    .dm-summary-left{ align-items:flex-start; }
+    .dm-summary-name{
+      white-space:normal !important;
+      overflow:visible !important;
+      text-overflow:clip !important;
+      overflow-wrap:anywhere;
+    }
+  }
+${darkInlineColorCSS}`;
 
 const placedCSS = `
   .dm-trk{opacity:0;animation:dmTrkIn .45s cubic-bezier(0.22,1,0.36,1) both;}
@@ -2353,6 +2529,7 @@ const placedCSS = `
   html.dark .pay-note[style*="color:'#047857'"]{ color:#34D399 !important; }
   html.dark .pay-note[style*="color: #1D4ED8"],
   html.dark .pay-note[style*="color:'#1D4ED8'"]{ color:#60A5FA !important; }
+${darkInlineColorCSS}
   @media (prefers-reduced-motion:reduce){
     .dm-trk,.dm-pm{animation:none !important;opacity:1 !important;transform:none !important;}
     .dm-trk-bar{animation:none !important;}

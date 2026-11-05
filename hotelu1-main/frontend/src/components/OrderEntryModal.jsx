@@ -672,7 +672,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  <div key={item.id} className="bg-white dark:bg-[#1A2336] rounded-xl p-2 sm:p-3 shadow-sm border border-indigo-200 dark:border-indigo-800/50 hover:shadow-md transition-shadow dark:bg-[#1A2336] dark:border-slate-600">
  <div className="flex items-center justify-between">
  <div className="flex-1 min-w-0">
- <h6 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm truncate">{item.name}</h6>
+ <h6 className="font-bold text-gray-800 dark:text-slate-200 text-xs sm:text-sm break-words leading-tight">{item.name}</h6>
  <p className="text-xs text-gray-500 dark:text-slate-400">
  {fmt(item.price)} × {item.qty}
  </p>
@@ -951,7 +951,7 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {Object.values(cart).map(item => (
 <div key={item.id} className="flex items-center justify-between bg-indigo-50 dark:bg-[#1A2336] p-2.5 sm:p-3 rounded-xl gap-2">
 <div className="flex-1 min-w-0">
-<p className="font-semibold text-gray-800 dark:text-slate-200 text-sm truncate">{item.name}</p>
+<p className="font-semibold text-gray-800 dark:text-slate-200 text-sm break-words leading-tight">{item.name}</p>
 <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium whitespace-nowrap">{fmt(item.price)} each</p>
  </div>
  <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">

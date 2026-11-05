@@ -1717,12 +1717,24 @@ main {
   .flex:not(.flex-col) {
     flex-wrap: wrap;
   }
-  /* But don't break layouts that intentionally use flex-nowrap (tabs, pills) */
+  /* But don't break layouts that intentionally use flex-nowrap (tabs, pills).
+     BUGFIX: the original carve-out only matched DESCENDANTS of a scrolling
+     wrapper (`.overflow-x-auto .flex`). Every horizontally-scrollable row that
+     IS the wrapper itself — e.g. the DeliveryMenu category strip
+     `.flex.overflow-x-auto.scrollbar-hide` — still got `wrap`, so on a 320px
+     phone its chips stacked into 5 rows and pushed the menu far below the fold.
+     Match the self case too, plus the scrollbar-none variant used by admin tabs. */
   .flex.flex-nowrap,
+  .flex.overflow-x-auto:not(.flex-wrap),
+  .flex.scrollbar-hide:not(.flex-wrap),
+  .flex.scrollbar-none:not(.flex-wrap),
   .overflow-x-auto .flex,
   .scrollbar-hide .flex {
     flex-wrap: nowrap;
   }
+  /* Elements that explicitly opt into wrapping keep it (e.g. BillingPage's
+     filter pills) even when they also carry overflow-x-auto. */
+  .flex.flex-wrap:not(.flex-nowrap){ flex-wrap: wrap; }
 }
 
 /* Ensure modal and card content doesn't exceed viewport on mobile */

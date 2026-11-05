@@ -399,7 +399,7 @@ const HomeLanding = () => {
 
               {/* In-tile rating strip */}
               <div className="mt-3 hidden sm:flex items-center justify-between gap-3 px-1">
-                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-2xl"
+                <div className="hl-rating-pill flex items-center gap-2 px-3.5 py-2.5 rounded-2xl"
                      style={{ background: '#FFFFFF', border: '1px solid var(--pw-line)', boxShadow: '0 12px 28px -18px rgba(63,32,4,0.3)' }}>
                   <span style={{ color: '#FBBF24', display: 'inline-flex' }} aria-hidden="true"><Star size={15} fill="#F59E0B" color="#F59E0B" /></span>
                   <span className="pw-ink text-[13px] font-extrabold">4.5</span>

@@ -612,8 +612,8 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  onClick={() => { setMenuError(''); setLoading(true); window.location.reload(); }}
  style={{
  padding: '10px 24px', borderRadius: 12, border: 'none',
- background: '#6366f1', color: '#fff', fontSize: 14, fontWeight: 600,
- cursor: 'pointer', boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
+ background: '#4F46E5', color: '#fff', fontSize: 14, fontWeight: 600,
+ cursor: 'pointer', boxShadow: '0 4px 14px rgba(79,70,229,0.3)',
  }}
  >
  Retry
@@ -1575,9 +1575,10 @@ const CSS = `
   .sm-cart-item-info{flex:1 1 100%;min-width:0!important}
   .sm-cart-item-controls{flex:1 1 100%;justify-content:space-between;padding-left:44px}
   .sm-cart-item-total{font-size:12px!important;min-width:48px!important}
-  .sm-qty-btn-sm{width:28px!important;height:28px!important}
- }
- @media(max-width:359px){
+  .sm-qty-btn-sm{width:36px!important;height:36px!important}
+  .sm-cart-remove-btn{width:36px!important;height:36px!important}
+}
+@media(max-width:359px){
   .sm-drawer{max-height:90vh!important}
   .sm-drawer-title{font-size:14px!important}
   .sm-drawer-sub{font-size:10px!important}
@@ -1589,9 +1590,42 @@ const CSS = `
   .sm-pay-grid{grid-template-columns:minmax(0,1fr)!important}
   /* Guest counter: slightly smaller */
   .sm-guest-counter{padding:8px 10px!important}
- }
+}
 
- .sm-float-bar{transition:transform 0.2s}
+/* ── Short viewports (small phones + landscape) ──
+   The bill, guest counter and payment footer together are taller than
+   the drawer on short screens. The footer used to squeeze the item list
+   down to a few pixels and push the Place Order button off-screen.
+   Cap the footer, let it scroll internally, and pin the CTA so both the
+   items and the order button always stay visible. */
+@media(max-height:700px){
+  .sm-drawer{overflow:hidden!important}
+  .sm-drawer-scroll{flex:1 1 auto!important;min-height:0!important}
+  .sm-drawer-foot{
+    flex:0 0 auto!important;max-height:46vh;max-height:46dvh;
+    overflow-y:auto!important;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;padding-bottom:12px!important;
+  }
+  .sm-drawer-foot .sm-bill{padding:9px 11px!important;margin-bottom:8px!important}
+  .sm-bill-hint{display:none!important}
+  .sm-guest-counter{padding:6px 10px!important;margin-bottom:8px!important}
+  .sm-pay-heading{display:none!important}
+  .sm-pay-grid{gap:6px!important;margin-bottom:8px!important}
+  .sm-pay-grid button{padding:7px 10px!important}
+  .sm-pay-sub{display:none!important}
+  .sm-order-btn{position:sticky;bottom:0;z-index:2;padding:12px 0!important}
+}
+
+/* Very short / landscape phones: give the item list back enough height
+   that at least one full row is visible and the last row is reachable. */
+@media(max-height:500px){
+  .sm-drawer{max-height:96vh!important}
+  .sm-drawer-handle{margin-top:6px!important}
+  .sm-drawer-head{padding:8px 16px!important}
+  .sm-drawer-foot{max-height:38vh;max-height:38dvh}
+}
+
+.sm-float-bar{transition:transform 0.2s}
  .sm-float-bar:active{transform:scale(0.97)}
  /* Float bar: more compact on tiny screens */
  @media(max-width:374px){
@@ -2141,7 +2175,7 @@ const s = {
  qtyBtn: { width: 32, height: 32, borderRadius: 10, border: '1.5px solid rgba(0,0,0,0.06)', background: 'rgba(255,255,255,0.8)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e293b', transition: 'all 0.15s' },
  qtyNum: { fontSize: 15, fontWeight: 800, color: '#0f172a', minWidth: 22, textAlign: 'center' },
  qtyRowSm: { display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 },
- qtyBtnSm: { width: 26, height: 26, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0, touchAction: 'manipulation' },
+ qtyBtnSm: { width: 32, height: 32, borderRadius: 8, border: '1.5px solid', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0, touchAction: 'manipulation' },
  qtyNumSm: { fontSize: 12, fontWeight: 800, minWidth: 16, textAlign: 'center' },
 
  ripple: { position: 'absolute', width: 70, height: 70, background: 'rgba(255,255,255,0.3)', borderRadius: '50%', transform: 'translate(-50%,-50%) scale(0)', animation: 'ripple 0.5s ease-out', pointerEvents: 'none' },
@@ -2171,7 +2205,7 @@ const s = {
  cartItemName: { margin: 0, fontSize: 13, fontWeight: 700, color: '#0f172a' },
  cartItemPrice: { margin: '2px 0 0', fontSize: 11, color: '#94a3b8' },
  cartItemTotal: { fontSize: 13, fontWeight: 800, color: '#0f172a', minWidth: 52, textAlign: 'right' },
- cartRemoveBtn: { width: 26, height: 26, borderRadius: 6, border: 'none', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
+ cartRemoveBtn: { width: 32, height: 32, borderRadius: 6, border: 'none', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
 
  drawerFoot: { padding: '14px 20px 28px', borderTop: '1px solid rgba(0,0,0,0.04)' },
  bill: { background: 'rgba(0,0,0,0.02)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 },

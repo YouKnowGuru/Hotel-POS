@@ -357,10 +357,10 @@ const Login = ({ onLogin }) => {
               {STATS.map(({ icon: StatIcon, label, value }) => (
                 <div key={label} className="flex flex-col">
                   <div className="flex items-center gap-1.5">
-                    <StatIcon className="w-3.5 h-3.5 text-slate-500" />
+                    <StatIcon className="w-3.5 h-3.5 text-slate-400" />
                     <span className="text-2xl font-bold text-white">{value}</span>
                   </div>
-                  <span className="text-xs" style={{ color: '#64748B' }}>{label}</span>
+                  <span className="text-xs" style={{ color: '#94A3B8' }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -372,7 +372,7 @@ const Login = ({ onLogin }) => {
               {['var(--theme-primary, #4338CA)', 'var(--theme-gold, #D4A017)', '#059669', '#7C3AED'].map((c, i) => (
                 <div
                   key={i}
-                  className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white"
+                  className="li-avatar w-9 h-9 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white"
                   style={{ background: c, borderColor: '#0B1220', boxShadow: `0 2px 8px ${c}40` }}
                 >
                   {['A', 'M', 'W', 'C'][i]}
@@ -381,7 +381,7 @@ const Login = ({ onLogin }) => {
             </div>
             <div>
               <p className="text-sm font-medium text-white/80">Trusted by hospitality teams</p>
-              <p className="text-xs" style={{ color: '#64748B' }}>Multi-branch, multi-role, one platform</p>
+              <p className="text-xs" style={{ color: '#94A3B8' }}>Multi-branch, multi-role, one platform</p>
             </div>
           </div>
         </div>
@@ -457,7 +457,7 @@ const Login = ({ onLogin }) => {
                   required
                   disabled={loading}
                   autoComplete="username"
-                  className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl text-white placeholder-slate-500 transition-all duration-200 focus:outline-none"
+                  className="w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-3.5 rounded-xl text-white placeholder-slate-400 transition-all duration-200 focus:outline-none"
                   style={{
                     background: focused === 'username'
                       ? 'rgba(255,255,255,0.06)'
@@ -488,7 +488,7 @@ const Login = ({ onLogin }) => {
                   required
                   disabled={loading}
                   autoComplete="current-password"
-                  className="w-full pl-11 sm:pl-12 pr-11 sm:pr-12 py-3 sm:py-3.5 rounded-xl text-white placeholder-slate-500 transition-all duration-200 focus:outline-none"
+                  className="w-full pl-11 sm:pl-12 pr-11 sm:pr-12 py-3 sm:py-3.5 rounded-xl text-white placeholder-slate-400 transition-all duration-200 focus:outline-none"
                   style={{
                     background: focused === 'password'
                       ? 'rgba(255,255,255,0.06)'
@@ -589,22 +589,31 @@ const Login = ({ onLogin }) => {
             {/* Divider + trust */}
             <div className="mt-6 flex items-center gap-3">
               <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-              <span className="text-xs" style={{ color: '#475569' }}>Secure login</span>
+              <span className="text-xs" style={{ color: '#94A3B8' }}>Secure login</span>
               <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
             </div>
           </div>
 
           {/* Footer */}
           <div className="mt-5 text-center">
-            <p className="text-xs" style={{ color: '#475569' }}>
+            <p className="text-xs" style={{ color: '#94A3B8' }}>
               &copy; {new Date().getFullYear()} {siteName} &middot; All rights reserved
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── Keyframe animations ── */}
+      {/* ── Keyframe animations + dark-surface contrast ── */}
       <style>{`
+        /* This page is a navy hero in both themes. The brand-coloured trust
+           avatars are too bright behind 10px white initials, so darken the
+           circle with an inset shadow. Inset shadows paint above the
+           background but below the text, so the letters stay white. */
+        .li-avatar{
+          box-shadow:inset 0 0 0 100px rgba(11,18,32,0.5) !important;
+          color:#F8FAFC !important;
+        }
+
         @keyframes float-orb {
           0%   { transform: translate(0, 0); }
           100% { transform: translate(30px, -40px); }
