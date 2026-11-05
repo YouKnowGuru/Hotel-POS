@@ -1105,6 +1105,10 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  )}
 
+ {/* One scroll region for items + bill + payment. On short screens this
+     becomes the ONLY scroll container, so nothing is hidden behind the
+     Place Order button and every section is reachable by one gesture. */}
+ <div className="sm-drawer-body">
  <div className="sm-drawer-scroll" style={s.drawerScroll}>
  {!cart.length ? (
  <div style={{ textAlign: 'center', padding: '60px 24px' }}>
@@ -1141,7 +1145,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <div className="sm-bill" style={s.bill}>
  <div style={s.billRow}><span className="sm-bill-label" style={s.billLabel}>Subtotal</span><span className="sm-bill-val" style={s.billVal}>{fmt(totals.subtotal)}</span></div>
  {totals.discountAmount > 0 && (
- <div style={s.billRow}><span className="sm-bill-label" style={s.billLabel}>Discount</span><span className="sm-bill-val" style={{ ...s.billVal, color: '#ef4444' }}>-{fmt(totals.discountAmount)}</span></div>
+ <div style={s.billRow}><span className="sm-bill-label" style={s.billLabel}>Discount</span><span className="sm-bill-val sm-discount-val" style={{ ...s.billVal, color: '#ef4444' }}>-{fmt(totals.discountAmount)}</span></div>
  )}
  {/* Service Charge — shown always, separate from GST */}
  <div className="sm-service-charge-row" style={{ ...s.billRow, color: '#1a5c3e' }}>
@@ -1158,7 +1162,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <span className="sm-bill-total" style={s.billTotal}>Grand Total</span>
  <span className="sm-bill-total-val" style={s.billTotalVal}>{fmt(totals.total)}</span>
  </div>
- <p className="sm-bill-hint" style={{ margin: '6px 0 0', fontSize: 10, color: '#94a3b8', textAlign: 'center' }}>
+ <p className="sm-bill-hint" style={{ margin: '6px 0 0', fontSize: 10, color: '#64748b', textAlign: 'center' }}>
  Incl. {SERVICE_CHARGE_PERCENT}% service charge + {totals.taxPercent}% GST
  </p>
  </div>
@@ -1172,12 +1176,14 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <button
  type="button"
  onClick={() => setGuestCount(g => Math.max(1, Number(g) - 1))}
+ className="sm-guest-btn"
  style={{ width: 30, height: 30, borderRadius: 15, background: '#fff', border: '1px solid rgba(59,130,246,0.35)', color: '#2563eb', fontWeight: 700, fontSize: 16, lineHeight: 1, cursor: 'pointer' }}
  aria-label="Fewer guests"
  >
  −
  </button>
  <input
+ className="sm-guest-input"
  type="number"
  min="1"
  max="50"
@@ -1188,6 +1194,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <button
  type="button"
  onClick={() => setGuestCount(g => Math.min(50, Number(g) + 1))}
+ className="sm-guest-btn"
  style={{ width: 30, height: 30, borderRadius: 15, background: '#fff', border: '1px solid rgba(59,130,246,0.35)', color: '#2563eb', fontWeight: 700, fontSize: 16, lineHeight: 1, cursor: 'pointer' }}
  aria-label="More guests"
  >
@@ -1207,6 +1214,9 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  return (
  <button
  key={id}
+ className={active ? 'sm-pay-active' : 'sm-pay-inactive'}
+ data-pay={id}
+ aria-pressed={active}
  onClick={() => setPaymentMethod(id)}
  style={{
  display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4, position: 'relative',
@@ -1220,13 +1230,20 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <Icon size={15} color={active ? color : '#94a3b8'} />
  <span className="sm-pay-label" style={{ fontSize: 12, fontWeight: 700, color: active ? color : '#0f172a' }}>{label}</span>
  </div>
- <span className="sm-pay-sub" style={{ fontSize: 10, color: '#94a3b8', lineHeight: 1.3 }}>{sub}</span>
+ <span className="sm-pay-sub" style={{ fontSize: 10, color: '#64748b', lineHeight: 1.3 }}>{sub}</span>
  {active && <span style={{ position: 'absolute', top: 8, right: 10, fontSize: 10, color }}>✓</span>}
  </button>
  );
  })}
  </div>
 
+ </div>
+ )}
+ </div>
+ {cart.length > 0 && (
+ <div className="sm-cta-wrap">
+ {/* Persistent total: on short screens the bill can be scrolled out of view */}
+ <div className="sm-cta-total"><span>Grand Total</span><strong>{fmt(totals.total)}</strong></div>
  <button className="sm-order-btn" style={{ ...s.orderBtn, ...((placing || (tableStatus === 'occupied' && !tableMine)) ? { opacity: 0.5, pointerEvents: 'none' } : {}), ...(paymentMethod === 'cash' ? { background: 'linear-gradient(135deg,#10b981,#34d399)' } : {}) }} onClick={placeOrder} disabled={placing || (tableStatus === 'occupied' && !tableMine)}>
  {tableStatus === 'occupied' && !tableMine
  ? <><Utensils size={17} /> Table Occupied — Ask Staff</>
@@ -1561,7 +1578,29 @@ const CSS = `
 
  .sm-drawer{animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1)}
 
- /* ── Cart Drawer Responsive ── */
+ /* ── Checkout card layout ──────────────────────────────────────────────
+   Fixed header → ONE scrollable body (items + bill + payment) → pinned
+   CTA bar. The CTA is a real flex sibling, NOT position:sticky, so it can
+   never paint over the Grand Total, guest counter or payment buttons. */
+.sm-drawer-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.sm-drawer-body > .sm-drawer-scroll{min-height:0}
+.sm-drawer-foot{flex:0 0 auto}
+.sm-cta-wrap{
+  flex:0 0 auto;position:relative;z-index:3;
+  padding:0 20px calc(20px + env(safe-area-inset-bottom,0px));
+  background:#fff;border-top:1px solid rgba(0,0,0,0.06);
+  box-shadow:0 -8px 20px rgba(0,0,0,0.04);
+}
+.sm-cta-total{
+  display:none;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:8px 2px;font-size:12px;font-weight:700;color:#475569;
+}
+.sm-cta-total strong{font-size:16px;font-weight:900;color:#0f172a}
+/* Guest counter controls were only 30px — too small for touch on tablets */
+.sm-guest-btn{width:40px!important;height:40px!important;border-radius:20px!important}
+.sm-guest-input{width:52px!important;height:40px!important;padding:8px 0!important}
+
+/* ── Cart Drawer Responsive ── */
  /* On very small screens, cart items can overflow because all the
     controls (emoji + name + qty + total + remove) are on one row.
     Stack the name/price above the qty/total/remove row below 420px. */
@@ -1569,7 +1608,8 @@ const CSS = `
   .sm-drawer{max-width:100vw!important;border-radius:20px 20px 0 0!important}
   .sm-drawer-head{padding:12px 14px!important}
   .sm-drawer-scroll{padding:4px 14px!important}
-  .sm-drawer-foot{padding:12px 14px 24px!important}
+  .sm-drawer-foot{padding:12px 14px 10px!important}
+  .sm-cta-wrap{padding:0 14px calc(16px + env(safe-area-inset-bottom,0px))!important}
   /* Cart item: wrap the right-side controls to a new row */
   .sm-cart-item{flex-wrap:wrap;gap:6px!important;padding:10px 0!important}
   .sm-cart-item-info{flex:1 1 100%;min-width:0!important}
@@ -1593,36 +1633,37 @@ const CSS = `
 }
 
 /* ── Short viewports (small phones + landscape) ──
-   The bill, guest counter and payment footer together are taller than
-   the drawer on short screens. The footer used to squeeze the item list
-   down to a few pixels and push the Place Order button off-screen.
-   Cap the footer, let it scroll internally, and pin the CTA so both the
-   items and the order button always stay visible. */
+   Collapse to ONE scroll region so items, bill and payment are all
+   reachable with a single gesture. All explanatory text stays visible,
+   and the pinned CTA bar keeps the Grand Total on screen at all times. */
 @media(max-height:700px){
   .sm-drawer{overflow:hidden!important}
-  .sm-drawer-scroll{flex:1 1 auto!important;min-height:0!important}
-  .sm-drawer-foot{
-    flex:0 0 auto!important;max-height:46vh;max-height:46dvh;
-    overflow-y:auto!important;overscroll-behavior:contain;
-    -webkit-overflow-scrolling:touch;padding-bottom:12px!important;
+  .sm-drawer-body{
+    display:block;overflow-y:auto!important;overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
   }
+  .sm-drawer-scroll{flex:0 0 auto!important;min-height:0!important;overflow:visible!important}
+  .sm-drawer-foot{overflow:visible!important;max-height:none!important;padding-bottom:10px!important}
   .sm-drawer-foot .sm-bill{padding:9px 11px!important;margin-bottom:8px!important}
-  .sm-bill-hint{display:none!important}
+  .sm-bill-hint{font-size:9.5px!important}
   .sm-guest-counter{padding:6px 10px!important;margin-bottom:8px!important}
-  .sm-pay-heading{display:none!important}
+  .sm-pay-heading{font-size:10px!important;margin-bottom:6px!important}
   .sm-pay-grid{gap:6px!important;margin-bottom:8px!important}
   .sm-pay-grid button{padding:7px 10px!important}
-  .sm-pay-sub{display:none!important}
-  .sm-order-btn{position:sticky;bottom:0;z-index:2;padding:12px 0!important}
+  .sm-pay-sub{font-size:9.5px!important}
+  .sm-cta-wrap{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))!important}
+  .sm-cta-total{display:flex}
+  .sm-order-btn{position:static;flex:0 0 auto;padding:13px 0!important}
 }
 
-/* Very short / landscape phones: give the item list back enough height
-   that at least one full row is visible and the last row is reachable. */
+/* Very short / landscape phones: keep the header and CTA compact so the
+   scroll region still has useful height. */
 @media(max-height:500px){
   .sm-drawer{max-height:96vh!important}
   .sm-drawer-handle{margin-top:6px!important}
   .sm-drawer-head{padding:8px 16px!important}
-  .sm-drawer-foot{max-height:38vh;max-height:38dvh}
+  .sm-cta-total{padding:5px 2px!important}
+  .sm-order-btn{padding:10px 0!important}
 }
 
 .sm-float-bar{transition:transform 0.2s}
@@ -1657,7 +1698,7 @@ const CSS = `
   .sm-card-desc,
   .sm-card-hover p,
   p.sm-card-desc {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   .sm-section-title {
     color: #0F172A !important;
@@ -1738,6 +1779,11 @@ const CSS = `
   html.dark .sm-bill-val {
     color: #E2E8F0 !important;
   }
+  /* The blanket .sm-bill-val rule above used to neutralise the red
+     discount amount in dark mode; keep it visibly a deduction. */
+  html.dark .sm-discount-val {
+    color: #FCA5A5 !important;
+  }
   html.dark .sm-bill {
     background: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -1770,6 +1816,14 @@ const CSS = `
   html.dark .sm-drawer-foot {
     border-top-color: rgba(255, 255, 255, 0.08) !important;
   }
+  /* Pinned CTA bar: opaque so scrolled content never shows through */
+  html.dark .sm-cta-wrap {
+    background: #141C2E !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.35) !important;
+  }
+  html.dark .sm-cta-total { color: #94A3B8 !important; }
+  html.dark .sm-cta-total strong { color: #F1F5F9 !important; }
   /* Bill rows top divider in dark mode */
   html.dark .sm-bill .sm-bill-row {
     border-top-color: rgba(255, 255, 255, 0.08) !important;
@@ -1792,16 +1846,36 @@ const CSS = `
     background: #1E293B !important;
     border-color: rgba(59, 130, 246, 0.3) !important;
   }
-  /* Payment method buttons in dark mode */
-  html.dark .sm-pay-grid button {
+  /* Payment method buttons in dark mode.
+     A blanket override used to flatten BOTH buttons to the same background,
+     border and label colour, so the selected method was invisible except
+     for a tiny checkmark. Scope by state instead. */
+  html.dark .sm-pay-grid button.sm-pay-inactive {
     background: #1E293B !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
   }
-  html.dark .sm-pay-grid button .sm-pay-label {
-    color: #E2E8F0 !important;
+  html.dark .sm-pay-grid button[data-pay="cash"].sm-pay-active {
+    background: rgba(16, 185, 129, 0.14) !important;
+    border-color: rgba(16, 185, 129, 0.6) !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.16) !important;
+  }
+  html.dark .sm-pay-grid button[data-pay="qr"].sm-pay-active {
+    background: rgba(249, 115, 22, 0.14) !important;
+    border-color: rgba(249, 115, 22, 0.6) !important;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.16) !important;
+  }
+  html.dark .sm-pay-grid button.sm-pay-inactive .sm-pay-label {
+    color: #CBD5E1 !important;
+  }
+  html.dark .sm-pay-grid button[data-pay="cash"].sm-pay-active .sm-pay-label {
+    color: #6EE7B7 !important;
+  }
+  html.dark .sm-pay-grid button[data-pay="qr"].sm-pay-active .sm-pay-label {
+    color: #FDBA74 !important;
   }
   html.dark .sm-pay-grid button .sm-pay-sub {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   /* Empty cart state in dark mode — only the empty-cart paragraphs,
      NOT all <p> in the drawer (cart item names have their own override) */
@@ -1809,7 +1883,7 @@ const CSS = `
     color: #F1F5F9 !important;
   }
   html.dark .sm-empty-cart-desc {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   /* Search bar in dark mode */
   html.dark .sm-search-wrap,
@@ -1853,7 +1927,7 @@ const CSS = `
     color: #F8FAFC !important;
   }
   html.dark .sm-empty-desc {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   /* Bill reveal in dark mode */
   html.dark .sm-bill-reveal {
@@ -1868,7 +1942,7 @@ const CSS = `
     color: #F8FAFC !important;
   }
   html.dark .sm-bill-receipt-sub {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   html.dark .sm-bill-item-name {
     color: #CBD5E1 !important;
@@ -1877,7 +1951,7 @@ const CSS = `
     color: #F1F5F9 !important;
   }
   html.dark .sm-bill-item-qty {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
   html.dark .sm-bill-divider {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent) !important;
@@ -1908,18 +1982,13 @@ const CSS = `
     color: #F1F5F9 !important;
   }
   html.dark .sm-empty-cart-desc {
-    color: #64748B !important;
-  }
-
-  /* Payment heading + labels */
-  html.dark .sm-pay-heading {
     color: #94A3B8 !important;
   }
-  html.dark .sm-pay-grid button .sm-pay-label {
-    color: #E2E8F0 !important;
-  }
-  html.dark .sm-pay-grid button .sm-pay-sub {
-    color: #64748B !important;
+
+  /* Payment heading (label/sub overrides live in the state-scoped
+     dark rules above so the selected option keeps its accent colour). */
+  html.dark .sm-pay-heading {
+    color: #94A3B8 !important;
   }
 
   /* Tracker label */
@@ -1936,7 +2005,7 @@ const CSS = `
 
   /* Bill hint text */
   html.dark .sm-bill-hint {
-    color: #64748B !important;
+    color: #94A3B8 !important;
   }
 
   /* Bill item dots separator */
@@ -2207,7 +2276,7 @@ const s = {
  cartItemTotal: { fontSize: 13, fontWeight: 800, color: '#0f172a', minWidth: 52, textAlign: 'right' },
  cartRemoveBtn: { width: 32, height: 32, borderRadius: 6, border: 'none', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s', flexShrink: 0 },
 
- drawerFoot: { padding: '14px 20px 28px', borderTop: '1px solid rgba(0,0,0,0.04)' },
+ drawerFoot: { padding: '14px 20px 12px', borderTop: '1px solid rgba(0,0,0,0.04)' },
  bill: { background: 'rgba(0,0,0,0.02)', borderRadius: 14, padding: '12px 14px', marginBottom: 12 },
  billRow: { display: 'flex', justifyContent: 'space-between', marginBottom: 4 },
  billLabel: { fontSize: 12, color: '#64748b', fontWeight: 500 },
