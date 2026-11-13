@@ -693,7 +693,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  <style>{CSS}</style>
  <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
 
- {/* Shooting star field — vibrant multi-color cosmic palette (NOT brand colors) */}
+ {/* Shooting star field — subtle brand tones in light mode, cosmic in dark mode */}
  <div className="sm-starfield">
  {/* Twinkling background dots — mixed colors */}
  <span className="sm-twinkle" style={{top:'12%',left:'22%',animationDelay:'0s'}} />
@@ -855,22 +855,23 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  </div>
  </div>
  </div>
- <button
- type="button"
- onClick={callWaiter}
- disabled={waiter.loading || waiter.called}
- aria-label="Call waiter"
- title={waiter.called ? 'Waiter notified' : (waiter.error || 'Call the waiter to your table')}
- className="sm-callwaiter-btn"
- style={{
- ...s.callWaiterBtn,
- ...(waiter.called ? s.callWaiterDone : {}),
- ...(waiter.loading ? { opacity: 0.7, pointerEvents: 'none' } : {}),
- }}
- >
- <BellRing size={16} />
- <span className="sm-cw-label">{waiter.called ? 'Called' : 'Call Waiter'}</span>
- </button>
+        <button
+          type="button"
+          onClick={callWaiter}
+          disabled={waiter.loading || waiter.called}
+          aria-label={waiter.called ? 'Waiter called' : (waiter.loading ? 'Calling waiter' : 'Call waiter')}
+          aria-busy={waiter.loading}
+          aria-live="polite"
+          title={waiter.called ? 'Waiter notified' : (waiter.loading ? 'Notifying the waiter...' : (waiter.error || 'Call the waiter to your table'))}
+          className={`sm-callwaiter-btn${waiter.called ? ' is-called' : ''}${waiter.loading ? ' is-loading' : ''}${waiter.error ? ' is-error' : ''}`}
+          style={{
+            ...s.callWaiterBtn,
+            ...(waiter.loading ? { opacity: 0.72, pointerEvents: 'none' } : {}),
+          }}
+        >
+          {waiter.called ? <CheckCircle2 size={16} aria-hidden="true" /> : <BellRing size={16} aria-hidden="true" />}
+          <span className="sm-cw-label">{waiter.called ? 'Called' : (waiter.loading ? 'Calling...' : 'Call Waiter')}</span>
+        </button>
  <button ref={cartBtnRef} className="sm-cart-btn" aria-label={`Open cart, ${cartCount} items`} style={{ ...s.cartBtn, ...(cartCount ? s.cartBtnActive : {}) }} onClick={() => setCartOpen(true)}>
  <ShoppingBag size={18} />
  {cartCount > 0 && <span style={s.cartCount}>{cartCount}</span>}
@@ -1378,8 +1379,9 @@ const CSS = `
  @keyframes paidBurst{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
 
- /* === Shooting Star — vibrant multi-color cosmic palette (NOT brand colors) === */
- /* Colors: electric cyan, warm gold, lime, coral, violet — a real meteor shower feel */
+/* === Shooting Star — theme-aware palette === */
+/* Light mode uses soft berry / violet / amber brand tones; dark mode keeps
+   the brighter white-hot cosmic cores that read well on the navy surface. */
  @keyframes shootStar1{
   0%{transform:translate(0,0) rotate(35deg);opacity:0}
   5%{opacity:1}
@@ -1454,49 +1456,47 @@ const CSS = `
   50%{opacity:0.9;transform:scale(1.2)}
  }
  .sm-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
- /* Light mode: each star type has its own vibrant color */
- .sm-twinkle{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#00E5FF,rgba(0,229,255,0.2));animation:twinkleDot 3s ease-in-out infinite;box-shadow:0 0 5px rgba(0,229,255,0.4)}
- .sm-twinkle-gold{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#FFD700,rgba(255,215,0,0.2));animation:twinkleDotGold 3.5s ease-in-out infinite;box-shadow:0 0 5px rgba(255,215,0,0.4)}
- .sm-twinkle-cyan{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#5EEAD4,rgba(94,234,212,0.2));animation:twinkleDotCyan 2.8s ease-in-out infinite;box-shadow:0 0 5px rgba(94,234,212,0.35)}
- .sm-twinkle-lime{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#A3E635,rgba(163,230,53,0.2));animation:twinkleDot 3.2s ease-in-out infinite;box-shadow:0 0 5px rgba(163,230,53,0.35)}
- .sm-twinkle-coral{position:absolute;width:3px;height:3px;border-radius:50%;background:radial-gradient(circle,#FF7F50,rgba(255,127,80,0.2));animation:twinkleDotGold 4s ease-in-out infinite;box-shadow:0 0 5px rgba(255,127,80,0.35)}
+ /* Light mode: a restrained berry / violet / amber family that matches the
+    brand accents. The old cyan/lime/coral dots looked like neon on white.
+    Legacy class names are kept so the existing markup stays untouched. */
+ .sm-twinkle,
+ .sm-twinkle-gold,
+ .sm-twinkle-cyan,
+ .sm-twinkle-lime,
+ .sm-twinkle-coral{
+   position:absolute;width:3px;height:3px;border-radius:50%;
+   background:radial-gradient(circle,rgba(var(--sm-dot),0.82) 0%,rgba(var(--sm-dot),0.20) 55%,rgba(var(--sm-dot),0) 100%);
+   box-shadow:0 0 5px rgba(var(--sm-dot),0.16)
+ }
+ .sm-twinkle{--sm-dot:190,24,93;animation:twinkleDot 3s ease-in-out infinite}
+ .sm-twinkle-gold{--sm-dot:194,65,12;animation:twinkleDotGold 3.5s ease-in-out infinite}
+ .sm-twinkle-cyan{--sm-dot:109,40,217;animation:twinkleDotCyan 2.8s ease-in-out infinite}
+ .sm-twinkle-lime{--sm-dot:180,83,9;animation:twinkleDot 3.2s ease-in-out infinite}
+ .sm-twinkle-coral{--sm-dot:126,34,206;animation:twinkleDotGold 4s ease-in-out infinite}
  .sm-shoot-wrap{position:absolute;top:0;left:0;width:1px;height:1px}
- .sm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0}
- /* Star 1: Electric Cyan */
- .sm-shoot-1 .trail{background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.1) 25%,rgba(0,229,255,0.5) 60%,rgba(0,229,255,0.9) 85%,#00E5FF 100%);filter:blur(0.4px)}
- .sm-shoot-1 .head{background:radial-gradient(circle,#00E5FF 20%,rgba(0,229,255,0.7) 55%,rgba(14,165,233,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(0,229,255,0.6),0 0 16px 4px rgba(94,234,212,0.3)}
- /* Star 2: Warm Gold */
- .sm-shoot-2 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,0.1) 25%,rgba(255,215,0,0.5) 60%,rgba(255,215,0,0.9) 85%,#FFD700 100%);filter:blur(0.4px)}
- .sm-shoot-2 .head{background:radial-gradient(circle,#FFD700 20%,rgba(255,215,0,0.7) 55%,rgba(245,158,11,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,215,0,0.6),0 0 16px 4px rgba(251,191,36,0.3)}
- /* Star 3: Lime Green */
- .sm-shoot-3 .trail{background:linear-gradient(90deg,transparent 0%,rgba(163,230,53,0.1) 25%,rgba(163,230,53,0.5) 60%,rgba(163,230,53,0.9) 85%,#A3E635 100%);filter:blur(0.4px)}
- .sm-shoot-3 .head{background:radial-gradient(circle,#A3E635 20%,rgba(163,230,53,0.7) 55%,rgba(132,204,22,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(163,230,53,0.6),0 0 16px 4px rgba(190,242,100,0.3)}
- /* Star 4: Coral */
- .sm-shoot-4 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,127,80,0.1) 25%,rgba(255,127,80,0.5) 60%,rgba(255,127,80,0.9) 85%,#FF7F50 100%);filter:blur(0.4px)}
- .sm-shoot-4 .head{background:radial-gradient(circle,#FF7F50 20%,rgba(255,127,80,0.7) 55%,rgba(239,68,68,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(255,127,80,0.6),0 0 16px 4px rgba(251,146,60,0.3)}
- /* Star 5: Violet */
- .sm-shoot-5 .trail{background:linear-gradient(90deg,transparent 0%,rgba(167,139,250,0.1) 25%,rgba(167,139,250,0.5) 60%,rgba(167,139,250,0.9) 85%,#A78BFA 100%);filter:blur(0.4px)}
- .sm-shoot-5 .head{background:radial-gradient(circle,#A78BFA 20%,rgba(167,139,250,0.7) 55%,rgba(139,92,246,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(167,139,250,0.6),0 0 16px 4px rgba(196,181,253,0.3)}
- /* Star 6: Electric Cyan variant */
- .sm-shoot-6 .trail{background:linear-gradient(90deg,transparent 0%,rgba(56,189,248,0.1) 25%,rgba(56,189,248,0.5) 60%,rgba(56,189,248,0.9) 85%,#38BDF8 100%);filter:blur(0.4px)}
- .sm-shoot-6 .head{background:radial-gradient(circle,#38BDF8 20%,rgba(56,189,248,0.7) 55%,rgba(14,165,233,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(56,189,248,0.6),0 0 16px 4px rgba(125,211,252,0.3)}
- /* Star 7: Warm Gold variant */
- .sm-shoot-7 .trail{background:linear-gradient(90deg,transparent 0%,rgba(251,191,36,0.1) 25%,rgba(251,191,36,0.5) 60%,rgba(251,191,36,0.9) 85%,#FBBF24 100%);filter:blur(0.4px)}
- .sm-shoot-7 .head{background:radial-gradient(circle,#FBBF24 20%,rgba(251,191,36,0.7) 55%,rgba(245,158,11,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(251,191,36,0.6),0 0 16px 4px rgba(253,224,71,0.3)}
- /* Star 8: Rose Pink (distinct from brand pink — more warm/salmon) */
- .sm-shoot-8 .trail{background:linear-gradient(90deg,transparent 0%,rgba(244,114,182,0.1) 25%,rgba(244,114,182,0.5) 60%,rgba(244,114,182,0.9) 85%,#F472B6 100%);filter:blur(0.4px)}
- .sm-shoot-8 .head{background:radial-gradient(circle,#F472B6 20%,rgba(244,114,182,0.7) 55%,rgba(236,72,153,0.3) 80%,transparent);box-shadow:0 0 8px 2px rgba(244,114,182,0.6),0 0 16px 4px rgba(251,207,232,0.3)}
- /* Default trail/head fallback uses cyan */
- .sm-shoot-star .trail{position:absolute;inset:0;border-radius:2px;background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.1) 25%,rgba(0,229,255,0.5) 60%,rgba(0,229,255,0.9) 85%,#00E5FF 100%);filter:blur(0.4px)}
- .sm-shoot-star .head{position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%}
- .sm-shoot-1{animation:shootStar1 4s ease-in infinite;animation-delay:0.5s}
- .sm-shoot-2{animation:shootStar2 5s ease-in infinite;animation-delay:2.2s}
- .sm-shoot-3{animation:shootStar3 6s ease-in infinite;animation-delay:4s}
- .sm-shoot-4{animation:shootStar4 4.5s ease-in infinite;animation-delay:1.3s}
- .sm-shoot-5{animation:shootStar5 5.5s ease-in infinite;animation-delay:3.5s}
- .sm-shoot-6{animation:shootStar6 5s ease-in infinite;animation-delay:0.8s}
- .sm-shoot-7{animation:shootStar7 4.8s ease-in infinite;animation-delay:2.8s}
- .sm-shoot-8{animation:shootStar8 5.2s ease-in infinite;animation-delay:5s}
+ .sm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0;--sm-star:190,24,93}
+ /* Structural rules are declared before the per-star colours. The previous
+    cyan fallback came last and silently flattened every light-mode trail. */
+ .sm-shoot-star .trail{
+   position:absolute;inset:0;border-radius:2px;
+   background:linear-gradient(90deg,transparent 0%,rgba(var(--sm-star),0.03) 25%,rgba(var(--sm-star),0.14) 55%,rgba(var(--sm-star),0.36) 82%,rgba(var(--sm-star),0.62) 100%);
+   filter:blur(0.2px)
+ }
+ .sm-shoot-star .head{
+   position:absolute;right:-2px;top:50%;transform:translateY(-50%);
+   width:7px;height:7px;border-radius:50%;
+   background:radial-gradient(circle,rgba(var(--sm-star),0.98) 15%,rgba(var(--sm-star),0.68) 50%,rgba(var(--sm-star),0) 78%);
+   box-shadow:0 0 7px 1px rgba(var(--sm-star),0.22)
+ }
+ /* Light mode: eight coordinated berry, violet, copper and amber tones. */
+ .sm-shoot-1{--sm-star:190,24,93;animation:shootStar1 4s ease-in infinite;animation-delay:0.5s}
+ .sm-shoot-2{--sm-star:194,65,12;animation:shootStar2 5s ease-in infinite;animation-delay:2.2s}
+ .sm-shoot-3{--sm-star:109,40,217;animation:shootStar3 6s ease-in infinite;animation-delay:4s}
+ .sm-shoot-4{--sm-star:225,29,72;animation:shootStar4 4.5s ease-in infinite;animation-delay:1.3s}
+ .sm-shoot-5{--sm-star:126,34,206;animation:shootStar5 5.5s ease-in infinite;animation-delay:3.5s}
+ .sm-shoot-6{--sm-star:180,83,9;animation:shootStar6 5s ease-in infinite;animation-delay:0.8s}
+ .sm-shoot-7{--sm-star:157,23,77;animation:shootStar7 4.8s ease-in infinite;animation-delay:2.8s}
+ .sm-shoot-8{--sm-star:219,39,119;animation:shootStar8 5.2s ease-in infinite;animation-delay:5s}
  /* Dark mode: stars become brighter with white-hot cores */
  html.dark .sm-twinkle{background:radial-gradient(circle,#fff,rgba(0,229,255,0.4));box-shadow:0 0 6px rgba(255,255,255,0.5)}
  html.dark .sm-twinkle-gold{background:radial-gradient(circle,#fff,rgba(255,215,0,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
@@ -1963,11 +1963,44 @@ const CSS = `
     border-color: rgba(255, 255, 255, 0.08) !important;
     color: #94A3B8 !important;
   }
-  /* "Call waiter" header button: keep the label on phones >=420px,
-     icon-only below so the cart button still fits. */
-  .sm-callwaiter-btn { transition: all 0.25s cubic-bezier(0.4,0,0.2,1); }
-  .sm-callwaiter-btn:active { transform: scale(0.94); }
+  /* "Call waiter" header button. The light header is near-white, so the
+     control uses a tinted brand outline and dark berry text instead of the
+     old white-on-white translucent treatment. State colours inherit to both
+     the icon and label. */
+  .sm-callwaiter-btn {
+    padding: 0 12px;
+    box-sizing: border-box;
+    color: #86198F;
+    background: linear-gradient(135deg, rgba(255,60,172,0.11), rgba(120,75,160,0.10));
+    border: 1.5px solid rgba(190,24,93,0.28);
+    box-shadow: 0 2px 10px rgba(15,23,42,0.07), inset 0 1px 0 rgba(255,255,255,0.7);
+    white-space: nowrap;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .sm-callwaiter-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(255,60,172,0.17), rgba(120,75,160,0.15));
+    border-color: rgba(190,24,93,0.45);
+    box-shadow: 0 5px 16px rgba(190,24,93,0.14), inset 0 1px 0 rgba(255,255,255,0.8);
+    transform: translateY(-1px);
+  }
+  .sm-callwaiter-btn:active:not(:disabled) { transform: scale(0.94); }
+  .sm-callwaiter-btn:focus-visible { outline: 2px solid rgba(190,24,93,0.45); outline-offset: 2px; }
   .sm-callwaiter-btn:disabled { cursor: default; }
+  .sm-callwaiter-btn.is-loading { color: #9D174D; }
+  .sm-callwaiter-btn.is-error,
+  .sm-callwaiter-btn.is-error:hover:not(:disabled) {
+    color: #BE123C;
+    background: rgba(225,29,72,0.10);
+    border-color: rgba(190,18,60,0.38);
+    box-shadow: 0 2px 10px rgba(190,18,60,0.10);
+  }
+  .sm-callwaiter-btn.is-called {
+    color: #047857;
+    background: rgba(16,185,129,0.13);
+    border-color: rgba(5,150,105,0.42);
+    box-shadow: 0 2px 12px rgba(5,150,105,0.14), inset 0 1px 0 rgba(255,255,255,0.75);
+  }
+  .sm-callwaiter-btn.is-called:hover:not(:disabled) { transform: none; }
   @media (max-width: 419px) {
     .sm-callwaiter-btn { padding: 0 10px; }
     .sm-cw-label { display: none; }
@@ -1976,8 +2009,26 @@ const CSS = `
     background: rgba(255,255,255,0.14) !important;
     border-color: rgba(255,255,255,0.28) !important;
     color: #F8FAFC !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.18) !important;
   }
-  html.dark .sm-cw-label { color: #F8FAFC !important; }
+  html.dark .sm-callwaiter-btn:hover:not(:disabled) {
+    background: rgba(255,255,255,0.20) !important;
+    border-color: rgba(255,255,255,0.42) !important;
+    box-shadow: 0 5px 16px rgba(0,0,0,0.28) !important;
+  }
+  html.dark .sm-callwaiter-btn.is-error,
+  html.dark .sm-callwaiter-btn.is-error:hover:not(:disabled) {
+    background: rgba(244,63,94,0.16) !important;
+    border-color: rgba(251,113,133,0.52) !important;
+    color: #FECDD3 !important;
+  }
+  html.dark .sm-callwaiter-btn.is-called {
+    background: rgba(16,185,129,0.18) !important;
+    border-color: rgba(52,211,153,0.55) !important;
+    color: #A7F3D0 !important;
+    box-shadow: 0 2px 12px rgba(16,185,129,0.18) !important;
+  }
+  html.dark .sm-cw-label { color: inherit !important; }
 
   /* Tracker cards in dark mode */
   html.dark .sm-tracker-card {
@@ -2197,10 +2248,9 @@ const s = {
  brandSub: { margin: '1px 0 0', fontSize: 11, color: '#64748b', fontWeight: 500 },
  cartBtn: { position: 'relative', width: 42, height: 42, borderRadius: 13, border: '1.5px solid rgba(0,0,0,0.05)', background: 'rgba(0,0,0,0.02)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
  cartBtnActive: { background: 'rgba(255,60,172,0.08)', borderColor: 'rgba(255,60,172,0.2)', color: '#ff3cac', transform: 'scale(1.05)', animation: 'catBounce 0.4s ease' },
- // "Call waiter" header button — sits on the gradient header, so it uses
- // translucent white surfaces that read well on both light and dark states.
- callWaiterBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, padding: '0 12px', borderRadius: 999, fontSize: 12.5, fontWeight: 800, letterSpacing: '0.01em', color: '#fff', background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.32)', cursor: 'pointer', flexShrink: 0, transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' },
- callWaiterDone: { background: 'rgba(16,185,129,0.28)', borderColor: 'rgba(16,185,129,0.65)', color: '#d1fae5', boxShadow: '0 2px 10px rgba(16,185,129,0.25)' },
+ // "Call waiter" header button — layout only. Colours and success/error
+ // states live in CSS so light and dark themes each get readable contrast.
+ callWaiterBtn: { display: 'inline-flex', alignItems: 'center', gap: 6, height: 34, borderRadius: 999, fontSize: 12.5, fontWeight: 800, letterSpacing: '0.01em', cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' },
  cartCount: { position: 'absolute', top: -5, right: -5, minWidth: 20, height: 20, borderRadius: 10, background: 'linear-gradient(135deg,#ff3cac,#784ba0)', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(255,60,172,0.5)', padding: '0 5px' },
  searchWrap: { display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.025)', border: '1.5px solid rgba(0,0,0,0.04)', borderRadius: 12, padding: '10px 12px', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
  searchWrapFocus: { background: 'rgba(255,60,172,0.03)', borderColor: 'rgba(255,60,172,0.2)', boxShadow: '0 0 0 3px rgba(255,60,172,0.08)' },
