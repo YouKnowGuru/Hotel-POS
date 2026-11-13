@@ -3,11 +3,10 @@
  *
  * Sections:
  *  1. Hero with real dish photos from live menu + auto-rotating feature card
- *  2. How it Works (#how)
- *  3. Live menu preview (#menu) — top dishes, links to /order
- *  4. Tomza Pack highlight (#tomza)
- *  5. Stats strip
- *  6. Closing order CTA
+ *  2. Today's menu (#menu) — top dishes, links to /order
+ *  3. Tomza Pack highlight (#tomza)
+ *  4. Stats strip
+ *  5. Closing order CTA
  *
  * Visual system comes from PublicShell (.pw-* tokens). Static blocks carry
  * `pw-reveal` for scroll-in animation; dynamic grids use staggered CSS.
@@ -192,144 +191,133 @@ const HomeLanding = () => {
     <PublicShell active="home">
 
       {/* ══════════════════════════════════════════════════════════════
-          HERO
+          HERO  —  Premium, clean, animated text
       ══════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden" style={{ background: 'var(--pw-bg)' }}>
-        {/* soft ambient glows — the dot pattern now lives on the hero stage tile */}
-        <div aria-hidden="true" style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background:
-            'radial-gradient(720px 380px at 6% -12%,rgba(245,158,11,0.16),transparent 62%),' +
-            'radial-gradient(640px 420px at 98% 4%,rgba(234,88,12,0.10),transparent 64%),' +
-            'radial-gradient(520px 320px at 50% 118%,rgba(251,191,36,0.10),transparent 70%)',
-        }} />
+      <section className="hl-hero relative overflow-hidden" style={{ background: 'var(--pw-bg)' }}>
 
-        <div className="pw-container relative px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-6 sm:gap-8 lg:gap-10 xl:gap-16 items-center">
+        {/* Layered ambient background — soft, premium, never noisy */}
+        <div className="hl-hero-bg" aria-hidden="true">
+          <div className="hl-glow hl-glow-1" />
+          <div className="hl-glow hl-glow-2" />
+          <div className="hl-glow hl-glow-3" />
+          <div className="hl-grain" />
+        </div>
 
-            {/* Left — conversion copy (children stagger in via .hl-col CSS) */}
+        <div className="pw-container relative px-4 sm:px-6 lg:px-8 pt-14 pb-20 sm:pt-20 sm:pb-28 lg:pt-24 lg:pb-32">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 sm:gap-12 lg:gap-16 xl:gap-20 items-center">
+
+            {/* ── Left — premium conversion copy ── */}
             <div className="hl-col">
-              {  /* Live open-status pill (kitchen hours 10 AM – 9 PM) */}
-              <p className="pw-eyebrow mb-6">
-                <span className={`hl-dot ${kitchenOpen ? 'is-open' : ''}`} aria-hidden="true" />
-                {kitchenOpen ? 'Kitchen open now' : 'Pre-order for tomorrow'}
-                <span className="opacity-50" aria-hidden="true">·</span>
-                <span className="hidden sm:inline">Delivering across Thimphu</span>
-              </p>
 
-              <h1 className="pw-ink mb-5 text-balance"
-                  style={{ fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.08, fontSize: 'clamp(31px,4.4vw,52px)' }}>
-                Bhutanese comfort food —{' '}
-                <span className="block" style={{
-                  background: 'linear-gradient(90deg,#D9480F,#C2410C)',
-                  WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                }}>
-                  made fresh, delivered fast.
+              {/* Status pill */}
+              <div className="hl-pill mb-8" data-open={kitchenOpen}>
+                <span className="hl-pill-dot" aria-hidden="true" />
+                {kitchenOpen ? 'Kitchen open now' : 'Pre-order for tomorrow'}
+                <span className="hl-pill-sep" aria-hidden="true">·</span>
+                <span className="hidden sm:inline">Delivering across Thimphu</span>
+              </div>
+
+              {/* Headline — word-by-word animated reveal */}
+              <h1 className="hl-headline pw-ink mb-6"
+                  style={{ fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.06 }}>
+                <span className="hl-word" style={{ animationDelay: '0.1s' }}>Bhutanese</span>{' '}
+                <span className="hl-word" style={{ animationDelay: '0.2s' }}>comfort</span>{' '}
+                <span className="hl-word" style={{ animationDelay: '0.3s' }}>food,</span>{' '}
+                <br className="hidden sm:block" />
+                <span className="hl-word hl-grad-text" style={{ animationDelay: '0.45s' }}>
+                  made fresh,
+                </span>{' '}
+                <span className="hl-word hl-grad-text" style={{ animationDelay: '0.55s' }}>
+                  delivered fast.
                 </span>
               </h1>
 
-              <p className="pw-sub leading-relaxed mb-5" style={{ fontSize: 'clamp(15px,1.6vw,18px)', maxWidth: '36rem' }}>
+              {/* Subhead */}
+              <p className="hl-sub pw-sub leading-relaxed mb-8"
+                 style={{ fontSize: 'clamp(15px,1.5vw,18px)', maxWidth: '34rem', animationDelay: '0.7s' }}>
                 Fresh momos, rice plates, thukpa and our famous Tomza pack — cooked to order,
-                then hot to your door across Thimphu in about 20 minutes, with live tracking
-                and easy cash or QR payment.
+                then hot to your door across Thimphu in about 20 minutes.
               </p>
 
-              {/* Social proof — same numbers published in the footer */}
-              <div className="flex items-center gap-2.5 mb-7">
+              {/* CTAs */}
+              <div className="hl-cta-row flex flex-col sm:flex-row gap-3 mb-8" style={{ animationDelay: '0.85s' }}>
+                <Link to="/order" className="pw-btn-primary w-full sm:w-auto hl-cta-primary">
+                  Order now <ShoppingBag size={17} aria-hidden="true" />
+                </Link>
+                <a href="#menu" onClick={scrollToMenu} className="pw-btn-ghost-lg w-full sm:w-auto">
+                  Browse menu <ChevronRight size={17} aria-hidden="true" />
+                </a>
+              </div>
+
+              {/* Social proof — minimal, inline */}
+              <div className="hl-proof flex items-center gap-3 mb-8" style={{ animationDelay: '1s' }}>
                 <span className="flex items-center gap-0.5" aria-hidden="true">
                   {[1, 2, 3, 4, 5].map(s => (
                     <Star key={s} size={14} fill="#F59E0B" color="#F59E0B" />
                   ))}
                 </span>
-                <span className="pw-ink text-[13.5px] font-extrabold">4.5</span>
-                <span className="pw-muted text-[13px]">· 40+ Google reviews</span>
+                <span className="pw-ink text-[13px] font-bold">4.5</span>
+                <span className="pw-muted text-[12.5px]">· 40+ Google reviews</span>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                <Link to="/order" className="pw-btn-primary w-full sm:w-auto">
-                  Order now — ~20 min <ShoppingBag size={18} aria-hidden="true" />
-                </Link>
-                <a href="#menu" onClick={scrollToMenu} className="pw-btn-ghost-lg w-full sm:w-auto">
-                  Browse the menu <ChevronRight size={18} aria-hidden="true" />
-                </a>
-              </div>
-
-              {/* Funnel micro-steps (teaser for #how) */}
-              <ol className="hl-steps mb-9" aria-label="How ordering works">
-                {[
-                  { n: '1', text: 'Pick your dishes' },
-                  { n: '2', text: 'Pay cash or QR' },
-                  { n: '3', text: 'Track to your door' },
-                ].map(({ n, text }, i) => (
-                  <li key={n}>
-                    <span className="hl-step-n" aria-hidden="true">{n}</span>
-                    {text}
-                    {i < 2 && <span className="hl-step-sep" aria-hidden="true">→</span>}
-                  </li>
-                ))}
-              </ol>
-
-              {/* Live stat strip — dishes counter is real data; the rest are
-                  service promises already published on this site. */}
-              <div className="hl-stats grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 max-w-md">
+              {/* Stat strip — clean, refined */}
+              <div className="hl-stats grid grid-cols-3 gap-3 sm:gap-4" style={{ animationDelay: '1.15s' }}>
                 <div className="hl-stat">
                   <p className="hl-stat-num"><Counter target={Math.max(dishes.length, 1)} /></p>
-                  <p className="hl-stat-label">Dishes on menu</p>
+                  <p className="hl-stat-label">Dishes</p>
                 </div>
                 <div className="hl-stat">
-                  <p className="hl-stat-num">10<small>% SC</small></p>
-                  <p className="hl-stat-label">+ GST, all included</p>
+                  <p className="hl-stat-num">~20<small>min</small></p>
+                  <p className="hl-stat-label">Delivery</p>
                 </div>
                 <div className="hl-stat">
                   <p className="hl-stat-num">0<small>Nu.</small></p>
-                  <p className="hl-stat-label">Delivery on 3+ packs</p>
+                  <p className="hl-stat-label">On 3+ packs</p>
                 </div>
               </div>
             </div>
 
-            {/* Right — live dish collage on a warm stage tile */}
-            <div className="relative pw-reveal" style={{ transitionDelay: '120ms' }}>
-              <div className="hl-stage relative rounded-[2rem] p-4 sm:p-6"
+            {/* ── Right — premium dish showcase ── */}
+            <div className="relative hl-stage-wrap" style={{ animationDelay: '0.4s' }}>
+              <div className="hl-stage relative rounded-[2rem] p-4 sm:p-5"
                    onMouseEnter={() => setHeroPaused(true)}
-                   onMouseLeave={() => setHeroPaused(false)}
-                   style={{ background: '#FFF1DD', border: '1px solid rgba(245,158,11,0.32)' }}>
-                <span className="hl-stage-dots" aria-hidden="true" />
-                <span className="hl-clock absolute -top-3.5 right-5 sm:right-7 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-extrabold"
-                      style={{ background: '#FFFFFF', border: '1px solid rgba(245,158,11,0.4)', color: '#C2410C' }}>
-                  <Clock size={13} aria-hidden="true" /> Delivering in ~20 min
+                   onMouseLeave={() => setHeroPaused(false)}>
+
+                {/* Clock badge */}
+                <span className="hl-clock-badge absolute -top-3.5 right-5 sm:right-7 z-20 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11.5px] font-extrabold"
+                      style={{ background: '#FFFFFF', border: '1px solid rgba(245,158,11,0.35)', color: '#C2410C', boxShadow: '0 8px 24px -10px rgba(63,32,4,0.25)' }}>
+                  <Clock size={12} aria-hidden="true" /> ~20 min
                 </span>
 
-              {/* Loading skeleton — shown while fetching and no cache yet */}
+              {/* Loading skeleton */}
               {loading && heroPool.length === 0 && (
                 <div className="flex flex-col gap-3 sm:gap-4 animate-pulse" aria-hidden="true">
                   <div className="rounded-3xl"
-                       style={{ height: 'clamp(210px,34vw,320px)', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.2)' }} />
+                       style={{ height: 'clamp(200px,32vw,300px)', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.15)' }} />
                   <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="rounded-2xl"
-                         style={{ height: 'clamp(110px,20vw,150px)', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.15)' }} />
+                         style={{ height: 'clamp(100px,18vw,140px)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)' }} />
                     <div className="rounded-2xl"
-                         style={{ height: 'clamp(110px,20vw,150px)', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.15)' }} />
+                         style={{ height: 'clamp(100px,18vw,140px)', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.12)' }} />
                   </div>
                 </div>
               )}
 
               {heroPool.length === 0 && !loading && (
-                <div className="flex items-center justify-center h-64 sm:h-72 rounded-3xl px-6 text-center"
+                <div className="flex items-center justify-center h-56 sm:h-64 rounded-3xl px-6 text-center"
                      style={{ background: 'var(--pw-panel)', border: '1px dashed var(--pw-line)' }}>
                   <p className="pw-muted text-sm">Add dish photos in Menu Management to see them here</p>
                 </div>
               )}
 
               {heroFeature && (
-                <div className="grid gap-3 sm:gap-4"
-                     aria-live="polite"
-                     aria-atomic="true">
+                <div className="grid gap-3 sm:gap-4" aria-live="polite" aria-atomic="true">
                   {/* Main feature card */}
                   <Link
                     key={heroFeature.id}
                     to="/order"
                     className="hl-feature group block rounded-3xl overflow-hidden relative"
-                    style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)', animation: 'hlCross 0.6s cubic-bezier(0.22,1,0.36,1) both' }}
+                    style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)', animation: 'hlCross 0.7s cubic-bezier(0.22,1,0.36,1) both' }}
                   >
                     <MenuImage
                       src={heroFeature.image && !isImgBroken(heroFeature.id) ? heroFeature.image : null}
@@ -337,19 +325,19 @@ const HomeLanding = () => {
                       ratio={null}
                       priority
                       className="mi-zoom"
-                      style={{ height: 'clamp(210px,34vw,320px)' }}
+                      style={{ height: 'clamp(200px,32vw,300px)' }}
                       tint={`linear-gradient(135deg,${grad(heroFeature.category)[0]}22,${grad(heroFeature.category)[1]}11)`}
                       onError={() => markImgBroken(heroFeature.id)}
                     />
-                    <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.88) 0%,rgba(4,5,10,0.15) 45%,transparent 70%)' }} />
-                    <span className="absolute top-3 left-3 text-[10.5px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
-                          style={{ background: 'rgba(4,5,10,0.7)', border: '1px solid rgba(245,158,11,0.5)', color: '#FBBF24', backdropFilter: 'blur(6px)' }}>
+                    <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.82) 0%,rgba(4,5,10,0.1) 48%,transparent 70%)' }} />
+                    <span className="absolute top-3 left-3 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                          style={{ background: 'rgba(4,5,10,0.65)', border: '1px solid rgba(245,158,11,0.45)', color: '#FBBF24', backdropFilter: 'blur(8px)' }}>
                       {['Chef\'s pick', 'Most loved', 'Fresh daily'][heroIdx % 3]}
                     </span>
                     <span className="absolute bottom-0 inset-x-0 p-4 sm:p-5 flex items-end justify-between gap-3">
                       <span className="block min-w-0">
-                        <span className="block text-white font-bold text-lg leading-snug truncate">{heroFeature.name}</span>
-                        <span className="block text-[13px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Fresh from the kitchen</span>
+                        <span className="block text-white font-bold text-base sm:text-lg leading-snug truncate">{heroFeature.name}</span>
+                        <span className="block text-[12px] mt-0.5" style={{ color: 'rgba(255,255,255,0.65)' }}>Fresh from the kitchen</span>
                       </span>
                       <span className="shrink-0 px-3 py-1.5 rounded-xl text-sm font-black"
                             style={{ background: 'var(--pw-grad)', color: 'var(--pw-ink-on-accent)' }}>
@@ -371,7 +359,7 @@ const HomeLanding = () => {
                   {/* Side cards */}
                   {heroSides.length > 0 && (
                     <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      {heroSides.map((d, di) => (
+                      {heroSides.map((d) => (
                         <Link key={d.id} to="/order"
                               className="group block rounded-2xl overflow-hidden relative"
                               style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)' }}>
@@ -380,14 +368,14 @@ const HomeLanding = () => {
                             alt={d.name}
                             ratio={null}
                             className="mi-zoom"
-                            style={{ height: 'clamp(110px,20vw,150px)' }}
+                            style={{ height: 'clamp(100px,18vw,140px)' }}
                             tint={`linear-gradient(135deg,${grad(d.category)[0]}22,${grad(d.category)[1]}11)`}
                             onError={() => markImgBroken(d.id)}
                           />
-                          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.85) 0%,transparent 60%)' }} />
-                          <span className="absolute bottom-0 inset-x-0 p-3">
-                            <span className="block text-white text-[13.5px] font-semibold leading-snug truncate">{d.name}</span>
-                            <span className="block text-[12px] font-bold mt-0.5" style={{ color: '#FBBF24' }}>
+                          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.8) 0%,transparent 55%)' }} />
+                          <span className="absolute bottom-0 inset-x-0 p-2.5 sm:p-3">
+                            <span className="block text-white text-[12.5px] font-semibold leading-snug truncate">{d.name}</span>
+                            <span className="block text-[11px] font-bold mt-0.5" style={{ color: '#FBBF24' }}>
                               {CURRENCY}{Number(d.price).toFixed(2)}
                             </span>
                           </span>
@@ -397,96 +385,195 @@ const HomeLanding = () => {
                   )}
                 </div>
               )}
-
-              {/* In-tile rating strip */}
-              <div className="mt-3 hidden sm:flex items-center justify-between gap-3 px-1">
-                <div className="hl-rating-pill flex items-center gap-2 px-3.5 py-2.5 rounded-2xl"
-                     style={{ background: '#FFFFFF', border: '1px solid var(--pw-line)', boxShadow: '0 12px 28px -18px rgba(63,32,4,0.3)' }}>
-                  <span style={{ color: '#FBBF24', display: 'inline-flex' }} aria-hidden="true"><Star size={15} fill="#F59E0B" color="#F59E0B" /></span>
-                  <span className="pw-ink text-[13px] font-extrabold">4.5</span>
-                  <span className="pw-muted text-[12.5px]">· 40+ reviews</span>
-                </div>
-                <span className="pw-muted text-[11.5px] font-bold tracking-wider uppercase">
-                  {kitchenOpen ? 'Wrapping fresh orders now' : 'Pre-orders open for tomorrow'}
-                </span>
-              </div>
               </div>
             </div>
           </div>
         </div>
 
         <style>{`
-          @keyframes hlCross { from { opacity:0; transform:scale(1.03); } to { opacity:1; transform:none; } }
-          @keyframes hlUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+          /* ── Premium hero background ── */
+          .hl-hero-bg{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+          .hl-glow{ position:absolute; border-radius:50%; filter:blur(80px); }
+          .hl-glow-1{
+            width:600px; height:400px; top:-120px; left:-80px;
+            background:radial-gradient(circle,rgba(245,158,11,0.18) 0%,transparent 70%);
+            animation:hlFloat 12s ease-in-out infinite;
+          }
+          .hl-glow-2{
+            width:500px; height:500px; top:10%; right:-100px;
+            background:radial-gradient(circle,rgba(234,88,12,0.12) 0%,transparent 70%);
+            animation:hlFloat 14s ease-in-out infinite reverse;
+          }
+          .hl-glow-3{
+            width:450px; height:300px; bottom:-80px; left:30%;
+            background:radial-gradient(circle,rgba(251,191,36,0.10) 0%,transparent 70%);
+            animation:hlFloat 16s ease-in-out infinite;
+          }
+          .hl-grain{
+            position:absolute; inset:0;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            opacity:0.5;
+          }
+          @keyframes hlFloat{
+            0%,100%{ transform:translate(0,0) scale(1); }
+            33%{ transform:translate(20px,-15px) scale(1.05); }
+            66%{ transform:translate(-15px,10px) scale(0.97); }
+          }
 
-          /* Staggered copy entrance */
-          .hl-col > *{ opacity:0; animation:hlUp .55s cubic-bezier(0.22,1,0.36,1) both; }
-          .hl-col > *:nth-child(1){ animation-delay:.04s; }
-          .hl-col > *:nth-child(2){ animation-delay:.12s; }
-          .hl-col > *:nth-child(3){ animation-delay:.20s; }
-          .hl-col > *:nth-child(4){ animation-delay:.28s; }
-
-          /* Live stat tiles */
-          .hl-stats{ opacity:0; animation:hlUp .55s cubic-bezier(0.22,1,0.36,1) both; animation-delay:.32s; }
-          .hl-stat{ padding:12px 14px; border-radius:16px;
-            background:var(--pw-panel); border:1px solid var(--pw-line); }
-          .hl-stat-num{ font-weight:900; font-size:clamp(20px,2.4vw,26px); color:#C2410C;
-            font-variant-numeric:tabular-nums; line-height:1.1; }
-          .hl-stat-num small{ font-size:.55em; font-weight:800; color:#D9480F; margin-left:2px; }
-          .hl-stat-label{ font-size:10.5px; font-weight:700; color:var(--pw-muted);
-            margin-top:3px; letter-spacing:.02em; }
-
-          /* Feature card hover lift + warm glow */
-          .hl-feature{ transition:box-shadow .35s var(--pw-ease, ease), transform .35s var(--pw-ease, ease); }
-          .hl-feature:hover{ box-shadow:0 30px 70px -28px rgba(245,158,11,0.55); transform:translateY(-4px); }
-
-          /* Rotation indicator dots */
-          .hl-rot-dot{ width:6px;height:6px;border-radius:50%;
-            background:rgba(255,255,255,0.45);
-            transition:background .25s ease,opacity .25s ease,transform .25s ease; }
-
-          /* Live open-status dot */
-          .hl-dot{ width:7px;height:7px;border-radius:50%;flex-shrink:0;
-            background:#64748B; box-shadow:0 0 0 0 rgba(100,116,139,0.4);
-            animation:hlDotPulse 2s ease infinite; }
-          .hl-dot.is-open{ background:#34D399; box-shadow:0 0 0 0 rgba(52,211,153,0.5); }
+          /* ── Status pill ── */
+          .hl-pill{
+            display:inline-flex; align-items:center; gap:8px;
+            padding:7px 16px; border-radius:999px;
+            font-size:12.5px; font-weight:700; letter-spacing:0.01em;
+            background:var(--pw-panel); border:1px solid var(--pw-line);
+            box-shadow:0 4px 14px -6px rgba(63,32,4,0.12);
+            opacity:0; animation:hlFadeUp .6s var(--pw-ease) forwards;
+          }
+          .hl-pill-dot{
+            width:7px; height:7px; border-radius:50%; flex-shrink:0;
+            background:#64748B;
+            animation:hlDotPulse 2.5s ease infinite;
+          }
+          .hl-pill[data-open="true"] .hl-pill-dot{
+            background:#34D399;
+            box-shadow:0 0 0 0 rgba(52,211,153,0.5);
+          }
+          .hl-pill-sep{ opacity:0.4; }
           @keyframes hlDotPulse{
             0%{ box-shadow:0 0 0 0 rgba(52,211,153,0.5); }
-            70%{ box-shadow:0 0 0 7px rgba(52,211,153,0); }
+            70%{ box-shadow:0 0 0 6px rgba(52,211,153,0); }
             100%{ box-shadow:0 0 0 0 rgba(52,211,153,0); }
           }
 
-          /* Funnel micro-steps */
-          .hl-steps{ display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;
-            font-size:12.5px;font-weight:700;color:#5C4B3A;list-style:none;padding:0;margin:0 0 36px; }
-          .hl-steps li{ display:inline-flex;align-items:center;gap:7px; }
-          .hl-step-n{ width:22px;height:22px;border-radius:50%;flex-shrink:0;
-            display:inline-flex;align-items:center;justify-content:center;
-            background:rgba(245,158,11,0.13);border:1px solid rgba(245,158,11,0.4);
-            color:#C2410C;font-size:11px;font-weight:900; }
-          .hl-step-sep{ color:#F59E0B;opacity:.6;margin:0 4px;padding:0 2px; }
-
-          /* Rotating glow ring — removed: hero should feel calm, not gimmicky */
-
-          @media (prefers-reduced-motion: reduce){
-            .hl-col > *, .hl-stats{ animation:none !important; opacity:1 !important; transform:none !important; }
-            .hl-feature{ transition:none !important; }
-            .hl-dot{ animation:none !important; }
+          /* ── Headline word-by-word reveal ── */
+          .hl-word{
+            display:inline-block;
+            opacity:0;
+            transform:translateY(28px);
+            animation:hlWordIn .7s var(--pw-ease) forwards;
+          }
+          @keyframes hlWordIn{
+            0%{ opacity:0; transform:translateY(28px); }
+            100%{ opacity:1; transform:translateY(0); }
           }
 
-          /* Warm stage tile behind the dish collage */
-          .hl-stage-dots{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-            background-image:radial-gradient(rgba(63,32,4,0.10) 1px,transparent 1px);
-            background-size:22px 22px;
-            -webkit-mask-image:radial-gradient(80% 70% at 60% 30%,#000 0%,transparent 100%);
-            mask-image:radial-gradient(80% 70% at 60% 30%,#000 0%,transparent 100%);}
-          .hl-clock{box-shadow:0 10px 26px -14px rgba(63,32,4,0.5);}
+          /* Gradient text with subtle shimmer */
+          .hl-grad-text{
+            background:linear-gradient(90deg,#D9480F,#C2410C,#EA580C);
+            background-size:200% auto;
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+            animation:hlShimmer 4s linear infinite;
+            animation-delay:1.5s;
+          }
+          @keyframes hlShimmer{
+            0%{ background-position:0% center; }
+            100%{ background-position:200% center; }
+          }
+          .hl-headline{
+            font-size:clamp(32px,5vw,56px);
+          }
 
-          /* Dark Tomza feature band — keep light text on the dark surface */
+          /* ── Subhead, CTA row, proof — staggered fade-up ── */
+          .hl-sub, .hl-cta-row, .hl-proof, .hl-stats{
+            opacity:0;
+            animation:hlFadeUp .7s var(--pw-ease) forwards;
+          }
+          @keyframes hlFadeUp{
+            0%{ opacity:0; transform:translateY(20px); }
+            100%{ opacity:1; transform:translateY(0); }
+          }
+
+          /* ── CTA primary — premium lift ── */
+          .hl-cta-primary{
+            transition:transform .3s var(--pw-ease), box-shadow .3s var(--pw-ease);
+          }
+          .hl-cta-primary:hover{
+            transform:translateY(-2px);
+            box-shadow:0 14px 32px -10px rgba(234,88,12,0.5);
+          }
+
+          /* ── Stat tiles — clean, minimal ── */
+          .hl-stat{
+            padding:14px 16px; border-radius:14px;
+            background:var(--pw-panel); border:1px solid var(--pw-line);
+            transition:transform .3s var(--pw-ease), box-shadow .3s var(--pw-ease);
+          }
+          .hl-stat:hover{
+            transform:translateY(-2px);
+            box-shadow:0 8px 20px -8px rgba(63,32,4,0.12);
+          }
+          .hl-stat-num{
+            font-weight:900; font-size:clamp(18px,2.2vw,24px);
+            color:#C2410C; font-variant-numeric:tabular-nums; line-height:1.1;
+          }
+          .hl-stat-num small{
+            font-size:.5em; font-weight:800; color:#D9480F; margin-left:2px;
+          }
+          .hl-stat-label{
+            font-size:10px; font-weight:700; color:var(--pw-muted);
+            margin-top:3px; letter-spacing:0.03em; text-transform:uppercase;
+          }
+
+          /* ── Stage wrap fade-in ── */
+          .hl-stage-wrap{
+            opacity:0;
+            animation:hlStageIn .8s var(--pw-ease) forwards;
+          }
+          @keyframes hlStageIn{
+            0%{ opacity:0; transform:translateY(24px) scale(0.98); }
+            100%{ opacity:1; transform:translateY(0) scale(1); }
+          }
+
+          /* ── Stage tile — premium glass surface ── */
+          .hl-stage{
+            background:rgba(255,241,221,0.6);
+            border:1px solid rgba(245,158,11,0.25);
+            backdrop-filter:blur(12px);
+            box-shadow:0 24px 60px -20px rgba(63,32,4,0.15);
+          }
+
+          /* ── Feature card hover ── */
+          .hl-feature{
+            transition:box-shadow .4s var(--pw-ease), transform .4s var(--pw-ease);
+          }
+          .hl-feature:hover{
+            box-shadow:0 28px 64px -24px rgba(245,158,11,0.5);
+            transform:translateY(-3px);
+          }
+
+          /* ── Rotation dots ── */
+          .hl-rot-dot{
+            width:5px; height:5px; border-radius:50%;
+            background:rgba(255,255,255,0.4);
+            transition:background .25s ease, opacity .25s ease;
+          }
+
+          /* ── Cross-fade animation for hero rotation ── */
+          @keyframes hlCross{
+            from{ opacity:0; transform:scale(1.03); }
+            to{ opacity:1; transform:none; }
+          }
+
+          /* ── Dark Tomza feature band ── */
           .tz-dark .pw-ink{ color:#F8FAFC; }
           .tz-dark .pw-sub{ color:#C6CFDC; }
           .tz-dark .pw-muted{ color:#A89C8E; }
-          .tz-dark .pw-eyebrow{ background:rgba(245,158,11,0.14); border-color:rgba(245,158,11,0.4); color:#FBBF24; }`}</style>
+          .tz-dark .pw-eyebrow{ background:rgba(245,158,11,0.14); border-color:rgba(245,158,11,0.4); color:#FBBF24; }
+
+          /* ── Reduced motion ── */
+          @media (prefers-reduced-motion: reduce){
+            .hl-word, .hl-sub, .hl-cta-row, .hl-proof, .hl-stats,
+            .hl-stage-wrap, .hl-pill{
+              animation:none !important; opacity:1 !important; transform:none !important;
+            }
+            .hl-grad-text{ animation:none !important; }
+            .hl-glow-1, .hl-glow-2, .hl-glow-3{ animation:none !important; }
+            .hl-pill-dot{ animation:none !important; }
+            .hl-feature{ transition:none !important; }
+          }
+        `}</style>
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
@@ -511,53 +598,14 @@ const HomeLanding = () => {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════
-          HOW IT WORKS
-      ══════════════════════════════════════════════════════════════ */}
-      <section id="how" className="py-16 sm:py-24" style={{ background: 'var(--pw-bg-2)', scrollMarginTop: 96 }}>
-        <div className="pw-container px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 pw-reveal">
-            <p className="pw-eyebrow mb-4">Simple process</p>
-            <h2 className="pw-ink font-extrabold tracking-tight leading-[1.1]"
-                style={{ fontSize: 'clamp(28px,4vw,44px)', fontFamily: "'Playfair Display',Georgia,serif" }}>
-              Dinner in three easy steps
-            </h2>
-            <p className="pw-muted mt-4 text-[15px]">No app to install, no account required — just pick, pay and track.</p>
-          </div>
-
-          <ol className="grid sm:grid-cols-3 gap-5 sm:gap-6 relative">
-            {[
-              { step: '01', icon: <ShoppingBag size={24} />, title: 'Browse & pick', desc: 'Explore today’s menu, pick your favourite dishes and drop them in the cart.' },
-              { step: '02', icon: <Phone size={24} />,       title: 'Place your order', desc: 'Confirm your address and pay — cash on delivery or online — in seconds.' },
-              { step: '03', icon: <Truck size={24} />,       title: 'Fast delivery', desc: 'Our rider brings it hot to your door, typically within ~20 minutes.' },
-            ].map(({ step, icon, title, desc }, i) => (
-              <li key={step}
-                  className="pw-card relative p-6 sm:p-7 text-center pw-reveal"
-                  style={{ transitionDelay: `${i * 90}ms` }}>
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 h-7 min-w-[28px] px-2 rounded-full flex items-center justify-center text-[11px] font-black"
-                      style={{ background: 'var(--pw-grad)', color: 'var(--pw-ink-on-accent)' }}>
-                  {step}
-                </span>
-                <span className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5"
-                      style={{ background: 'rgba(234,88,12,0.09)', border: '1px solid rgba(234,88,12,0.25)', color: '#C2410C' }} aria-hidden="true">
-                  {icon}
-                </span>
-                <h3 className="pw-ink font-bold text-lg mb-2">{title}</h3>
-                <p className="pw-muted text-[14px] leading-relaxed">{desc}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
       {/* ══════════════════════════════════════════════════════════════
-          LIVE MENU PREVIEW
+          TODAY'S MENU  (replaces former "Dinner in three easy steps")
       ══════════════════════════════════════════════════════════════ */}
-      <section id="menu" className="py-16 sm:py-24" style={{ background: 'var(--pw-bg)', scrollMarginTop: 96 }}>
+      <section id="menu" className="py-16 sm:py-24" style={{ background: 'var(--pw-bg-2)', scrollMarginTop: 96 }}>
         <div className="pw-container px-4 sm:px-6 lg:px-8">
           <Heading
             eyebrow="Live from our kitchen"
-            title="Today’s menu"
+            title="Today's menu"
             action={
               <Link to="/order" className="pw-btn-primary self-start shrink-0">
                 Full menu <ArrowRight size={17} aria-hidden="true" />

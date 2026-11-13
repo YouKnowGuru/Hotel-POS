@@ -26,8 +26,7 @@ const RESTAURANT_LOCATION = 'Norzin Lam 1, opposite Thimphu Thromde Office, near
 /* ── Nav link definitions ── */
 const NAV_LINKS = [
   { key: 'home', label: 'Home',         to: '/' },
-  { key: 'menu', label: 'Menu',         to: '/',    hash: '#menu' },
-  { key: 'how',  label: 'How it works', to: '/',    hash: '#how' },
+  { key: 'menu', label: "Today's Menu", to: '/',    hash: '#menu' },
   { key: 'about', label: 'About',       to: '/about' },
   { key: 'order', label: 'Order Now',   to: '/order', cta: true },
 ];
@@ -38,7 +37,6 @@ const QUICK_LINKS = [
   { label: 'About Us',          to: '/about' },
   { label: 'Privacy Policy',    to: '/privacy' },
   { label: 'Terms & Conditions', to: '/terms' },
-  { label: 'Staff Login',       to: '/login' },
 ];
 
 const HOURS = [
@@ -313,7 +311,6 @@ const PublicShell = ({ active = '', children }) => {
           {/* Desktop actions */}
           <div className="hidden lg:flex items-center gap-2.5">
             <NavLink l={NAV_LINKS.find(l => l.cta)} />
-            <Link to="/login" className="pw-btn-ghost">Staff Login</Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -345,15 +342,6 @@ const PublicShell = ({ active = '', children }) => {
 
             <nav aria-label="Mobile navigation" className="flex flex-col gap-2 p-4 overflow-y-auto flex-1">
               {NAV_LINKS.map((l, i) => <NavLink key={l.key} l={l} mobile index={i} />)}
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="pw-drawer-link is-quiet"
-                style={{ animationDelay: `${60 + NAV_LINKS.length * 45}ms` }}
-              >
-                <span>Staff Login</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
             </nav>
 
             <div className="px-5 py-5 pw-rule-t space-y-2 text-[13px]">

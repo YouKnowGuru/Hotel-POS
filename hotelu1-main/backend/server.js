@@ -6854,6 +6854,78 @@ app.post('/api/notifications/dismiss', verifyToken, async (req, res) => {
   }
 });
 
+/* ── SEO: robots.txt + sitemap.xml ──────────────────────────────
+   Served as dedicated routes BEFORE the SPA catch-all so they are
+   returned as real static files (not index.html).
+   The domain in sitemap.xml is derived from CORS_ORIGIN (first
+   https entry) or SITE_URL env var, falling back to the literal
+   production domain. */
+const SITE_URL = (() => {
+  // 1. Explicit override
+  if (process.env.SITE_URL) return process.env.SITE_URL.replace(/\/+$/, '');
+  // 2. First https origin from CORS_ORIGIN
+  const origins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim());
+  const httpsOrigin = origins.find(o => /^https:\/\//.test(o));
+  if (httpsOrigin) return httpsOrigin.replace(/\/+$/, '');
+  // 3. Fallback
+  return 'https://paradisetomza.com';
+})();
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Allow: /order
+Allow: /about
+Allow: /privacy
+Allow: /terms
+Disallow: /login
+Disallow: /dashboard
+Disallow: /orders
+Disallow: /menu
+Disallow: /dinein
+Disallow: /settings
+Disallow: /api/
+Disallow: /*?
+Disallow: /*#
+
+Sitemap: ${SITE_URL}/sitemap.xml
+`);
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${SITE_URL}/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/order</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>${SITE_URL}/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>
+`);
+});
+
 // Fallback for React Single Page Application (SPA) routing
 if (fs.existsSync(frontendBuildPath)) {
   app.get("*", (req, res, next) => {
