@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import PublicShell from './PublicShell';
 import MenuImage from './MenuImage';
+import DeliveryPaymentModal from './DeliveryPaymentModal';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
 import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
@@ -168,6 +169,18 @@ const DeliveryMenu = () => {
   const [proofImage,      setProofImage]      = useState('');
   const [paymentError,    setPaymentError]    = useState('');
   const [submittingProof, setSubmittingProof] = useState(false);
+  /* QR payment sheet state. qrError is kept separate from paymentError so a
+     missing/unreachable QR never masquerades as a proof-upload problem. */
+  const [qrError,         setQrError]         = useState('');
+  const [qrNonce,         setQrNonce]         = useState(0);
+  const [proofSubmitted,  setProofSubmitted]  = useState(false);
+  const [proofFileName,   setProofFileName]   = useState('');
+  const [paymentOpenError,setPaymentOpenError]= useState('');
+  /* Orders whose proof we submitted locally but the 4s poll has not caught
+     up with yet. Without this, a stale `awaiting_payment` poll puts the
+     "Pay now" button back on screen and customers pay twice. */
+  const proofPendingIds = useRef(new Set());
+  const proofInFlight   = useRef(false);
 
   /* Delivery-details form state */
   const [errs,      setErrs]      = useState({});
@@ -344,22 +357,37 @@ const DeliveryMenu = () => {
   };
 
   /* ── Payment QR modal data ── */
+  /* A fresh payment session starts with a clean form. Kept separate from the
+     QR fetch so "Try again" does not wipe an already-selected screenshot. */
   useEffect(() => {
     if (!paymentOrder) return;
-    setPaymentQr('');
     setPaymentError('');
+    setProofImage('');
+    setProofFileName('');
+    setProofSubmitted(false);
+  }, [paymentOrder]);
+
+  useEffect(() => {
+    if (!paymentOrder) return undefined;
+    let alive = true;
+    setPaymentQr('');
+    setQrError('');
     fetch(`${getAPI_URL()}/api/settings?key=payment_qr_image`)
       .then((res) => res.ok ? res.json() : null)
       .then((data) => {
+        if (!alive) return;
         const val = data?.value;
         if (val && (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(val) || /^(https?:\/\/|\/)/i.test(val))) {
           setPaymentQr(val);
         } else {
-          setPaymentError('Payment QR is not configured. Please ask the restaurant for assistance.');
+          setQrError('The restaurant has not configured a payment QR yet. Please contact the restaurant so they can share it with you.');
         }
       })
-      .catch(() => setPaymentError('Could not load the restaurant payment QR.'));
-  }, [paymentOrder]);
+      .catch(() => {
+        if (alive) setQrError('Could not load the payment QR. Check your connection and try again.');
+      });
+    return () => { alive = false; };
+  }, [paymentOrder, qrNonce]);
 
   const selectProof = (file) => {
     setPaymentError('');
@@ -368,16 +396,26 @@ const DeliveryMenu = () => {
       setPaymentError('Please choose a PNG, JPG, or WebP screenshot smaller than 3 MB.');
       return;
     }
+    setProofFileName(file.name || 'Payment screenshot');
     const reader = new FileReader();
     reader.onload = () => setProofImage(String(reader.result));
     reader.readAsDataURL(file);
   };
 
+  const removeProof = () => {
+    setProofImage('');
+    setProofFileName('');
+    setPaymentError('');
+  };
+
   const submitPaymentProof = async () => {
-    if (!proofImage || !paymentOrder || submittingProof) {
+    // Ref guard: React state has not flushed yet on a fast double tap.
+    if (proofInFlight.current) return;
+    if (!proofImage || !paymentOrder) {
       setPaymentError('Upload your payment screenshot before submitting.');
       return;
     }
+    proofInFlight.current = true;
     setSubmittingProof(true); setPaymentError('');
     try {
       const res = await fetch(`${getAPI_URL()}/api/orders/${paymentOrder.id}/payment-proof`, {
@@ -392,16 +430,21 @@ const DeliveryMenu = () => {
       if (!res.ok && res.status !== 409) throw new Error(data?.message || 'Could not submit payment proof');
       const submittedId = Number(paymentOrder.id);
       const finalStatus = String(data?.payment_status || 'verification_pending');
-      setPaymentOrder(null);
-      setProofImage('');
+      // Keep the sheet open and show a real success state. Closing it
+      // instantly made the whole step feel like it failed and tempted
+      // customers to pay a second time.
+      setProofSubmitted(true);
+      setPaymentError('');
       // Mark locally so the tracker stops asking for payment until a fresh
       // poll confirms the admin's decision.
+      proofPendingIds.current.add(submittedId);
       setOrders(p => p.map(o => Number(o.id) === submittedId
         ? { ...o, payment_status: finalStatus === 'paid' ? 'paid' : 'verification_pending' }
         : o));
     } catch (err) {
       setPaymentError(err.message || 'Could not submit payment proof');
     } finally {
+      proofInFlight.current = false;
       setSubmittingProof(false);
     }
   };
@@ -410,10 +453,14 @@ const DeliveryMenu = () => {
      restores the one-time token only while payment is still due (same
      flow the QR table menu uses). */
   const openPayment = async (order) => {
+    // A proof we just submitted is still under review even if a stale poll
+    // says otherwise — never reopen the payment sheet for that order.
+    if (proofPendingIds.current.has(Number(order.id))) return;
     setPaymentError('');
+    setPaymentOpenError('');
     setProofImage('');
     try {
-      let token = paymentOrder?.id === order.id ? paymentOrder.paymentAccessToken : null;
+      let token = Number(paymentOrder?.id) === Number(order.id) ? paymentOrder.paymentAccessToken : null;
       if (!token) {
         if (order.payment_access_token) {
           token = order.payment_access_token;
@@ -428,7 +475,9 @@ const DeliveryMenu = () => {
       }
       setPaymentOrder({ ...order, paymentAccessToken: token });
     } catch (err) {
-      setPaymentError(err.message || 'Could not open payment. Please refresh and try again.');
+      // The sheet is not mounted on this path, so an error inside the sheet
+      // would be invisible. Surface it on the tracking page instead.
+      setPaymentOpenError(err.message || 'Could not open payment. Please refresh and try again.');
     }
   };
 
@@ -454,9 +503,21 @@ const DeliveryMenu = () => {
         if (!res.ok) return;
         const data = await res.json();
         if (!Array.isArray(data) || !alive) return;
+        // A poll that was already in flight when the customer submitted their
+        // proof can still report `awaiting_payment`. Without reconciliation it
+        // resurrects the "Pay now" button and invites a second payment.
         const mine = data
           .filter(o => ids.has(Number(o.id)))
-          .sort((a, b) => Number(b.id) - Number(a.id));
+          .sort((a, b) => Number(b.id) - Number(a.id))
+          .map(o => {
+            const id = Number(o.id);
+            if (!proofPendingIds.current.has(id)) return o;
+            const ps = String(o.payment_status || '').toLowerCase();
+            if (ps !== 'awaiting_payment') proofPendingIds.current.delete(id);
+            return ps === 'awaiting_payment'
+              ? { ...o, payment_status: 'verification_pending' }
+              : o;
+          });
         // Only re-render when guest-visible state actually changed.
         const sig = mine.map(o => [
           o.id, o.status, o.payment_status || '',
@@ -483,7 +544,9 @@ const DeliveryMenu = () => {
   const startNewOrder = () => {
     setStep('menu'); setName(''); setPhone(''); setEmail(''); setAddress(''); setNotes('');
     setErrs({}); setTouched({}); setNotesOpen(false); setOrderErr(''); setPayMethod('cash');
-    setPaymentOrder(null); setProofImage(''); setPaymentError('');
+    setPaymentOrder(null); setProofImage(''); setPaymentError(''); setPaymentOpenError('');
+    proofPendingIds.current.clear();
+    proofInFlight.current = false;
     // BUGFIX: stale orders/signature previously leaked into the next order's
     // placed screen (old cards resurfaced next to the new one).
     setOrders([]);
@@ -514,6 +577,18 @@ const DeliveryMenu = () => {
 
             {/* Live order + payment tracking */}
             <div className="mt-8 space-y-4">
+              {paymentOpenError && (
+                <div role="alert" className="pw-card flex items-start gap-3 p-4 pw-reveal dm-payopen-err">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-[14px] leading-snug">Couldn&apos;t open the payment sheet</p>
+                    <p className="pw-muted text-[12.5px] mt-1 leading-relaxed">{paymentOpenError}</p>
+                    <button type="button" className="pw-btn-ghost-lg mt-3" onClick={() => setPaymentOpenError('')}>
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
               {orders.length === 0 && (
                 <div className="pw-card p-6 text-center pw-reveal" role="status">
                   <Loader2 size={22} className="mx-auto mb-3 animate-spin" style={{ color: '#C2410C' }} aria-hidden="true" />
@@ -706,12 +781,23 @@ const DeliveryMenu = () => {
           </div>
         </div>
 
-        {/* QR payment dialog */}
-        {paymentOrder && <PaymentModal
-          paymentOrder={paymentOrder} paymentQr={paymentQr} proofImage={proofImage}
-          paymentError={paymentError} submittingProof={submittingProof}
+        {/* QR payment sheet — portaled to document.body so it is never
+            dimmed/clobbered by the shell's dark-mode overrides. */}
+        {paymentOrder && <DeliveryPaymentModal
+          paymentOrder={paymentOrder}
+          paymentQr={paymentQr}
+          qrError={qrError}
+          onRetryQr={() => setQrNonce(n => n + 1)}
+          proofImage={proofImage}
+          proofFileName={proofFileName}
+          paymentError={paymentError}
+          submittingProof={submittingProof}
+          proofSubmitted={proofSubmitted}
           close={() => setPaymentOrder(null)}
-          selectProof={selectProof} submit={submitPaymentProof}
+          selectProof={selectProof}
+          removeProof={removeProof}
+          submit={submitPaymentProof}
+          currency={CURRENCY}
         />}
 
         <style>{placedCSS}</style>
@@ -2061,20 +2147,6 @@ const DeliveryMenu = () => {
         /* Sheet handle */
         html.dark .dm-sheet-handle span{ background:rgba(255,255,255,0.2) !important; }
 
-        /* File input */
-        html.dark .dm-file{ color:#D6CBBE !important; }
-        html.dark .dm-file::file-selector-button{
-          background:rgba(245,158,11,0.14) !important;
-          color:#FBBF24 !important;
-        }
-
-        /* Error alert box */
-        html.dark .dm-err{
-          background:rgba(239,68,68,0.15) !important;
-          border-color:rgba(239,68,68,0.35) !important;
-          color:#FCA5A5 !important;
-        }
-
         /* ═══ Inline style overrides — prices, pay-notes, icons ═══ */
         /* Price color #C2410C → amber in dark mode */
         html.dark .pw-root [style*="color: #C2410C"],
@@ -2169,75 +2241,6 @@ ${darkInlineColorCSS}
     </PublicShell>
   );
 };
-
-/* ── QR payment dialog shared with the placed screen ── */
-const PaymentModal = ({ paymentOrder, paymentQr, proofImage, paymentError, submittingProof, close, selectProof, submit }) => (
-  <div
-    className="fixed inset-0 z-[500] overflow-y-auto overscroll-contain p-3 sm:p-6 flex items-center justify-center dm-pm"
-    onClick={(e) => { if (e.target === e.currentTarget) close(); }}
-    role="dialog" aria-modal="true" aria-label="Complete your payment">
-    <div className="w-full max-w-md my-auto pw-card" style={{ background: '#FFF8F1', boxShadow: '0 40px 90px -30px rgba(63,32,4,0.35)' }}>
-      <div className="dm-pm-head">
-        <span className="dm-pm-icon" aria-hidden="true"><QrCode size={20} /></span>
-        <div className="min-w-0 flex-1">
-          <h2 className="pw-ink font-extrabold text-[17px] leading-tight">Pay before we prepare your order</h2>
-          <p className="pw-muted text-[12.5px] mt-0.5">
-            Order #{paymentOrder.id} · Total <strong style={{ color: '#C2410C' }}>{CURRENCY}{Number(paymentOrder.total).toFixed(2)}</strong>
-          </p>
-        </div>
-        <button onClick={close} className="pw-icon-btn" aria-label="Close payment dialog">
-          <X size={18} />
-        </button>
-      </div>
-
-      <div className="p-5 sm:p-6 space-y-4">          <div className="rounded-2xl p-4 text-center" style={{ background: 'rgba(63,32,4,0.04)', border: '1px solid var(--pw-line)' }}>
-          {paymentQr ? (
-            <img src={paymentQr} alt="Payment QR code"
-                 className="w-48 h-48 sm:w-56 sm:h-56 max-w-full mx-auto bg-white p-2 rounded-xl object-contain" />
-          ) : (
-            <div className="py-12 flex flex-col items-center justify-center">
-              <Loader2 size={26} className="animate-spin mb-3" style={{ color: '#C2410C' }} aria-hidden="true" />
-              <p className="pw-muted text-sm">Loading payment QR…</p>
-            </div>
-          )}
-          <p className="pw-muted text-[12px] mt-3 leading-relaxed">
-            Scan with your payment app, pay the exact amount, then upload the confirmation screenshot.
-          </p>
-        </div>
-
-        <div>
-          <label htmlFor="dm-proof" className="df-label" style={{ display: 'block', marginBottom: 8 }}>
-            Payment screenshot <span className="df-badge is-req" style={{ marginLeft: 6 }}>Required</span>
-          </label>
-          <input id="dm-proof" type="file" accept="image/png,image/jpeg,image/webp"
-                 onChange={(e) => selectProof(e.target.files?.[0])}
-                 className="dm-file" aria-describedby="dm-proof-help" />
-          <p id="dm-proof-help" className="pw-muted text-[11.5px] mt-1.5">PNG, JPG or WebP — up to 3 MB.</p>
-        </div>
-
-        {proofImage && (
-          <p className="flex items-center gap-2 text-[13px] font-bold" style={{ color: '#047857' }}>
-            <CheckCircle size={14} aria-hidden="true" /> Screenshot attached
-          </p>
-        )}
-        {paymentError && (
-          <p role="alert" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-semibold dm-err">
-            <AlertCircle size={14} aria-hidden="true" /> {paymentError}
-          </p>
-        )}
-
-        <button onClick={submit} disabled={submittingProof} className="pw-btn-primary w-full">
-          {submittingProof
-            ? <><Loader2 size={17} className="animate-spin" aria-hidden="true" /> Submitting proof…</>
-            : <><ShieldCheck size={17} aria-hidden="true" /> Submit payment for review</>}
-        </button>
-        <p className="pw-muted text-center text-[12px] leading-relaxed">
-          Your order is sent to the kitchen &amp; delivery staff only after an admin approves your payment.
-        </p>
-      </div>
-    </div>
-  </div>
-);
 
 /* BUGFIX: the checkout screen returns early, before the menu screen's
    <style> block ever renders — so its delivery-details form rendered with
@@ -2471,24 +2474,13 @@ const placedCSS = `
     font-size:12.5px;font-weight:600;line-height:1.6;
     border:1px solid;background:rgba(255,255,255,0.02);
   }
-  .dm-pm{animation:dmBgd .25s var(--pw-ease) both;}
-  @keyframes dmBgd{from{opacity:0}to{opacity:1}}
-  .dm-pm-head{
-    display:flex;align-items:center;gap:12px;
-    padding:16px 18px;border-bottom:1px solid var(--pw-line);
-    background:linear-gradient(135deg,rgba(245,158,11,0.14),rgba(234,88,12,0.06));
+  /* Payment-session failures render on the tracker (the portaled sheet is
+     not mounted on that path), so they need a visible alert of their own. */
+  .dm-payopen-err{
+    background:rgba(239,68,68,0.08) !important;
+    border:1px solid rgba(239,68,68,0.4) !important;
+    color:#B91C1C;
   }
-  .dm-pm-icon{
-    width:42px;height:42px;border-radius:13px;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--pw-grad);color:var(--pw-ink-on-accent);
-  }
-  .dm-file{ width:100%;font-size:13px;color:#5C4B3A; }
-  .dm-file::file-selector-button{
-    margin-right:12px;padding:10px 16px;border-radius:12px;border:0;cursor:pointer;
-    background:rgba(245,158,11,0.14);color:#C2410C;font-weight:800;font-size:13px;
-  }
-  .dm-err{ background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#B91C1C; }
 
   /* ── Dark mode overrides for placed/tracking screen ── */
   html.dark .dm-trk-badge{
@@ -2496,19 +2488,11 @@ const placedCSS = `
     border-color:rgba(255,255,255,0.1) !important;
     color:#D6CBBE !important;
   }
-  html.dark .dm-pm-head{
-    background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(234,88,12,0.04)) !important;
-  }
   html.dark .dm-trk-head{
     background:linear-gradient(135deg,rgba(52,211,153,0.1),rgba(16,185,129,0.04)) !important;
   }
-  html.dark .dm-file{ color:#D6CBBE !important; }
-  html.dark .dm-file::file-selector-button{
-    background:rgba(245,158,11,0.14) !important;
-    color:#FBBF24 !important;
-  }
-  html.dark .dm-err{
-    background:rgba(239,68,68,0.15) !important;
+  html.dark .dm-payopen-err{
+    background:rgba(239,68,68,0.14) !important;
     border-color:rgba(239,68,68,0.35) !important;
     color:#FCA5A5 !important;
   }
@@ -2523,7 +2507,7 @@ const placedCSS = `
   html.dark .pay-note[style*="color:'#1D4ED8'"]{ color:#60A5FA !important; }
 ${darkInlineColorCSS}
   @media (prefers-reduced-motion:reduce){
-    .dm-trk,.dm-pm{animation:none !important;opacity:1 !important;transform:none !important;}
+    .dm-trk{animation:none !important;opacity:1 !important;transform:none !important;}
     .dm-trk-bar{animation:none !important;}
   }
 `;
