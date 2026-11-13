@@ -20,6 +20,7 @@ import {
   ArrowRight, Sparkles,
 } from 'lucide-react';
 import PublicShell from './PublicShell';
+import MenuImage from './MenuImage';
 import { getAPI_URL } from '../utils/api';
 
 const CURRENCY = 'Nu. ';
@@ -330,16 +331,16 @@ const HomeLanding = () => {
                     className="hl-feature group block rounded-3xl overflow-hidden relative"
                     style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)', animation: 'hlCross 0.6s cubic-bezier(0.22,1,0.36,1) both' }}
                   >
-                    {heroFeature.image && !isImgBroken(heroFeature.id)
-                      ? <img src={heroFeature.image} alt={heroFeature.name}
-                             fetchpriority="high"
-                             onError={() => markImgBroken(heroFeature.id)}
-                             className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                             style={{ height: 'clamp(210px,34vw,320px)' }} />
-                      : <div style={{ height: 'clamp(210px,34vw,320px)', background: `linear-gradient(135deg,${grad(heroFeature.category)[0]}22,${grad(heroFeature.category)[1]}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Flame size={56} style={{ color: grad(heroFeature.category)[0], opacity: 0.5 }} />
-                        </div>
-                    }
+                    <MenuImage
+                      src={heroFeature.image && !isImgBroken(heroFeature.id) ? heroFeature.image : null}
+                      alt={heroFeature.name}
+                      ratio={null}
+                      priority
+                      className="mi-zoom"
+                      style={{ height: 'clamp(210px,34vw,320px)' }}
+                      tint={`linear-gradient(135deg,${grad(heroFeature.category)[0]}22,${grad(heroFeature.category)[1]}11)`}
+                      onError={() => markImgBroken(heroFeature.id)}
+                    />
                     <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.88) 0%,rgba(4,5,10,0.15) 45%,transparent 70%)' }} />
                     <span className="absolute top-3 left-3 text-[10.5px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
                           style={{ background: 'rgba(4,5,10,0.7)', border: '1px solid rgba(245,158,11,0.5)', color: '#FBBF24', backdropFilter: 'blur(6px)' }}>
@@ -374,15 +375,15 @@ const HomeLanding = () => {
                         <Link key={d.id} to="/order"
                               className="group block rounded-2xl overflow-hidden relative"
                               style={{ border: '1px solid var(--pw-line)', background: 'var(--pw-panel)' }}>
-                          {d.image && !isImgBroken(d.id)
-                            ? <img src={d.image} alt={d.name} loading="lazy"
-                                   onError={() => markImgBroken(d.id)}
-                                   className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                   style={{ height: 'clamp(110px,20vw,150px)' }} />
-                            : <div style={{ height: 'clamp(110px,20vw,150px)', background: `linear-gradient(135deg,${grad(d.category)[0]}22,${grad(d.category)[1]}11)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Flame size={30} style={{ color: grad(d.category)[0], opacity: 0.5 }} />
-                              </div>
-                          }
+                          <MenuImage
+                            src={d.image && !isImgBroken(d.id) ? d.image : null}
+                            alt={d.name}
+                            ratio={null}
+                            className="mi-zoom"
+                            style={{ height: 'clamp(110px,20vw,150px)' }}
+                            tint={`linear-gradient(135deg,${grad(d.category)[0]}22,${grad(d.category)[1]}11)`}
+                            onError={() => markImgBroken(d.id)}
+                          />
                           <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top,rgba(4,5,10,0.85) 0%,transparent 60%)' }} />
                           <span className="absolute bottom-0 inset-x-0 p-3">
                             <span className="block text-white text-[13.5px] font-semibold leading-snug truncate">{d.name}</span>
@@ -568,7 +569,7 @@ const HomeLanding = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5" aria-hidden="true">
               {[...Array(8)].map((_, i) => (
                 <div key={i} className="rounded-2xl overflow-hidden animate-pulse"
-                     style={{ background: 'var(--pw-panel)', border: '1px solid var(--pw-line)', height: 236 }} />
+                     style={{ background: 'var(--pw-panel)', border: '1px solid var(--pw-line)', aspectRatio: '4 / 3' }} />
               ))}
             </div>
           )}
@@ -588,22 +589,20 @@ const HomeLanding = () => {
                 className="group block rounded-2xl overflow-hidden pw-card pw-fx-tilt pw-fx-sheen pw-reveal min-w-0"
                 style={{ transitionDelay: `${Math.min(i, 7) * 55}ms` }}
               >
-                <div className="relative h-32 sm:h-36 overflow-hidden">
-                  {item.image
-                    ? <img src={item.image} alt={item.name} loading="lazy"
-                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                    : <div className="w-full h-full flex items-center justify-center"
-                           style={{ background: `linear-gradient(135deg,${grad(item.category)[0]}18,${grad(item.category)[1]}0d)` }}>
-                        <Flame size={30} style={{ color: grad(item.category)[0], opacity: 0.5 }} />
-                      </div>
-                  }
+                <MenuImage
+                  src={item.image}
+                  alt={item.name}
+                  ratio="4 / 3"
+                  className="mi-zoom"
+                  tint={`linear-gradient(135deg,${grad(item.category)[0]}18,${grad(item.category)[1]}0d)`}
+                >
                   {item.category && (
                     <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
                           style={{ background: 'rgba(4,5,10,0.75)', color: '#FBBF24', backdropFilter: 'blur(4px)' }}>
                       {item.category}
                     </span>
                   )}
-                </div>
+                </MenuImage>
                 <div className="p-3.5 sm:p-4">
                   <p className="pw-ink font-semibold text-[14px] leading-snug mb-1 line-clamp-1">{item.name}</p>
                   {item.description && (

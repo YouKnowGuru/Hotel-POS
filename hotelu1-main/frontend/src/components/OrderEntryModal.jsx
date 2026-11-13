@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { authFetch, getAPI_URL } from '../utils/api';
 import { enrichOrderWithTotals, fetchAndCacheGlobalSettings, calculateOrderTotals, getGlobalTaxDiscount } from '../utils/orderTotals';
 import Notification from './Notification';
+import MenuImage from './MenuImage';
 import useCurrency from '../hooks/useCurrency';
 import { Users } from 'lucide-react';
 import {
@@ -595,15 +596,9 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  {/* Food Image - Circular like MenuManagement */}
  <div className="w-full h-14 sm:h-28 bg-indigo-50 flex items-center justify-center border-b border-indigo-200 dark:bg-[#0B1220] dark:border-slate-700/60">
  <div className="w-10 h-10 sm:w-20 sm:h-20 rounded-full bg-white shadow-md overflow-hidden flex items-center justify-center dark:bg-[#1A2336]">
- {item.image ? (
- <img 
- src={item.image} 
- alt={item.name}
- className="w-full h-full object-cover"
- />
- ) : (
- <span className="text-lg sm:text-3xl">{getCategoryIcon(displayCategory)}</span>
- )}
+ <MenuImage src={item.image} alt={item.name} ratio="1 / 1"
+ emoji={getCategoryIcon(displayCategory)} className="mi-round"
+ style={{ width: '100%', height: '100%' }} />
  </div>
  </div>
  <div className="p-1.5 sm:p-3">

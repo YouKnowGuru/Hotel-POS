@@ -10,6 +10,7 @@ import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orde
 import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
 import { formatTableName, tableIdMatches, isActiveTableOrder } from '../utils/tableOrderUtils';
 import useCurrency from '../hooks/useCurrency';
+import MenuImage from './MenuImage';
 
 const CAT_ICONS = {
  All: Sparkles, Starters: Soup, Biryani: Flame, 'Main Course': Utensils,
@@ -64,14 +65,16 @@ const SectionBlock = React.memo(function SectionBlock({
  const inSpotCart = cart.find(c => c.id === feat.id);
  return (
  <div style={s.spotlight}>
- <div className="sm-spotlight" style={s.spotlightInner}>
- {feat.image ? (
- <img src={feat.image} alt={feat.name} style={s.spotlightImg} decoding="async" />
- ) : (
- <div style={{ ...s.spotlightPH, background: `linear-gradient(135deg,${g1}22,${g2}11)` }}>
- <span style={{ fontSize: 64, opacity: 0.3 }}>{emoji}</span>
- </div>
- )}
+ <MenuImage
+ src={feat.image}
+ alt={feat.name}
+ ratio={null}
+ emoji={emoji}
+ priority
+ className="sm-spotlight mi-zoom"
+ style={s.spotlightInner}
+ tint={`linear-gradient(135deg,${g1}22,${g2}11)`}
+ >
  <div style={s.spotlightOverlay} />
  <div style={s.spotlightContent}>
  <span style={{ ...s.spotlightBadge, background: `linear-gradient(135deg,${g1},${g2})` }}>
@@ -105,7 +108,7 @@ const SectionBlock = React.memo(function SectionBlock({
  }} />
  ))}
  </div>
- </div>
+ </MenuImage>
  </div>
  );
  })()}
@@ -128,14 +131,16 @@ const SectionBlock = React.memo(function SectionBlock({
  const { g1, g2, emoji } = catOf(item.category);
  return (
  <div key={item.id} className="sm-card sm-card-hover" style={{ ...s.card, animationDelay: `${idx * 50}ms` }}>
- <div className="sm-card-top" style={{ ...s.cardTop, background: `linear-gradient(135deg,${g1}14,${g2}08)` }}>
- {item.image ? (
- <img src={item.image} alt={item.name} className="sm-card-img" style={s.cardImg} loading="lazy" decoding="async" />
- ) : (
- <span style={{ fontSize: 52, opacity: 0.32, transition: 'transform 0.3s', filter: 'saturate(1.3)' }} className="sm-card-emoji">{emoji}</span>
- )}
+ <MenuImage
+ src={item.image}
+ alt={item.name}
+ ratio="4 / 3"
+ emoji={emoji}
+ className="sm-card-top mi-zoom"
+ tint={`linear-gradient(135deg,${g1}14,${g2}08)`}
+ >
  <span className="sm-card-cat" style={{ ...s.cardCat, background: `linear-gradient(135deg,${g1},${g2})` }}>{item.category}</span>
- </div>
+ </MenuImage>
  <div className="sm-card-body" style={s.cardBody}>
  <h4 className="sm-card-name" style={s.cardName}>{item.name}</h4>
  {item.description && <p className="sm-card-desc" style={s.cardDesc}>{item.description}</p>}
@@ -1562,10 +1567,9 @@ const CSS = `
  .sm-pay-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  @media(max-width:340px){.sm-pay-grid{grid-template-columns:minmax(0,1fr)}}
 
- /* Bigger food imagery: taller image area on phones, more on desktop */
- .sm-card-top{height:132px}
- @media(min-width:480px){.sm-card-top{height:150px}}
- @media(min-width:1024px){.sm-card-top{height:170px}}
+ /* Image proportion is owned by .mi-frame (one 4:3 ratio at EVERY width).
+   The old fixed 132/150/170px heights made the same admin photo crop
+   differently at each breakpoint and squashed wide desktop cards. */
  .sm-card-body{padding:11px 13px 13px;min-width:0}
  .sm-card-name{min-height:34px}
 
@@ -1573,8 +1577,9 @@ const CSS = `
     a compact 116px tile instead of one huge full-width block. */
  @media(max-width:399px){
   .sm-card{display:flex;align-items:stretch;min-height:116px}
-  .sm-card-top{width:116px;min-width:116px;height:auto;min-height:116px;flex:0 0 116px}
-  .sm-card-img{position:absolute;inset:0;width:100%!important;height:100%!important}
+  /* Square photo tile in the horizontal card — still a ratio, never a
+     stretched/fixed-pixel box, so any upload fits here too. */
+  .sm-card-top{--mi-ratio:1 / 1 !important;aspect-ratio:1 / 1 !important;width:116px;min-width:116px;height:auto;min-height:116px;flex:0 0 116px}
   .sm-card-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 12px}
   .sm-card-name{min-height:0;margin-bottom:2px}
   .sm-card-desc{margin-bottom:6px}
@@ -1593,8 +1598,8 @@ const CSS = `
 
  .sm-card-hover{transition:transform 0.25s cubic-bezier(0.4,0,0.2,1),box-shadow 0.25s}
  .sm-card-hover:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,0.07)}
- .sm-card-hover:hover .sm-card-img{transform:scale(1.06)}
- .sm-card-hover:hover .sm-card-emoji{transform:scale(1.15)}
+.sm-card-hover:hover .mi-cover{transform:scale(1.06)}
+.sm-card-hover:hover .mi-empty{transform:scale(1.15)}
  .sm-card-hover:active{transform:scale(0.97)!important}
 
  .sm-qty-btn:active{transform:scale(0.85)!important}
@@ -1733,7 +1738,7 @@ const CSS = `
 
  @media(hover:none){
  .sm-card-hover:hover{transform:none;box-shadow:0 1px 8px rgba(0,0,0,0.03)}
- .sm-card-hover:hover .sm-card-img{transform:none}
+ .sm-card-hover:hover .mi-cover{transform:none}
  .sm-float-bar:active{transform:none}
  }
 

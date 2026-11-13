@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/api';
 import Notification from './Notification';
 import MenuItemForm from './MenuItemForm';
+import MenuImage from './MenuImage';
 import { useTheme } from '../contexts/ThemeContext';
 import EmptyState from '../ui/EmptyState';
 import {
-  Plus, Edit2, Trash2, Search, Package, Eye, EyeOff, X, Soup, Flame,
+  Plus, Edit2, Trash2, Search, Eye, EyeOff, X, Soup, Flame,
   Utensils, Pizza, Coffee, Cookie, IceCream, Sparkles, LayoutGrid,
   List, SlidersHorizontal,
 } from 'lucide-react';
@@ -182,7 +183,7 @@ const MenuManagement = ({ locationSettings }) => {
         
         /* Card Hover Effects */
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
-        .card-hover:hover .card-img { transform: scale(1.05); }
+        .card-hover:hover .mi-cover { transform: scale(1.05); }
         
         /* Row Hover */
         .row-hover:hover { transform: translateX(4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
@@ -381,15 +382,15 @@ const Card = ({ item, fmt, i, onEdit, onDelete, onToggle, css }) => {
         animation: `fadeUp 0.45s ease ${i * 50}ms both`,
       }}
     >
-      {/* Image */}
-      <div style={css.cardImgWrap}>
-        {item.image ? (
-          <img src={item.image} alt={item.name} className="card-img" style={css.cardImg} onError={e => { e.currentTarget.style.display = 'none'; }} />
-        ) : (
-          <div style={{ ...css.cardImgPH, background: `linear-gradient(135deg, ${cat.g1}22, ${cat.g2}11)` }}>
-            <span style={{ fontSize: 48, opacity: 0.3 }}>{CATEGORY_ICONS[item.category] ? '' : '🍽️'}</span>
-          </div>
-        )}
+      {/* Image — one 4:3 ratio at every admin screen size */}
+      <MenuImage
+        src={item.image}
+        alt={item.name}
+        ratio="4 / 3"
+        className="mi-zoom"
+        style={css.cardImgWrap}
+        tint={`linear-gradient(135deg, ${cat.g1}22, ${cat.g2}11)`}
+      >
         {/* Availability Badge */}
         <div style={{
           ...css.badge,
@@ -410,7 +411,7 @@ const Card = ({ item, fmt, i, onEdit, onDelete, onToggle, css }) => {
         }}>
           {item.category || 'Other'}
         </div>
-      </div>
+      </MenuImage>
 
       {/* Body */}
       <div style={css.cardBody}>
@@ -450,16 +451,10 @@ const Row = ({ item, fmt, i, onEdit, onDelete, onToggle, css }) => {
         animation: `fadeUp 0.35s ease ${i * 40}ms both`,
       }}
     >
-      {/* Image */}
-      <div style={css.rowImgWrap}>
-        {item.image ? (
-          <img src={item.image} alt={item.name} style={css.rowImg} />
-        ) : (
-          <div style={{ ...css.rowImgPH, background: `linear-gradient(135deg, ${cat.g1}, ${cat.g2})` }}>
-            <Package className="w-5 h-5" color="#fff" style={{ opacity: 0.5 }} />
-          </div>
-        )}
-      </div>
+      {/* Square thumbnail — same smart fit as the big cards */}
+      <MenuImage src={item.image} alt={item.name} ratio="1 / 1"
+                 className="mi-zoom" style={css.rowImgWrap}
+                 tint={`linear-gradient(135deg, ${cat.g1}22, ${cat.g2}11)`} />
 
       {/* Info */}
       <div style={css.rowInfo}>
@@ -576,7 +571,7 @@ const getCss = (isDark) => ({
 
   /* Skeleton */
   skelCard: { borderRadius: 18, overflow: 'hidden', background: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.5)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', animation: 'fadeUp 0.4s ease both' },
-  skelImg: { height: 160, background: isDark ? 'linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%)' : 'linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.07) 50%,rgba(0,0,0,0.04) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' },
+  skelImg: { aspectRatio: '4 / 3', background: isDark ? 'linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%)' : 'linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.07) 50%,rgba(0,0,0,0.04) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' },
   skelBody: { padding: 16 },
   skelLine: { height: 14, borderRadius: 8, marginBottom: 10, background: isDark ? 'linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%)' : 'linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.07) 50%,rgba(0,0,0,0.04) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite' },
 
@@ -589,9 +584,9 @@ const getCss = (isDark) => ({
 
   /* Card */
   card: { borderRadius: 18, overflow: 'hidden', background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.8)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.05)', boxShadow: isDark ? '0 2px 16px rgba(0,0,0,0.3)' : '0 2px 16px rgba(0,0,0,0.05)', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)' },
-  cardImgWrap: { position: 'relative', height: 180, overflow: 'hidden', background: isDark ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)' },
-  cardImg: { width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)' },
-  cardImgPH: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  // No fixed height — .mi-frame owns the 4:3 ratio so a phone card and a
+  // wide desktop card crop the same photo identically.
+  cardImgWrap: { position: 'relative', overflow: 'hidden' },
   badge: { position: 'absolute', top: 10, right: 10, display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 50, fontSize: 11, fontWeight: 700 },
   catTag: { position: 'absolute', bottom: 10, left: 10, padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 800, color: '#fff' },
   cardBody: { padding: '14px 16px 16px' },
@@ -608,9 +603,7 @@ const getCss = (isDark) => ({
 
   /* Row */
   row: { display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, background: isDark ? 'rgba(30,41,59,0.95)' : 'rgba(255,255,255,0.7)', border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)', boxShadow: isDark ? '0 1px 8px rgba(0,0,0,0.3)' : '0 1px 8px rgba(0,0,0,0.03)', transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)', flexWrap: 'wrap' },
-  rowImgWrap: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0, background: isDark ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'linear-gradient(135deg, #f8fafc, #f1f5f9)' },
-  rowImg: { width: '100%', height: '100%', objectFit: 'cover' },
-  rowImgPH: { width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  rowImgWrap: { width: 56, height: 56, borderRadius: 12, overflow: 'hidden', flexShrink: 0 },
   rowInfo: { flex: 1, minWidth: 0 },
   rowInfoTop: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   rowName: { margin: 0, fontSize: 14, fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' },

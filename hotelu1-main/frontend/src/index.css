@@ -1988,3 +1988,71 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   MENU IMAGE — universal smart-fit frame (see components/MenuImage.jsx)
+   --------------------------------------------------------------------------
+   Admin uploads arrive in any shape (9:16 phone shots, 1:1 crops, 3:1
+   banners). A single aspect-ratio frame at every breakpoint means the same
+   photo is never cropped differently on a 320px phone and a 1440px desktop,
+   is never stretched, and can never overflow its card. Extreme ratios get a
+   blurred copy of the photo as a backdrop instead of empty letterbox bars.
+   ========================================================================== */
+.mi-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--mi-ratio, 4 / 3);
+  overflow: hidden;
+  isolation: isolate;
+  flex: none;
+  background: var(--mi-bg, linear-gradient(135deg, rgba(245,158,11,.10), rgba(249,115,22,.05)));
+}
+/* Old browsers without aspect-ratio still get a usable, bounded frame. */
+@supports not (aspect-ratio: 1 / 1) {
+  .mi-frame { height: 180px; }
+}
+html.dark .mi-frame {
+  background: var(--mi-bg, linear-gradient(135deg, rgba(245,158,11,.12), rgba(249,115,22,.06)));
+}
+/* Overlays (chips, badges, gradients, text) always paint above the photo. */
+.mi-frame > * { z-index: 2; }
+.mi-frame > img.mi-backdrop {
+  position: absolute; inset: 0; z-index: 0;
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  filter: blur(22px) saturate(1.2) brightness(.9);
+  transform: scale(1.18);
+  opacity: .75;
+  pointer-events: none;
+}
+.mi-frame > img.mi-photo {
+  position: absolute; inset: 0; z-index: 1;
+  display: block; width: 100%; height: 100%;
+  object-position: center;
+  pointer-events: none;
+  transition: transform .45s cubic-bezier(.4,0,.2,1);
+}
+.mi-frame > img.mi-cover   { object-fit: cover; }
+.mi-frame > img.mi-contain { object-fit: contain; }
+.mi-frame > .mi-empty {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(28px, 7vw, 52px);
+  opacity: .6;
+  user-select: none;
+}
+.mi-frame.mi-round { border-radius: 50%; }
+.mi-frame.mi-zoom:hover > img.mi-cover { transform: scale(1.06); }
+/* Tailwind `group` wrappers (landing-page cards) hover the whole card. */
+.group:hover .mi-frame.mi-zoom > img.mi-cover { transform: scale(1.05); }
+@media (hover: none) {
+  .mi-frame.mi-zoom:hover > img.mi-cover { transform: none; }
+  .group:hover .mi-frame.mi-zoom > img.mi-cover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mi-frame > img.mi-photo { transition: none; }
+  .mi-frame.mi-zoom:hover > img.mi-cover { transform: none; }
+  .group:hover .mi-frame.mi-zoom > img.mi-cover { transform: none; }
+}
+

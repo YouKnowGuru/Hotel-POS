@@ -24,6 +24,7 @@ import {
   Ban, Hourglass, PackageCheck,
 } from 'lucide-react';
 import PublicShell from './PublicShell';
+import MenuImage from './MenuImage';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
 import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
@@ -1091,17 +1092,15 @@ const DeliveryMenu = () => {
                          ref={el => { cardRefs.current[item.id] = el; }}
                          className={`pw-card pw-fx-tilt pw-fx-sheen overflow-hidden flex flex-col dm-food-card dm-in${addedId === item.id ? ' dm-card-pop' : ''}`}
                          style={{ animationDelay: `${Math.min(i, 11) * 40}ms` }}>
-                  {/* Image — aspect-ratio keeps a 158px phone card and a 292px
-                      desktop card in the same proportion (was a fixed clamp
-                      height, which turned wide cards into flat slabs). */}
-                  <div className={`dm-food-img relative overflow-hidden${item.image ? '' : ' is-empty'}`}>
-                    {item.image
-                      ? <img src={item.image} alt={item.name} loading="lazy" className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center"
-                             style={{ background: `linear-gradient(135deg,${grad(item.category)[0]}18,${grad(item.category)[1]}0d)` }}>
-                          <Flame size={30} style={{ color: grad(item.category)[0], opacity: 0.5 }} />
-                        </div>
-                    }
+                  {/* Image — one ratio at every width; extreme portrait/ultra-wide
+                      uploads show the WHOLE photo instead of being chopped. */}
+                  <MenuImage
+                    src={item.image}
+                    alt={item.name}
+                    ratio={item.image ? '4 / 3' : '16 / 9'}
+                    className="dm-food-img mi-zoom"
+                    tint={`linear-gradient(135deg,${grad(item.category)[0]}18,${grad(item.category)[1]}0d)`}
+                  >
                     {item.category && (
                       <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full"
                             style={{ background: 'rgba(4,5,10,0.75)', color: '#FBBF24', backdropFilter: 'blur(4px)' }}>
@@ -1114,7 +1113,7 @@ const DeliveryMenu = () => {
                         {qty}
                       </span>
                     )}
-                  </div>
+                  </MenuImage>
 
                   {/* Info */}
                   <div className="dm-food-body flex flex-col flex-1 min-w-0">
@@ -1254,13 +1253,9 @@ const DeliveryMenu = () => {
                 <div key={item.id} className="dm-cart-item">
                   <span className="dm-cart-accent" aria-hidden="true"
                         style={{ background: `linear-gradient(180deg, ${grad(item.category)[0]}, ${grad(item.category)[1]})` }} />
-                  {item.image
-                    ? <img src={item.image} alt="" className="dm-cart-thumb" />
-                    : <div className="dm-cart-thumb dm-cart-thumb-empty"
-                           style={{ background: `linear-gradient(135deg,${grad(item.category)[0]}20,${grad(item.category)[1]}12)` }}>
-                        <Flame size={17} style={{ color: grad(item.category)[0], opacity: 0.6 }} />
-                      </div>
-                  }
+                  <MenuImage src={item.image} alt="" ratio="1 / 1"
+                             className="dm-cart-thumb"
+                             tint={`linear-gradient(135deg,${grad(item.category)[0]}20,${grad(item.category)[1]}12)`} />
                   <div className="dm-cart-item-info flex-1 min-w-0">
                     <p className="pw-ink text-[14px] font-bold line-clamp-1 leading-tight">{item.name}</p>
                     <p className="text-[12.5px] font-extrabold tabular-nums mt-0.5" style={{ color: '#C2410C' }}>
@@ -1483,18 +1478,9 @@ const DeliveryMenu = () => {
         .dm-dish-grid > *{ min-width:0; }
         .dm-food-card{ border-radius:18px; }
 
-        .dm-food-img{
-          position:relative;width:100%;height:auto;flex:none;
-          aspect-ratio:4 / 3;overflow:hidden;
-        }
-        .dm-food-img > img,
-        .dm-food-img > div{
-          position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-        }
-        /* Menu items without a photo get a compact banner instead of a tall
-           empty gradient slab; real photos keep the full 4:3 frame. */
-        .dm-food-img.is-empty{ aspect-ratio:16 / 9; }
-        .dm-food-img.is-empty svg{ width:34px;height:34px; }
+        /* .mi-frame owns the ratio (4:3 with a photo, 16:9 without one) and
+           the smart cover/contain fit; don't override it here. */
+        .dm-food-img{ position:relative;width:100%;flex:none;overflow:hidden; }
 
         .dm-food-body{ padding:10px 11px 11px; }
         .dm-food-name{
