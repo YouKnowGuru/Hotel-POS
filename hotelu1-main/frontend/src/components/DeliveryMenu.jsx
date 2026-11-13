@@ -386,12 +386,18 @@ const DeliveryMenu = () => {
         body: JSON.stringify({ paymentAccessToken: paymentOrder.paymentAccessToken, proofImage }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.message || 'Could not submit payment proof');
+      // 409 means the proof was already accepted/verified (double tap,
+      // second tab, or a retry after a dropped response) — close the card
+      // instead of asking the customer to pay again.
+      if (!res.ok && res.status !== 409) throw new Error(data?.message || 'Could not submit payment proof');
+      const submittedId = Number(paymentOrder.id);
+      const finalStatus = String(data?.payment_status || 'verification_pending');
       setPaymentOrder(null);
+      setProofImage('');
       // Mark locally so the tracker stops asking for payment until a fresh
       // poll confirms the admin's decision.
-      setOrders(p => p.map(o => o.id === paymentOrder.id
-        ? { ...o, payment_status: 'verification_pending' }
+      setOrders(p => p.map(o => Number(o.id) === submittedId
+        ? { ...o, payment_status: finalStatus === 'paid' ? 'paid' : 'verification_pending' }
         : o));
     } catch (err) {
       setPaymentError(err.message || 'Could not submit payment proof');

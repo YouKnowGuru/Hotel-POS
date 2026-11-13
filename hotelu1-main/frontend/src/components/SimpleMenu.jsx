@@ -255,6 +255,15 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  // Signature of the last state pushed into `orders` — polls producing the
  // same visible state skip the setState entirely (no re-render at all).
  const lastOrdersSig = useRef('');
+ // Order ids whose QR payment proof this device just submitted. A 4s poll
+ // can race the DB write and hand back a stale "awaiting_payment" row;
+ // without this guard the "Pay now" card reappears and the guest pays a
+ // second time. Once the server reports anything else the id is dropped.
+ const proofPendingIds = useRef(new Set());
+ // Synchronous double-submit / double-tap guards. React state is batched,
+ // so `submittingProof` / `placing` alone cannot stop two taps in one tick.
+ const proofInFlight = useRef(false);
+ const placingInFlight = useRef(false);
 
  // Ensure this device has a session token (runs once on mount).
  useEffect(() => { ensureSession(tableId); }, [tableId]);
@@ -375,17 +384,43 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  // Filter to only orders placed by THIS device so customers on the same
  // table QR don't see each other's order history.
  const localIds = getLocalOrderIds(t);
+ // BUGFIX (takeaway double payment): a paid self-service TAKEAWAY is set
+ // to status "completed" by the server. Keep that card visible as a
+ // "Payment Complete" receipt instead of letting the whole tracker vanish
+ // the instant the guest pays — a vanishing card looked like a failed
+ // payment and made people order + pay a second time.
+ const isPaidTakeaway = (o) => isTakeaway &&
+ String(o.status || '').toLowerCase() === 'completed' &&
+ o.payment_status === 'paid';
  const myOrders = localIds.size > 0
- ? d.filter(o => tableIdMatches(t, o.table_name) && isActiveTableOrder(o) && localIds.has(Number(o.id)))
+ ? d.filter(o => tableIdMatches(t, o.table_name) &&
+     (isActiveTableOrder(o) || isPaidTakeaway(o)) &&
+     localIds.has(Number(o.id)))
  : []; // new device — show nothing until an order is placed
+ // Only the newest paid takeaway receipt stays on screen; older completed
+ // ones would otherwise pile up forever on a shared / long-lived device.
+ const newestPaidId = isTakeaway
+ ? myOrders.filter(isPaidTakeaway).reduce((m, o) => Math.max(m, Number(o.id) || 0), 0)
+ : 0;
+ const visibleOrders = myOrders.filter(o => !isPaidTakeaway(o) || Number(o.id) === newestPaidId);
+ // Reconcile a proof we just submitted locally. A poll racing the DB write
+ // can still say "awaiting_payment"; force "verification_pending" so the
+ // Pay now card cannot reappear before the server catches up.
+ const reconciled = visibleOrders.map(o => {
+ if (!proofPendingIds.current.has(Number(o.id))) return o;
+ if (o.payment_status !== 'awaiting_payment') proofPendingIds.current.delete(Number(o.id));
+ return o.payment_status === 'awaiting_payment'
+ ? { ...o, payment_status: 'verification_pending' }
+ : o;
+ });
  // Only re-render when something the guest can actually see changed.
- const sig = myOrders.map(o => [
+ const sig = reconciled.map(o => [
  o.id, o.status, o.payment_status, o.bill_status || '',
  o.bill_requested ? 1 : 0, (o.items || []).length,
  ].join(':')).join('|');
  if (sig !== lastOrdersSig.current) {
  lastOrdersSig.current = sig;
- setOrders(myOrders);
+ setOrders(reconciled);
  }
  }
  } catch (_) { }
@@ -495,7 +530,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  };
 
  const placeOrder = async () => {
- if (!cart.length || placing) return;
+ if (!cart.length || placing || placingInFlight.current) return;
  // Double-check the table session client-side; the server enforces it too.
  // Only blocks when the table is occupied by a DIFFERENT device — the
  // guest who placed the open order can always add more items.
@@ -503,6 +538,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  setPaymentError('This table is currently occupied. Please ask our staff for help.');
  return;
  }
+ placingInFlight.current = true;
  setPlacing(true);
  setPaymentError('');
  try {
@@ -534,6 +570,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  if (res.status === 409) { setTableStatus('occupied'); setTableMine(false); }
  setPaymentError(order?.message || 'Could not place the order. Please try again.');
  setPlacing(false);
+ placingInFlight.current = false;
  return;
  }
  addLocalOrderId(tableId, order.id);
@@ -552,6 +589,7 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  setPaymentError('Network problem — could not place the order. Please try again.');
  }
  setPlacing(false);
+ placingInFlight.current = false;
  };
 
  const selectProof = (file) => {
@@ -567,26 +605,56 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  };
 
  const submitPaymentProof = async () => {
+ if (proofInFlight.current) return;
  if (!proofImage || !paymentOrder || submittingProof) {
  setPaymentError('Upload your payment screenshot before submitting.'); return;
  }
+ // Snapshot before clearing the modal — a double tap must never be able
+ // to fall through to a second PUT with a stale paymentOrder.
+ const submittedOrder = paymentOrder;
+ proofInFlight.current = true;
  setSubmittingProof(true); setPaymentError('');
  try {
- const res = await fetch(`${getAPI_URL()}/api/orders/${paymentOrder.id}/payment-proof`, {
+ const res = await fetch(`${getAPI_URL()}/api/orders/${submittedOrder.id}/payment-proof`, {
  method: 'PUT', headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ paymentAccessToken: paymentOrder.paymentAccessToken, proofImage }),
+ body: JSON.stringify({ paymentAccessToken: submittedOrder.paymentAccessToken, proofImage }),
  });
- const data = await res.json();
- if (!res.ok) throw new Error(data.message || 'Could not submit payment proof');
+ const data = await res.json().catch(() => ({}));
+ if (!res.ok) {
+ // 409 = this proof was already accepted/verified (double tap, second
+ // tab, or a retry after a dropped response). It is NOT a request to
+ // pay again, so close the card instead of showing a scary error.
+ if (res.status !== 409) throw new Error(data.message || 'Could not submit payment proof');
+ }
+ const finalStatus = String(data.payment_status || 'verification_pending');
+ const alreadyPaid = finalStatus === 'paid';
+ if (alreadyPaid) proofPendingIds.current.delete(Number(submittedOrder.id));
+ else proofPendingIds.current.add(Number(submittedOrder.id));
  setPaymentOrder(null);
- setBoomMsg({ title: 'Payment proof submitted!', sub: 'Waiting for admin review' });
- setBoom(true); setTimeout(() => setBoom(false), 3500); fetchOrders();
- if (onOrderPlaced) onOrderPlaced({ ...paymentOrder, payment_status: 'verification_pending' });
+ setProofImage('');
+ // BUGFIX (takeaway double payment): hide the "Pay now" card on THIS
+ // render. Previously only fetchOrders() ran, and the 4s poll could
+ // return a stale "awaiting_payment" row, leaving the pay card on screen
+ // long enough for the guest to pay a second time.
+ setOrders(p => p.map(o => Number(o.id) === Number(submittedOrder.id)
+ ? { ...o, payment_status: alreadyPaid ? 'paid' : 'verification_pending' }
+ : o));
+ setBoomMsg(alreadyPaid
+ ? { title: 'Payment already received', sub: 'This order has been paid and verified.' }
+ : { title: 'Payment proof submitted!', sub: 'Waiting for admin review' });
+ setBoom(true); setTimeout(() => setBoom(false), 3500);
+ fetchOrders();
+ if (onOrderPlaced) onOrderPlaced({ ...submittedOrder, payment_status: 'verification_pending' });
  } catch (e) { setPaymentError(e.message || 'Could not submit payment proof'); }
- finally { setSubmittingProof(false); }
+ finally { setSubmittingProof(false); proofInFlight.current = false; }
  };
 
  const openPayment = async (order) => {
+ // Never reopen a payment card for an order that is already paid or has a
+ // proof awaiting review. This closes the "pay two times" path even if a
+ // stale poll briefly renders an old "Pay now" button.
+ if (proofPendingIds.current.has(Number(order.id)) ||
+ ['verification_pending', 'paid', 'cash_pending'].includes(order.payment_status)) return;
  setPaymentError('');
  setProofImage('');
  try {

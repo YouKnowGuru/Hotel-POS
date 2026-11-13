@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../utils/api';
 import { enrichOrderWithTotals } from '../utils/orderTotals';
@@ -122,6 +122,12 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  const [isLoaded, setIsLoaded] = useState(false);
  const [showReceipt, setShowReceipt] = useState(false);
  const [confirmedOrder, setConfirmedOrder] = useState(null);
+ // true when the receipt modal was opened from an existing card (read-only)
+ // instead of right after placing a brand new order.
+ const [receiptViewOnly, setReceiptViewOnly] = useState(false);
+ // Synchronous double-click guard for "Pay & complete order". React state
+ // is batched, so `completingId` alone cannot stop two taps in one tick.
+ const payCompleteInFlight = useRef(null);
 
  // --- new local UI state (visual only) ---
  const [activeFilter, setActiveFilter] = useState('all');
@@ -174,6 +180,7 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  setActiveOrders((prev) => [...prev, orderData]);
  if (orderData.token) {
  setConfirmedOrder(orderData);
+ setReceiptViewOnly(false);
  setShowReceipt(true);
  } else {
  setNotification({ message: 'Takeaway order placed!', type: 'success' });
@@ -307,6 +314,8 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
     payment modal uses records payment + the money snapshot
     (food subtotal, service charge, GST) on the ledger. */
  const handlePayComplete = async (order) => {
+ if (payCompleteInFlight.current === order.id) return;
+ payCompleteInFlight.current = order.id;
  setCompletingId(order.id);
  try {
  const res = await authFetch(`/api/orders/${order.id}/complete-payment`, {
@@ -328,7 +337,18 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  setNotification({ message: `Could not complete order #${order.id}: ${error.message}`, type: 'error' });
  }
  setCompletingId(null);
+ payCompleteInFlight.current = null;
  setTimeout(() => setNotification(null), 4000);
+ };
+
+ /* BUGFIX (takeaway double payment): the "Receipt" button used to call
+    onPayComplete(order), so opening a receipt silently ran
+    /complete-payment and closed/charged the order a second time. Viewing a
+    receipt must never mutate the order. */
+ const handleViewReceipt = (order) => {
+ setConfirmedOrder(order);
+ setReceiptViewOnly(true);
+ setShowReceipt(true);
  };
 
  /* -------------- derived counts + filtered list -------------- */
@@ -491,6 +511,7 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
   isDark={isDark}
   onMarkCompleted={() => handleMarkCompleted(order.id)}
   onPayComplete={() => handlePayComplete(order)}
+  onViewReceipt={() => handleViewReceipt(order)}
   completingId={completingId}
   onAddItems={() => handleAddMoreItems(order)}
   onDeleteEmpty={() => handleDeleteEmptyOrder(order)}
@@ -543,9 +564,11 @@ isActive ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600 dark:bg-[#1E293
  <ReceiptModal
  order={confirmedOrder}
  fmt={fmt}
+ viewOnly={receiptViewOnly}
  onClose={() => {
  setShowReceipt(false);
  setConfirmedOrder(null);
+ setReceiptViewOnly(false);
  }}
  />
  )}
@@ -632,9 +655,10 @@ const OrderCard = ({
  fmt,
  index,
  isLoaded,
- onMarkCompleted,
- onPayComplete,
- completingId,
+  onMarkCompleted,
+  onPayComplete,
+  onViewReceipt,
+  completingId,
 	onAddItems,
 	onDeleteEmpty,
 	isDark,
@@ -645,6 +669,24 @@ const OrderCard = ({
  const totalSafe =
  typeof order.total === 'number' && !isNaN(order.total) ? order.total : 0;
  const t = enrichOrderWithTotals(order);
+
+ /* Payment state decides whether staff may collect money at all. A QR
+    takeaway guest may already have paid (or have a proof under review)
+    while the order status is still "pending". Showing "Pay & complete"
+    in those states is what caused the customer to be charged twice. */
+ const ps = String(order.payment_status || '').toLowerCase();
+ const paidOnline = ps === 'paid' ||
+ String(order.payment_method || '').toLowerCase() === 'qr_payment';
+ const proofUnderReview = ps === 'verification_pending';
+ const awaitingCustomerQr = ps === 'awaiting_payment';
+ const canCollectPayment = !paidOnline && !proofUnderReview && !awaitingCustomerQr;
+ const paymentNote = paidOnline
+ ? 'Paid online — no payment due'
+ : proofUnderReview
+ ? 'QR payment under review'
+ : awaitingCustomerQr
+ ? 'Awaiting customer QR payment'
+ : '';
 
  return (
 	<div
@@ -775,9 +817,12 @@ const OrderCard = ({
  <span className="hidden sm:inline">Mark as Delivered</span>
  </button>
  )}
- {order.status === 'pending' && (
+ {/* BUGFIX (takeaway double payment): never offer manual cash collection
+     for an order the guest already paid online, has a proof under review,
+     or is still being asked to pay by QR. */}
+ {order.status === 'pending' && canCollectPayment && (
  <button
- onClick={() => onPayComplete(order)}
+ onClick={onPayComplete}
  disabled={completingId === order.id}
  className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-semibold shadow-sm transition disabled:opacity-60 min-h-[40px]"
  >
@@ -790,6 +835,17 @@ const OrderCard = ({
  <span className="hidden sm:inline">Pay & complete order</span>
  </>
  )}
+ </button>
+ )}
+ {order.status === 'pending' && !canCollectPayment && (
+ <button
+ disabled
+ className="w-full inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2 sm:py-2.5 rounded-xl bg-gray-100 text-gray-500 text-xs sm:text-sm font-semibold cursor-not-allowed dark:bg-white/5 dark:text-gray-400 min-h-[40px]"
+ >
+ {paidOnline
+ ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+ : <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+ {paymentNote}
  </button>
  )}
  {order.status === 'preparing' && (
@@ -830,7 +886,7 @@ const OrderCard = ({
 		</button>
 	) : (
 		<button
-			onClick={() => onPayComplete(order)}
+			onClick={onViewReceipt}
 			disabled={completingId === order.id}
 			className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl bg-white border border-gray-200 text-gray-700 hover:border-gray-300 text-[11px] sm:text-xs font-semibold transition dark:bg-[#1A2336] dark:border-gray-700 dark:text-gray-200 min-w-0 min-h-[36px] disabled:opacity-50"
 		>
@@ -845,8 +901,13 @@ const OrderCard = ({
  );
 };
 
-const ReceiptModal = ({ order, fmt, onClose }) => {
+const ReceiptModal = ({ order, fmt, onClose, viewOnly = false }) => {
  const t = enrichOrderWithTotals(order);
+ const statusText = viewOnly
+ ? (String(order.payment_status || '').toLowerCase() === 'paid'
+ ? 'Paid'
+ : String(order.status || 'pending').replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()))
+ : 'Pending';
  return (
 	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-2 sm:p-4">
  <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[88vh] overflow-hidden flex flex-col animate-scale-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
@@ -862,9 +923,9 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/30 flex items-center justify-center mx-auto mb-2">
  <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
  </div>
- <h2 className="text-lg sm:text-xl font-bold">Order Confirmed</h2>
+ <h2 className="text-lg sm:text-xl font-bold">{viewOnly ? 'Order Receipt' : 'Order Confirmed'}</h2>
  <p className="text-indigo-100 text-xs mt-0.5">
- Your takeaway order has been placed
+ {viewOnly ? `Takeaway order #${order.id}` : 'Your takeaway order has been placed'}
  </p>
  </div>
 
@@ -893,7 +954,7 @@ const ReceiptModal = ({ order, fmt, onClose }) => {
  <p className="text-gray-400 font-semibold dark:text-slate-500">Status</p>
  <p className="mt-0.5">
  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
- Pending
+ {statusText}
  </span>
  </p>
  </div>

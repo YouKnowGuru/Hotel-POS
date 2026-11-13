@@ -2470,6 +2470,54 @@ app.get("/api/orders/:id/proof-image", verifyToken, async (req, res) => {
   }
 });
 
+/* ------------------------------------------------------------------ */
+/* Payment idempotency helpers                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Serialize mutating payment requests for the same order inside this
+ * process. Two rapid taps (or two browser tabs) can otherwise both read an
+ * unpaid row before either one saves, and both record the payment.
+ * The lock is released as soon as the response finishes or the socket
+ * closes, so a crashed/aborted request cannot wedge the order forever.
+ */
+const paymentLocks = new Map();
+function lockPayment(orderId, res) {
+  const key = String(orderId);
+  if (paymentLocks.has(key)) return false;
+  paymentLocks.set(key, true);
+  const release = () => paymentLocks.delete(key);
+  res.once("finish", release);
+  res.once("close", release);
+  return true;
+}
+
+/**
+ * Decide how a repeat payment-proof submission should be answered.
+ * - completed / paid  -> 409, the money is already in; never reopen it.
+ * - verification_pending -> 200 idempotent replay (no overwrite, no
+ *   duplicate staff notification, no reset of review timestamps).
+ * - awaiting_payment / rejected -> null, proceed with the normal upload.
+ */
+function paymentProofBlocked(order) {
+  if (!order) return null;
+  const state = String(order.payment_status || "").toLowerCase();
+  const status = String(order.status || "").toLowerCase();
+  if (status === "completed" || state === "paid") {
+    return {
+      status: 409,
+      body: { message: "Payment for this order has already been verified.", payment_status: state || "paid" },
+    };
+  }
+  if (state === "verification_pending") {
+    return {
+      status: 200,
+      body: { message: "Payment proof already submitted for review", orderId: order.id, payment_status: state },
+    };
+  }
+  return null;
+}
+
 // Public endpoint used by the QR customer page. The one-time access token is
 // returned only when the order is created, so knowing an order number alone is
 // not enough to attach a payment screenshot to someone else's order.
@@ -2498,6 +2546,9 @@ app.get("/api/orders/:id/payment-session", strictLimiter, async (req, res) => {
 });
 
 app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
+  if (!lockPayment(req.params.id, res)) {
+    return res.status(409).json({ message: "A payment proof for this order is already being submitted" });
+  }
   try {
     const { paymentAccessToken, proofImage } = req.body || {};
     if (!paymentAccessToken || !proofImage) {
@@ -2509,6 +2560,8 @@ app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === Number(req.params.id));
       if (!order || order.payment_access_token !== paymentAccessToken) return res.status(404).json({ message: "Order not found" });
+      const mockRepeat = paymentProofBlocked(order);
+      if (mockRepeat) return res.status(mockRepeat.status).json(mockRepeat.body);
       order.payment_transaction_id = null;
       order.payment_proof_image = proofImage;
       order.payment_submitted_at = new Date();
@@ -2518,6 +2571,10 @@ app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
     }
     const order = await Order.findByPk(req.params.id);
     if (!order || order.payment_access_token !== paymentAccessToken) return res.status(404).json({ message: "Order not found" });
+    // Idempotency: a repeat proof must not reopen a paid order or emit a
+    // second "payment submitted" staff alert for the same order.
+    const repeat = paymentProofBlocked(order);
+    if (repeat) return res.status(repeat.status).json(repeat.body);
     order.payment_transaction_id = null;
     order.payment_proof_image = proofImage;
     order.payment_submitted_at = new Date();
@@ -4048,6 +4105,9 @@ app.get("/api/orders/status/delivered", verifyToken, async (req, res) => {
 
 // Complete order and mark bill as paid
 app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
+  if (!lockPayment(req.params.id, res)) {
+    return res.status(409).json({ message: "A payment for this order is already being processed" });
+  }
   try {
     // ROLE GATE: closing an order marks revenue as collected. Waiters must
     // not be able to do it — the Billing UI restricts the button to
@@ -4060,6 +4120,10 @@ app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
     if (!dbConnected) {
       const order = mockOrders.find((o) => o.id === parseInt(req.params.id));
       if (order) {
+        if (String(order.payment_status || "").toLowerCase() === "paid" &&
+            String(order.status || "").toLowerCase() === "completed") {
+          return res.json({ message: "Payment already completed", order, alreadyPaid: true });
+        }
         order.status = "completed";
         order.payment_method = paymentMethod;
         order.payment_status = "paid";
@@ -4082,6 +4146,17 @@ app.put("/api/orders/:id/complete-payment", verifyToken, async (req, res) => {
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (!(await assertOrderInScope(req, order, res))) return;
+
+    // IDEMPOTENCY (takeaway double payment): a QR takeaway that was already
+    // approved is paid + completed. Re-running /complete-payment on it used
+    // to overwrite the original payment method, reset paid_at, re-email the
+    // customer and double-count the close-out. Return the existing state
+    // instead of mutating anything.
+    if (String(order.payment_status || "").toLowerCase() === "paid" &&
+        String(order.status || "").toLowerCase() === "completed") {
+      const existingBill = await Bill.findOne({ where: { orderId: id } });
+      return res.json({ message: "Payment already completed", order, bill: existingBill, alreadyPaid: true });
+    }
 
     order.status = "completed";
     order.payment_method = paymentMethod;
