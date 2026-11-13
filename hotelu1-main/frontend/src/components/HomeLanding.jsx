@@ -217,18 +217,27 @@ const HomeLanding = () => {
                 <span className="hidden sm:inline">Delivering across Thimphu</span>
               </div>
 
-              {/* Headline — word-by-word animated reveal */}
+              {/* Headline — outer span = one-shot reveal,
+                  inner span = continuous float + gradient shimmer.
+                  Splitting them avoids the CSS `animation` shorthand
+                  collision that silently cancelled the reveal. */}
               <h1 className="hl-headline pw-ink mb-6"
                   style={{ fontFamily: "'Playfair Display',Georgia,serif", fontWeight: 700, letterSpacing: '-0.025em', lineHeight: 1.06 }}>
-                <span className="hl-word" style={{ animationDelay: '0.1s' }}>Bhutanese</span>{' '}
-                <span className="hl-word" style={{ animationDelay: '0.2s' }}>comfort</span>{' '}
-                <span className="hl-word" style={{ animationDelay: '0.3s' }}>food,</span>{' '}
-                <br className="hidden sm:block" />
-                <span className="hl-word hl-grad-text" style={{ animationDelay: '0.45s' }}>
-                  made fresh,
+                <span className="hl-word" style={{ animationDelay: '0.10s' }}>
+                  <span className="hl-word-float" style={{ animationDelay: '0.0s' }}>Bhutanese</span>
                 </span>{' '}
-                <span className="hl-word hl-grad-text" style={{ animationDelay: '0.55s' }}>
-                  delivered fast.
+                <span className="hl-word" style={{ animationDelay: '0.20s' }}>
+                  <span className="hl-word-float" style={{ animationDelay: '0.3s' }}>comfort</span>
+                </span>{' '}
+                <span className="hl-word" style={{ animationDelay: '0.30s' }}>
+                  <span className="hl-word-float" style={{ animationDelay: '0.6s' }}>food,</span>
+                </span>{' '}
+                <br className="hidden sm:block" />
+                <span className="hl-word" style={{ animationDelay: '0.45s' }}>
+                  <span className="hl-word-float hl-grad-text" style={{ animationDelay: '0.9s' }}>made fresh,</span>
+                </span>{' '}
+                <span className="hl-word" style={{ animationDelay: '0.55s' }}>
+                  <span className="hl-word-float hl-grad-text" style={{ animationDelay: '1.2s' }}>delivered fast.</span>
                 </span>
               </h1>
 
@@ -427,7 +436,7 @@ const HomeLanding = () => {
             font-size:12.5px; font-weight:700; letter-spacing:0.01em;
             background:var(--pw-panel); border:1px solid var(--pw-line);
             box-shadow:0 4px 14px -6px rgba(63,32,4,0.12);
-            opacity:0; animation:hlFadeUp .6s var(--pw-ease) forwards;
+            opacity:0; animation:hlFadeUp .6s var(--pw-ease, cubic-bezier(0.22,1,0.36,1)) forwards;
           }
           .hl-pill-dot{
             width:7px; height:7px; border-radius:50%; flex-shrink:0;
@@ -445,31 +454,53 @@ const HomeLanding = () => {
             100%{ box-shadow:0 0 0 0 rgba(52,211,153,0); }
           }
 
-          /* ── Headline word-by-word reveal ── */
+          /* ── Headline: one-shot reveal (outer) ── */
           .hl-word{
             display:inline-block;
             opacity:0;
-            transform:translateY(28px);
-            animation:hlWordIn .7s var(--pw-ease) forwards;
+            animation:hlWordIn .7s var(--pw-ease, cubic-bezier(0.22,1,0.36,1)) both;
           }
           @keyframes hlWordIn{
             0%{ opacity:0; transform:translateY(28px); }
             100%{ opacity:1; transform:translateY(0); }
           }
 
-          /* Gradient text with subtle shimmer */
+          /* ── Headline: CONTINUOUS gentle float (inner) ──
+             This is the motion that keeps the text alive after the
+             entrance reveal has finished. */
+          .hl-word-float{
+            display:inline-block;
+            animation:hlBob 5s ease-in-out infinite;
+            will-change:transform;
+          }
+          @keyframes hlBob{
+            0%,100%{ transform:translateY(0); }
+            50%{ transform:translateY(-4px); }
+          }
+
+          /* ── Gradient text: visible gold light-sweep ──
+             No animation declaration here — it is added by the combined selectors
+             below so it can never cancel the float or reveal. */
           .hl-grad-text{
-            background:linear-gradient(90deg,#D9480F,#C2410C,#EA580C);
-            background-size:200% auto;
+            background:linear-gradient(100deg,
+              #C2410C 0%, #EA580C 26%, #FBBF24 44%,
+              #FFE7A8 50%, #FBBF24 56%, #EA580C 74%, #C2410C 100%);
+            background-size:220% 100%;
+            background-position:0% 50%;
             -webkit-background-clip:text;
-            -webkit-text-fill-color:transparent;
             background-clip:text;
-            animation:hlShimmer 4s linear infinite;
-            animation-delay:1.5s;
+            -webkit-text-fill-color:transparent;
+            color:transparent;
+          }
+          /* Gradient words run BOTH the float and the shimmer */
+          .hl-word-float.hl-grad-text{
+            animation:
+              hlBob 5s ease-in-out infinite,
+              hlShimmer 3s linear infinite;
           }
           @keyframes hlShimmer{
-            0%{ background-position:0% center; }
-            100%{ background-position:200% center; }
+            0%{ background-position:0% 50%; }
+            100%{ background-position:100% 50%; }
           }
           .hl-headline{
             font-size:clamp(32px,5vw,56px);
@@ -478,7 +509,7 @@ const HomeLanding = () => {
           /* ── Subhead, CTA row, proof — staggered fade-up ── */
           .hl-sub, .hl-cta-row, .hl-proof, .hl-stats{
             opacity:0;
-            animation:hlFadeUp .7s var(--pw-ease) forwards;
+            animation:hlFadeUp .7s var(--pw-ease, cubic-bezier(0.22,1,0.36,1)) forwards;
           }
           @keyframes hlFadeUp{
             0%{ opacity:0; transform:translateY(20px); }
@@ -487,7 +518,7 @@ const HomeLanding = () => {
 
           /* ── CTA primary — premium lift ── */
           .hl-cta-primary{
-            transition:transform .3s var(--pw-ease), box-shadow .3s var(--pw-ease);
+            transition:transform .3s var(--pw-ease, ease), box-shadow .3s var(--pw-ease, ease);
           }
           .hl-cta-primary:hover{
             transform:translateY(-2px);
@@ -498,7 +529,7 @@ const HomeLanding = () => {
           .hl-stat{
             padding:14px 16px; border-radius:14px;
             background:var(--pw-panel); border:1px solid var(--pw-line);
-            transition:transform .3s var(--pw-ease), box-shadow .3s var(--pw-ease);
+            transition:transform .3s var(--pw-ease, ease), box-shadow .3s var(--pw-ease, ease);
           }
           .hl-stat:hover{
             transform:translateY(-2px);
@@ -519,7 +550,7 @@ const HomeLanding = () => {
           /* ── Stage wrap fade-in ── */
           .hl-stage-wrap{
             opacity:0;
-            animation:hlStageIn .8s var(--pw-ease) forwards;
+            animation:hlStageIn .8s var(--pw-ease, cubic-bezier(0.22,1,0.36,1)) forwards;
           }
           @keyframes hlStageIn{
             0%{ opacity:0; transform:translateY(24px) scale(0.98); }
@@ -536,7 +567,7 @@ const HomeLanding = () => {
 
           /* ── Feature card hover ── */
           .hl-feature{
-            transition:box-shadow .4s var(--pw-ease), transform .4s var(--pw-ease);
+            transition:box-shadow .4s var(--pw-ease, ease), transform .4s var(--pw-ease, ease);
           }
           .hl-feature:hover{
             box-shadow:0 28px 64px -24px rgba(245,158,11,0.5);
@@ -562,13 +593,21 @@ const HomeLanding = () => {
           .tz-dark .pw-muted{ color:#A89C8E; }
           .tz-dark .pw-eyebrow{ background:rgba(245,158,11,0.14); border-color:rgba(245,158,11,0.4); color:#FBBF24; }
 
-          /* ── Reduced motion ── */
+          /* ── Reduced motion ──
+             Keep every word visible with a static (still attractive)
+             gradient; disable all looping motion. */
           @media (prefers-reduced-motion: reduce){
             .hl-word, .hl-sub, .hl-cta-row, .hl-proof, .hl-stats,
             .hl-stage-wrap, .hl-pill{
               animation:none !important; opacity:1 !important; transform:none !important;
             }
-            .hl-grad-text{ animation:none !important; }
+            .hl-word-float{
+              animation:none !important; transform:none !important;
+            }
+            .hl-grad-text{
+              animation:none !important;
+              background-position:50% 50% !important;
+            }
             .hl-glow-1, .hl-glow-2, .hl-glow-3{ animation:none !important; }
             .hl-pill-dot{ animation:none !important; }
             .hl-feature{ transition:none !important; }
