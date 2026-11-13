@@ -80,6 +80,19 @@ const TYPE_FILTER_OPTIONS = [
  Helpers
  ================================================================= */
 
+/* A pay-first QR order whose screenshot has not arrived yet (or was
+   rejected) is a parked DRAFT, not an order admin should act on. This
+   applies to EVERY pay-first QR order — SimpleMenu dine-in/takeaway as
+   well as the public home-delivery flow. The backend withholds the staff
+   bell, the alert-feed entry and the "order confirmed" email until the
+   first proof is uploaded, so the UI must not auto-surface that draft
+   either. Cash/COD orders (payment_method 'cash') are real orders
+   immediately and stay in the actionable queue. */
+const PENDING_PAYMENT_STATES = ['awaiting_payment', 'rejected'];
+const paymentIncomplete = (o) =>
+ String(o.payment_method || '').toLowerCase() === 'qr' &&
+ PENDING_PAYMENT_STATES.includes(String(o.payment_status || ''));
+
 const formatId = (n) => `#ORD-${n}`;
 const orderTime = (o) => new Date(o.timestamp || o.created_at || Date.now());
 const minsAgo = (t) =>
@@ -150,8 +163,11 @@ const OrdersPage = ({ locationSettings }) => {
  setOrders(list);
  setLastUpdated(new Date());
  setSelectedId((prev) => {
+ // Keep an explicitly selected order (even a draft in Payment review),
+ // but NEVER auto-pick a proof-less QR draft as the default detail view.
  if (prev && list.some((o) => o.id === prev)) return prev;
- return list[0]?.id ?? null;
+ const actionable = list.filter((o) => !paymentIncomplete(o));
+ return actionable[0]?.id ?? null;
  });
  } catch (e) {
  // keep previous list on error
@@ -240,18 +256,10 @@ const OrdersPage = ({ locationSettings }) => {
  }, [orders, typeFilter, allDates, selectedDate]);
 
  /* ---------------- filtering ---------------- */
- /* BUGFIX (admin receiving orders too early): pay-first DELIVERY orders
- whose payment proof hasn't been uploaded yet (or was rejected) must not
- sit in the admin's "Pending" queue while the customer is still filling
- in the delivery address / payment screen. They live only in the
- "Payment review" tab until the screenshot arrives. Cash deliveries are
- NOT filtered — admin approval is what dispatches them. */
- const PENDING_PAYMENT_STATES = ['awaiting_payment', 'rejected'];
- const paymentIncomplete = (o) =>
- String(o.type || '').toUpperCase() === 'DELIVERY' &&
- String(o.payment_method || '') !== 'cash' &&
- PENDING_PAYMENT_STATES.includes(String(o.payment_status || ''));
-
+ /* Pay-first DELIVERY drafts (helper is module-scope so the loader can use
+   it too) live only in the "Payment review" tab until the screenshot
+   arrives. Cash deliveries are NOT filtered — admin approval dispatches
+   them. */
  const counts = useMemo(() => {
  const c = {
  all: 0,

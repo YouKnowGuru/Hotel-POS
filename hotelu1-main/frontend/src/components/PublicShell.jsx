@@ -45,32 +45,30 @@ const HOURS = [
   { day: 'Mon – Sun', hours: '10 AM – 9 PM' },
 ];
 
-/* ── Inline brand logo (respects admin branding) ── */
-const BrandLogo = ({ branding, size = 40 }) => {
+/* ── Inline brand logo (respects admin branding) ──
+   Sizing lives in CSS (.pw-logo) so the mark scales up on larger headers
+   instead of being a tiny fixed 40px chip glued to the nav. Uploaded logos
+   use object-fit:contain so the WHOLE mark is visible — a wide banner no
+   longer collapses to a cropped sliver that reads as "very small". */
+const BrandLogo = ({ branding }) => {
   const b = branding || loadBranding();
   const radius = b.logoShape === 'circle' ? '50%' : b.logoShape === 'square' ? 10 : 13;
+  const shell = { borderRadius: radius, flexShrink: 0 };
   if (b.logo) {
     return (
-      <img
-        src={b.logo}
-        alt={b.siteName}
-        style={{ width: size, height: size, borderRadius: radius, objectFit: 'cover', flexShrink: 0 }}
-      />
+      <span className="pw-logo has-img" style={shell} aria-hidden="true">
+        <img src={b.logo} alt={b.siteName} className="pw-logo-img" style={{ borderRadius: radius }} />
+      </span>
     );
   }
   return (
-    <div
+    <span
+      className="pw-logo"
       aria-hidden="true"
-      style={{
-        width: size, height: size, borderRadius: radius,
-        background: 'linear-gradient(135deg,#F59E0B,#EA580C)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 8px 22px -8px rgba(245,158,11,0.7)',
-        flexShrink: 0,
-      }}
+      style={{ ...shell, background: 'linear-gradient(135deg,#F59E0B,#EA580C)', boxShadow: '0 8px 22px -8px rgba(245,158,11,0.7)' }}
     >
-      <Utensils size={Math.round(size * 0.46)} color="#1B0F02" strokeWidth={2.4} />
-    </div>
+      <Utensils size={24} color="#1B0F02" strokeWidth={2.4} />
+    </span>
   );
 };
 
@@ -296,7 +294,7 @@ const PublicShell = ({ active = '', children }) => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 min-w-0" aria-label={`${siteName} — home`}>
-            <BrandLogo branding={branding} size={40} />
+            <BrandLogo branding={branding} />
             <span className="hidden sm:flex flex-col leading-none min-w-0">
               <span className="pw-brand-name truncate">{siteName}</span>
               {branding?.showTagline && branding?.tagline && (
@@ -306,7 +304,7 @@ const PublicShell = ({ active = '', children }) => {
           </Link>
 
           {/* Desktop nav */}
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1 ml-3">
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1 lg:ml-6">
             {NAV_LINKS.filter(l => !l.cta).map(l => <NavLink key={l.key} l={l} />)}
           </nav>
 
@@ -565,6 +563,19 @@ const PublicShell = ({ active = '', children }) => {
         .pw-brand-tag{
           font-size:9.5px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;
           color:#C2410C;margin-top:4px;
+        }
+
+        /* Brand logo chip — responsive so it reads as a proper mark, not a tiny
+           glued-on icon. .has-img gives uploaded logos a soft home; the gradient
+           fallback (no logo) stays clean. */
+        .pw-logo{
+          width:46px;height:46px;flex-shrink:0;display:inline-flex;
+          align-items:center;justify-content:center;overflow:hidden;
+        }
+        .pw-logo.has-img{background:rgba(63,32,4,0.05);box-shadow:0 2px 8px -4px rgba(63,32,4,0.2);}
+        .pw-logo-img{width:100%;height:100%;object-fit:contain;display:block;}
+        @media (min-width:1024px){
+          .pw-logo{width:54px;height:54px;}
         }
 
         .pw-nav-link{

@@ -984,11 +984,17 @@ function compactOrder(o) {
 }
 
 /**
- * THE canonical "an order arrived" signal. Every creation path calls this —
- * including payment-first orders that previously emitted nothing until an
- * admin approved the payment. One alert + one bell per order, guaranteed.
+ * THE canonical "an order arrived" signal for orders that are immediately
+ * actionable: dine-in, staff-created, and cash/COD delivery orders.
+ *
+ * Pay-first QR orders are deliberately NOT announced here. Until the guest
+ * uploads a payment screenshot they are parked drafts (payment_status
+ * "awaiting_payment") that nobody has paid for; ringing the staff bell,
+ * writing a "new-order" alert into the feed and refreshing every admin
+ * dashboard made admin act on phantom orders. They are announced by
+ * announceProofUploaded() at the moment the first proof arrives instead.
  */
-function emitOrderPlaced(order, stage = 'placed') {
+function emitOrderPlaced(order) {
   const c = compactOrder(order);
   if (!c.orderId) return;
   const isDelivery = c.type === 'DELIVERY';
@@ -996,17 +1002,15 @@ function emitOrderPlaced(order, stage = 'placed') {
     ? 'New Home Delivery Order'
     : c.type === 'TAKEAWAY' ? 'New Takeaway Order' : 'New Table Order Placed';
   const money = `Nu. ${c.total.toFixed(2)}`;
-  const message = stage === 'awaiting_payment'
-    ? `Order #${c.orderId} for ${c.tableLabel} is awaiting payment verification. Total: ${money}.`
-    : `Order #${c.orderId} has been placed for ${c.tableLabel}. Total: ${money}.`;
+  const message = `Order #${c.orderId} has been placed for ${c.tableLabel}. Total: ${money}.`;
 
-  emitStaffOnly('order_placed', { ...c, stage, title, message });
+  emitStaffOnly('order_placed', { ...c, title, message });
   io.emit('order_created'); // keeps existing dashboard/KDS listeners refreshing
   recordNotification({
     dedupeKey: `order-placed-${c.orderId}`,
     category: 'order',
     type: 'new-order',
-    severity: stage === 'awaiting_payment' ? 'warning' : 'success',
+    severity: 'success',
     title, message,
     orderId: c.orderId,
     tableLabel: c.tableLabel,
@@ -2183,7 +2187,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     const settings = await getTaxDiscountSettings();
     const paymentFirst = req.body.payment_first === true;
     const isCashPayment = req.body.payment_method === 'cash';
-    const paymentAccessToken = paymentFirst && !isCashPayment ? crypto.randomBytes(24).toString('hex') : null;
+    // A pay-first QR order is only a PARKED DRAFT until the customer uploads
+    // a payment screenshot. It must not ring the staff bell, appear in the
+    // admin alert feed, or trigger the "order confirmed" email before then.
+    // Cash/COD orders ARE real orders immediately (admin approval dispatches
+    // them), so they keep the normal announcement + email.
+    const parkedQrOrder = paymentFirst && !isCashPayment;
+    const paymentAccessToken = parkedQrOrder ? crypto.randomBytes(24).toString('hex') : null;
 
     // SECURITY: never trust client-sent money values. Every line item must
     // resolve to a real menu item; prices and the subtotal are recomputed
@@ -2358,10 +2368,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
         ...totals,
       };
       mockOrders.push(newOrder);
-      // EVERY order alerts staff instantly, including payment-first orders
-      // that are still waiting for the customer's payment proof.
-      emitOrderPlaced(newOrder, paymentFirst && !isCashPayment ? 'awaiting_payment' : 'placed');
-      if (isDeliveryOrder) mailer.sendOrderPlacedEmail(newOrder);
+      // Parked QR drafts are silent until the first proof is uploaded —
+      // no staff bell, no admin feed entry, no "order confirmed" email.
+      // Cash/COD and ordinary orders are announced immediately as before.
+      if (!parkedQrOrder) {
+        emitOrderPlaced(newOrder);
+        if (isDeliveryOrder) mailer.sendOrderPlacedEmail(newOrder);
+      }
       const responseOrder = { ...newOrder, paymentAccessToken };
       delete responseOrder.payment_access_token;
       return res.json(responseOrder);
@@ -2427,9 +2440,13 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     // exactly the same canonical totals/items projection as the API response
     // (the raw model hides values inside dataValues and item instances).
     const responseOrder = attachTotalsToOrder(orderWithItems, orderWithItems.items, totals);
-    emitOrderPlaced(responseOrder, paymentFirst && !isCashPayment ? 'awaiting_payment' : 'placed');
     // Automatic customer email #1: order placed (delivery orders only).
-    if (isDeliveryOrder) mailer.sendOrderPlacedEmail(orderWithItems);
+    // Parked QR drafts are deferred to the first proof upload — see
+    // announceProofUploaded(). Cash/COD orders still email immediately.
+    if (!parkedQrOrder) {
+      emitOrderPlaced(responseOrder);
+      if (isDeliveryOrder) mailer.sendOrderPlacedEmail(orderWithItems);
+    }
     responseOrder.paymentAccessToken = paymentAccessToken;
     delete responseOrder.payment_access_token;
     res
@@ -2518,6 +2535,36 @@ function paymentProofBlocked(order) {
   return null;
 }
 
+/**
+ * A parked pay-first QR order becomes a REAL order the moment the customer
+ * uploads their first payment screenshot. Only then should admin be told
+ * about it and only then should the "Order #N confirmed" email go out.
+ *
+ *  - `order_status_updated` + a payload-free `order_created` refresh every
+ *    admin view (the order now belongs in "Payment review"). No payload on
+ *    `order_created` means NotificationsContext does NOT ring the new-order
+ *    bell — the single review alert below is the right signal here.
+ *  - `emitPaymentSubmitted` writes the one staff alert + toast.
+ *  - The confirmation email is deferred from order creation to here, so a
+ *    guest who abandons the QR screen never receives "your order is
+ *    confirmed". Re-uploads after a rejection must not repeat that email,
+ *    hence `firstProof` is captured by the caller before mutating the order.
+ */
+function announceProofUploaded(order, { firstProof }) {
+  io.emit("order_status_updated", {
+    orderId: order.id,
+    status: order.status,
+    payment_status: order.payment_status,
+  });
+  io.emit("order_created");
+  emitPaymentSubmitted(order);
+  if (firstProof &&
+      String(order.type || "").toUpperCase() === "DELIVERY" &&
+      order.customer_email && mailer.isValidEmail(order.customer_email)) {
+    mailer.sendOrderPlacedEmail(order);
+  }
+}
+
 // Public endpoint used by the QR customer page. The one-time access token is
 // returned only when the order is created, so knowing an order number alone is
 // not enough to attach a payment screenshot to someone else's order.
@@ -2562,27 +2609,34 @@ app.put("/api/orders/:id/payment-proof", strictLimiter, async (req, res) => {
       if (!order || order.payment_access_token !== paymentAccessToken) return res.status(404).json({ message: "Order not found" });
       const mockRepeat = paymentProofBlocked(order);
       if (mockRepeat) return res.status(mockRepeat.status).json(mockRepeat.body);
+      const firstProof = !order.payment_submitted_at;
       order.payment_transaction_id = null;
       order.payment_proof_image = proofImage;
       order.payment_submitted_at = new Date();
       order.payment_status = "verification_pending";
-      emitPaymentSubmitted(order);
+      announceProofUploaded(order, { firstProof });
       return res.json({ message: "Payment proof submitted for review", orderId: order.id, payment_status: order.payment_status });
     }
-    const order = await Order.findByPk(req.params.id);
+    // Include line items so the deferred order-confirmation email carries the
+    // same itemised bill it would have had at creation time.
+    const order = await Order.findByPk(req.params.id, {
+      include: [{ model: OrderItem, as: "items" }],
+    });
     if (!order || order.payment_access_token !== paymentAccessToken) return res.status(404).json({ message: "Order not found" });
     // Idempotency: a repeat proof must not reopen a paid order or emit a
     // second "payment submitted" staff alert for the same order.
     const repeat = paymentProofBlocked(order);
     if (repeat) return res.status(repeat.status).json(repeat.body);
+    // A re-upload after a rejection already has payment_submitted_at set, so
+    // the confirmation email is sent exactly once per order.
+    const firstProof = !order.payment_submitted_at && !order.payment_rejection_reason;
     order.payment_transaction_id = null;
     order.payment_proof_image = proofImage;
     order.payment_submitted_at = new Date();
     order.payment_status = "verification_pending";
     order.payment_rejection_reason = null;
     await order.save();
-    emitPaymentSubmitted(order);
-    io.emit("order_status_updated", { orderId: order.id, status: order.status, payment_status: order.payment_status });
+    announceProofUploaded(order, { firstProof });
     res.json({ message: "Payment proof submitted for review", orderId: order.id, payment_status: order.payment_status });
   } catch (err) {
     res.status(500).json({ message: "Could not submit payment proof" });

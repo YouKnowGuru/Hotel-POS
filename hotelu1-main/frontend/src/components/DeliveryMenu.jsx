@@ -540,6 +540,68 @@ const DeliveryMenu = () => {
     };
   }, [step]);
 
+  /* BUGFIX: DeliveryMenu moves between its menu / checkout / placed screens
+     with local `step` state, NOT a route change. PublicShell's scroll-reset
+     and scroll-reveal engines are keyed on location.pathname, so they never
+     re-run when `step` changes. The result was two real bugs on the placed
+     (order-status) screen:
+       1. the viewport stayed scrolled down where the address form was
+          (opened on the footer instead of the top), and
+       2. the new .pw-reveal tracker cards mounted after the step swap and
+          were never observed by the reveal engine, so they stayed at
+          opacity:0 — the page looked blank / cards "unresponsive".
+     Replay both behaviours whenever `step` changes: pin to the top and
+     reveal any .pw-reveal nodes (including ones that mount later as the
+     order data loads). */
+  useEffect(() => {
+    const html = document.documentElement;
+    const savedBehavior = html.style.scrollBehavior;
+
+    const resetScroll = () => {
+      html.style.scrollBehavior = 'auto';
+      window.scrollTo(0, 0);
+      html.style.scrollBehavior = savedBehavior;
+    };
+    resetScroll();
+    requestAnimationFrame(resetScroll);
+    requestAnimationFrame(() => requestAnimationFrame(resetScroll));
+    const scrollTicks = [
+      setTimeout(resetScroll, 250),
+      setTimeout(resetScroll, 900),
+    ];
+
+    /* Re-arm the scroll-reveal for elements this step renders. A persistent
+       IntersectionObserver reveals them on scroll-in (preserving the fade-up
+       look), and a MutationObserver catches cards that mount later — e.g. the
+       tracker cards that appear only after the first status poll returns. */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('pw-in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.06 });
+
+    const observeAll = () => {
+      document.querySelectorAll('.pw-reveal:not(.pw-in)').forEach((el) => io.observe(el));
+    };
+    observeAll();
+
+    let mo;
+    if (typeof MutationObserver !== 'undefined') {
+      mo = new MutationObserver(observeAll);
+      mo.observe(document.body, { childList: true, subtree: true });
+    }
+
+    return () => {
+      scrollTicks.forEach(clearTimeout);
+      if (mo) mo.disconnect();
+      io.disconnect();
+      html.style.scrollBehavior = savedBehavior;
+    };
+  }, [step]);
+
   /* Reset back to the menu for a fresh order */
   const startNewOrder = () => {
     setStep('menu'); setName(''); setPhone(''); setEmail(''); setAddress(''); setNotes('');
@@ -678,7 +740,8 @@ const DeliveryMenu = () => {
                         </p>
                       </div>
                       <span className="dm-trk-badge" title={payCfg.label}>
-                        <PayIcon size={13} aria-hidden="true" /> {payCfg.label}
+                        <PayIcon size={13} aria-hidden="true" className="dm-trk-badge-ico" />
+                        <span className="dm-trk-badge-txt">{payCfg.label}</span>
                       </span>
                     </div>
 
@@ -2464,8 +2527,20 @@ const placedCSS = `
     margin-left:auto;flex-shrink:0;display:inline-flex;align-items:center;gap:6px;
     font-size:11px;font-weight:800;letter-spacing:0.02em;
     padding:6px 11px;border-radius:999px;
-    max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    max-width:50%;overflow:hidden;white-space:nowrap;
     background:rgba(63,32,4,0.05);border:1px solid var(--pw-line);color:#5C4B3A;
+  }
+  .dm-trk-badge-ico{flex-shrink:0;}
+  /* The long status labels ("Payment under review") must ellipsize instead of
+     pushing the header wider on small screens. */
+  .dm-trk-badge-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  /* ── Small-screen hardening: keep the tracker card from overflowing on phones.
+        Below 480px the badge drops onto its own row (full width, left aligned)
+        so it never competes with the order # + total line. ── */
+  @media (max-width:480px){
+    .dm-trk-head{flex-wrap:wrap;gap:10px;padding:14px 14px;}
+    .dm-trk-head > .min-w-0{flex:1 1 auto;min-width:0;}
+    .dm-trk-badge{margin-left:0;max-width:100%;flex-basis:100%;justify-content:flex-start;}
   }
   .dm-trk-bar{transition:width .6s var(--pw-ease);animation:dmPulseBar 2.4s ease infinite;}
   @keyframes dmPulseBar{0%,100%{opacity:1}50%{opacity:.75}}
