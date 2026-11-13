@@ -691,10 +691,12 @@ export default function SimpleMenu({ tableId, onOrderPlaced, locationSettings })
  return (
  <div className="sm-root" style={s.root}>
  <style>{CSS}</style>
- <div style={s.bgOrb1} /><div style={s.bgOrb2} /><div style={s.bgOrb3} />
+ <div className="sm-ambient-orb" style={s.bgOrb1} aria-hidden="true" />
+ <div className="sm-ambient-orb" style={s.bgOrb2} aria-hidden="true" />
+ <div className="sm-ambient-orb" style={s.bgOrb3} aria-hidden="true" />
 
- {/* Shooting star field — subtle brand tones in light mode, cosmic in dark mode */}
- <div className="sm-starfield">
+ {/* Decorative meteor field — subtle brand tones in light mode, cosmic in dark mode */}
+ <div className="sm-starfield" aria-hidden="true">
  {/* Twinkling background dots — mixed colors */}
  <span className="sm-twinkle" style={{top:'12%',left:'22%',animationDelay:'0s'}} />
  <span className="sm-twinkle-gold" style={{top:'8%',left:'68%',animationDelay:'0.5s',width:'2px',height:'2px'}} />
@@ -1379,86 +1381,33 @@ const CSS = `
  @keyframes paidBurst{0%{transform:scale(0.5);opacity:0}50%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
  @keyframes sparkle{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}50%{opacity:1;transform:scale(1) rotate(180deg)}}
 
-/* === Shooting Star — theme-aware palette === */
-/* Light mode uses soft berry / violet / amber brand tones; dark mode keeps
-   the brighter white-hot cosmic cores that read well on the navy surface. */
- @keyframes shootStar1{
-  0%{transform:translate(0,0) rotate(35deg);opacity:0}
-  5%{opacity:1}
-  40%{opacity:1}
-  60%{opacity:0}
-  100%{transform:translate(420px,300px) rotate(35deg);opacity:0}
+/* === Decorative meteor field === */
+/* One reusable motion curve instead of eight near-identical loops.
+   Per-star CSS variables provide different lengths, angles, travel distance,
+   speed and launch phase, so only 1-2 meteors are visible at any moment.
+   Linear timing matters: transform is only declared at 0% and 20%, so the
+   meteor travels steadily for the WHOLE time it is visible, then rests
+   invisible for the remaining 80% of its cycle. The "both" fill-mode keeps
+   stars hidden during their delay. */
+ @keyframes smMeteorFly{
+  0%{transform:translate3d(0,0,0) rotate(var(--sm-angle));opacity:0}
+  3%{opacity:var(--sm-peak)}
+  14%{opacity:var(--sm-peak)}
+  20%{transform:translate3d(var(--sm-travel-x),var(--sm-travel-y),0) rotate(var(--sm-angle));opacity:0}
+  100%{transform:translate3d(var(--sm-travel-x),var(--sm-travel-y),0) rotate(var(--sm-angle));opacity:0}
  }
- @keyframes shootStar2{
-  0%{transform:translate(0,0) rotate(28deg);opacity:0}
-  8%{opacity:0}
-  12%{opacity:1}
-  45%{opacity:1}
-  65%{opacity:0}
-  100%{transform:translate(360px,200px) rotate(28deg);opacity:0}
+ /* Twinkles only breathe in opacity — no scaling, which was distracting. */
+ @keyframes smTwinkle{
+  0%,100%{opacity:0.10}
+  50%{opacity:var(--sm-dot-peak)}
  }
- @keyframes shootStar3{
-  0%{transform:translate(0,0) rotate(42deg);opacity:0}
-  20%{opacity:0}
-  25%{opacity:1}
-  55%{opacity:1}
-  75%{opacity:0}
-  100%{transform:translate(500px,360px) rotate(42deg);opacity:0}
+ .sm-starfield{
+   position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+   --sm-dot-peak:0.55
  }
- @keyframes shootStar4{
-  0%{transform:translate(0,0) rotate(32deg);opacity:0}
-  10%{opacity:0}
-  15%{opacity:1}
-  50%{opacity:1}
-  70%{opacity:0}
-  100%{transform:translate(380px,250px) rotate(32deg);opacity:0}
- }
- @keyframes shootStar5{
-  0%{transform:translate(0,0) rotate(38deg);opacity:0}
-  15%{opacity:0}
-  20%{opacity:1}
-  55%{opacity:1}
-  75%{opacity:0}
-  100%{transform:translate(460px,320px) rotate(38deg);opacity:0}
- }
- @keyframes shootStar6{
-  0%{transform:translate(0,0) rotate(25deg);opacity:0}
-  10%{opacity:1}
-  45%{opacity:1}
-  65%{opacity:0}
-  100%{transform:translate(400px,220px) rotate(25deg);opacity:0}
- }
- @keyframes shootStar7{
-  0%{transform:translate(0,0) rotate(40deg);opacity:0}
-  12%{opacity:0}
-  18%{opacity:1}
-  50%{opacity:1}
-  70%{opacity:0}
-  100%{transform:translate(440px,340px) rotate(40deg);opacity:0}
- }
- @keyframes shootStar8{
-  0%{transform:translate(0,0) rotate(30deg);opacity:0}
-  8%{opacity:1}
-  40%{opacity:1}
-  60%{opacity:0}
-  100%{transform:translate(480px,290px) rotate(30deg);opacity:0}
- }
- @keyframes twinkleDot{
-  0%,100%{opacity:0.15;transform:scale(0.4)}
-  50%{opacity:1;transform:scale(1.3)}
- }
- @keyframes twinkleDotGold{
-  0%,100%{opacity:0.2;transform:scale(0.5)}
-  50%{opacity:0.95;transform:scale(1.1)}
- }
- @keyframes twinkleDotCyan{
-  0%,100%{opacity:0.15;transform:scale(0.4)}
-  50%{opacity:0.9;transform:scale(1.2)}
- }
- .sm-starfield{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
- /* Light mode: a restrained berry / violet / amber family that matches the
-    brand accents. The old cyan/lime/coral dots looked like neon on white.
-    Legacy class names are kept so the existing markup stays untouched. */
+ html.dark .sm-starfield{--sm-dot-peak:0.9}
+ /* Light mode: restrained berry / violet / amber family that matches the
+    brand accents. Legacy class names are kept so markup stays untouched. */
  .sm-twinkle,
  .sm-twinkle-gold,
  .sm-twinkle-cyan,
@@ -1466,59 +1415,113 @@ const CSS = `
  .sm-twinkle-coral{
    position:absolute;width:3px;height:3px;border-radius:50%;
    background:radial-gradient(circle,rgba(var(--sm-dot),0.82) 0%,rgba(var(--sm-dot),0.20) 55%,rgba(var(--sm-dot),0) 100%);
-   box-shadow:0 0 5px rgba(var(--sm-dot),0.16)
+   box-shadow:0 0 5px rgba(var(--sm-dot),0.16);
+   animation:smTwinkle var(--sm-dot-duration,5s) ease-in-out infinite both
  }
- .sm-twinkle{--sm-dot:190,24,93;animation:twinkleDot 3s ease-in-out infinite}
- .sm-twinkle-gold{--sm-dot:194,65,12;animation:twinkleDotGold 3.5s ease-in-out infinite}
- .sm-twinkle-cyan{--sm-dot:109,40,217;animation:twinkleDotCyan 2.8s ease-in-out infinite}
- .sm-twinkle-lime{--sm-dot:180,83,9;animation:twinkleDot 3.2s ease-in-out infinite}
- .sm-twinkle-coral{--sm-dot:126,34,206;animation:twinkleDotGold 4s ease-in-out infinite}
+ .sm-twinkle{--sm-dot:190,24,93;--sm-dot-duration:4.8s}
+ .sm-twinkle-gold{--sm-dot:194,65,12;--sm-dot-duration:5.4s}
+ .sm-twinkle-cyan{--sm-dot:109,40,217;--sm-dot-duration:4.4s}
+ .sm-twinkle-lime{--sm-dot:180,83,9;--sm-dot-duration:5.1s}
+ .sm-twinkle-coral{--sm-dot:126,34,206;--sm-dot-duration:5.8s}
  .sm-shoot-wrap{position:absolute;top:0;left:0;width:1px;height:1px}
- .sm-shoot-star{position:absolute;width:130px;height:2px;border-radius:2px;opacity:0;--sm-star:190,24,93}
- /* Structural rules are declared before the per-star colours. The previous
-    cyan fallback came last and silently flattened every light-mode trail. */
+ .sm-shoot-star{
+   position:absolute;
+   width:var(--sm-trail-w,150px);height:3px;
+   border-radius:999px;opacity:0;
+   --sm-star:190,24,93;
+   --sm-core-color:rgb(var(--sm-star));
+   --sm-peak:0.82;
+   --sm-bloom:0.34;
+   --sm-head-glow:0.34;
+   --sm-halo:0.14;
+   --sm-dust-opacity:0.36;
+   --sm-angle:32deg;
+   --sm-travel-x:520px;
+   --sm-travel-y:330px;
+   --sm-duration:12s;
+   --sm-delay:-2s;
+   transform:translate3d(0,0,0) rotate(var(--sm-angle));
+   transform-origin:0 50%;
+   backface-visibility:hidden;
+   will-change:transform,opacity;
+   animation:smMeteorFly var(--sm-duration) linear var(--sm-delay) infinite both
+ }
+ /* Structural rules come first; per-star variables below only change colour
+    and motion. This avoids a late fallback flattening every trail. */
  .sm-shoot-star .trail{
-   position:absolute;inset:0;border-radius:2px;
-   background:linear-gradient(90deg,transparent 0%,rgba(var(--sm-star),0.03) 25%,rgba(var(--sm-star),0.14) 55%,rgba(var(--sm-star),0.36) 82%,rgba(var(--sm-star),0.62) 100%);
-   filter:blur(0.2px)
+   position:absolute;inset:0;border-radius:999px;
+   clip-path:polygon(0 42%,100% 0,100% 100%,0 58%);
+   background:linear-gradient(90deg,transparent 0%,rgba(var(--sm-star),0.05) 18%,rgba(var(--sm-star),0.20) 45%,rgba(var(--sm-star),0.52) 75%,rgba(var(--sm-star),0.88) 100%);
+   filter:blur(0.15px)
+ }
+ .sm-shoot-star .trail::after{
+   content:'';position:absolute;inset:-3px 0;border-radius:inherit;
+   background:inherit;filter:blur(5px);
+   opacity:var(--sm-bloom);transform:scaleY(1.35);
+   pointer-events:none
  }
  .sm-shoot-star .head{
-   position:absolute;right:-2px;top:50%;transform:translateY(-50%);
-   width:7px;height:7px;border-radius:50%;
-   background:radial-gradient(circle,rgba(var(--sm-star),0.98) 15%,rgba(var(--sm-star),0.68) 50%,rgba(var(--sm-star),0) 78%);
-   box-shadow:0 0 7px 1px rgba(var(--sm-star),0.22)
+   position:absolute;right:-3px;top:50%;transform:translateY(-50%);
+   width:8px;height:8px;border-radius:50%;
+   background:radial-gradient(circle,var(--sm-core-color) 0 16%,rgba(var(--sm-star),0.86) 42%,rgba(var(--sm-star),0) 76%);
+   box-shadow:0 0 8px 1px rgba(var(--sm-star),var(--sm-head-glow)),0 0 18px 4px rgba(var(--sm-star),var(--sm-halo))
  }
- /* Light mode: eight coordinated berry, violet, copper and amber tones. */
- .sm-shoot-1{--sm-star:190,24,93;animation:shootStar1 4s ease-in infinite;animation-delay:0.5s}
- .sm-shoot-2{--sm-star:194,65,12;animation:shootStar2 5s ease-in infinite;animation-delay:2.2s}
- .sm-shoot-3{--sm-star:109,40,217;animation:shootStar3 6s ease-in infinite;animation-delay:4s}
- .sm-shoot-4{--sm-star:225,29,72;animation:shootStar4 4.5s ease-in infinite;animation-delay:1.3s}
- .sm-shoot-5{--sm-star:126,34,206;animation:shootStar5 5.5s ease-in infinite;animation-delay:3.5s}
- .sm-shoot-6{--sm-star:180,83,9;animation:shootStar6 5s ease-in infinite;animation-delay:0.8s}
- .sm-shoot-7{--sm-star:157,23,77;animation:shootStar7 4.8s ease-in infinite;animation-delay:2.8s}
- .sm-shoot-8{--sm-star:219,39,119;animation:shootStar8 5.2s ease-in infinite;animation-delay:5s}
- /* Dark mode: stars become brighter with white-hot cores */
+ .sm-shoot-star .head::after{
+   content:'';position:absolute;right:12px;top:50%;
+   width:2px;height:2px;border-radius:50%;
+   background:var(--sm-core-color);
+   opacity:var(--sm-dust-opacity);
+   transform:translateY(-50%);
+   box-shadow:-8px 2px 0 -0.5px var(--sm-core-color),-15px -1px 0 -1px var(--sm-core-color)
+ }
+ /* Light mode: eight coordinated tones, each with its own depth and timing. */
+ .sm-shoot-1{--sm-star:190,24,93;--sm-trail-w:150px;--sm-angle:32deg;--sm-travel-x:540px;--sm-travel-y:340px;--sm-duration:12.5s;--sm-delay:-1.8s}
+ .sm-shoot-2{--sm-star:194,65,12;--sm-trail-w:118px;--sm-angle:27deg;--sm-travel-x:440px;--sm-travel-y:225px;--sm-duration:14s;--sm-delay:-7.2s}
+ .sm-shoot-3{--sm-star:109,40,217;--sm-trail-w:180px;--sm-angle:39deg;--sm-travel-x:610px;--sm-travel-y:470px;--sm-duration:16s;--sm-delay:-11.4s}
+ .sm-shoot-4{--sm-star:225,29,72;--sm-trail-w:134px;--sm-angle:30deg;--sm-travel-x:480px;--sm-travel-y:280px;--sm-duration:13s;--sm-delay:-5.1s}
+ .sm-shoot-5{--sm-star:126,34,206;--sm-trail-w:160px;--sm-angle:35deg;--sm-travel-x:560px;--sm-travel-y:390px;--sm-duration:15s;--sm-delay:-9.3s}
+ .sm-shoot-6{--sm-star:180,83,9;--sm-trail-w:110px;--sm-angle:24deg;--sm-travel-x:420px;--sm-travel-y:190px;--sm-duration:11s;--sm-delay:-3.4s}
+ .sm-shoot-7{--sm-star:157,23,77;--sm-trail-w:170px;--sm-angle:41deg;--sm-travel-x:590px;--sm-travel-y:500px;--sm-duration:14.5s;--sm-delay:-12.6s}
+ .sm-shoot-8{--sm-star:219,39,119;--sm-trail-w:142px;--sm-angle:31deg;--sm-travel-x:510px;--sm-travel-y:310px;--sm-duration:12.8s;--sm-delay:-2.7s}
+ /* Dark mode: brighter white-hot cores, softer but still colourful tails. */
+ html.dark .sm-shoot-star{
+   --sm-core-color:#fff;
+   --sm-peak:1;
+   --sm-bloom:0.62;
+   --sm-head-glow:0.80;
+   --sm-halo:0.30;
+   --sm-dust-opacity:0.58
+ }
  html.dark .sm-twinkle{background:radial-gradient(circle,#fff,rgba(0,229,255,0.4));box-shadow:0 0 6px rgba(255,255,255,0.5)}
  html.dark .sm-twinkle-gold{background:radial-gradient(circle,#fff,rgba(255,215,0,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
  html.dark .sm-twinkle-cyan{background:radial-gradient(circle,#fff,rgba(94,234,212,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
  html.dark .sm-twinkle-lime{background:radial-gradient(circle,#fff,rgba(163,230,53,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
  html.dark .sm-twinkle-coral{background:radial-gradient(circle,#fff,rgba(255,127,80,0.4));box-shadow:0 0 6px rgba(255,255,255,0.4)}
- html.dark .sm-shoot-1 .trail{background:linear-gradient(90deg,transparent 0%,rgba(0,229,255,0.05) 30%,rgba(0,229,255,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-1 .head{background:radial-gradient(circle,#fff 30%,rgba(0,229,255,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(0,229,255,0.7),0 0 16px 4px rgba(94,234,212,0.4)}
- html.dark .sm-shoot-2 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,215,0,0.05) 30%,rgba(255,215,0,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-2 .head{background:radial-gradient(circle,#fff 30%,rgba(255,215,0,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,215,0,0.7),0 0 16px 4px rgba(251,191,36,0.4)}
- html.dark .sm-shoot-3 .trail{background:linear-gradient(90deg,transparent 0%,rgba(163,230,53,0.05) 30%,rgba(163,230,53,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-3 .head{background:radial-gradient(circle,#fff 30%,rgba(163,230,53,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(163,230,53,0.7),0 0 16px 4px rgba(190,242,100,0.4)}
- html.dark .sm-shoot-4 .trail{background:linear-gradient(90deg,transparent 0%,rgba(255,127,80,0.05) 30%,rgba(255,127,80,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-4 .head{background:radial-gradient(circle,#fff 30%,rgba(255,127,80,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(255,127,80,0.7),0 0 16px 4px rgba(251,146,60,0.4)}
- html.dark .sm-shoot-5 .trail{background:linear-gradient(90deg,transparent 0%,rgba(167,139,250,0.05) 30%,rgba(167,139,250,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-5 .head{background:radial-gradient(circle,#fff 30%,rgba(167,139,250,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(167,139,250,0.7),0 0 16px 4px rgba(196,181,253,0.4)}
- html.dark .sm-shoot-6 .trail{background:linear-gradient(90deg,transparent 0%,rgba(56,189,248,0.05) 30%,rgba(56,189,248,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-6 .head{background:radial-gradient(circle,#fff 30%,rgba(56,189,248,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(56,189,248,0.7),0 0 16px 4px rgba(125,211,252,0.4)}
- html.dark .sm-shoot-7 .trail{background:linear-gradient(90deg,transparent 0%,rgba(251,191,36,0.05) 30%,rgba(251,191,36,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-7 .head{background:radial-gradient(circle,#fff 30%,rgba(251,191,36,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(251,191,36,0.7),0 0 16px 4px rgba(253,224,71,0.4)}
- html.dark .sm-shoot-8 .trail{background:linear-gradient(90deg,transparent 0%,rgba(244,114,182,0.05) 30%,rgba(244,114,182,0.5) 70%,#fff 95%,rgba(255,255,255,0.95) 100%)}
- html.dark .sm-shoot-8 .head{background:radial-gradient(circle,#fff 30%,rgba(244,114,182,0.8) 60%,transparent);box-shadow:0 0 8px 2px rgba(244,114,182,0.7),0 0 16px 4px rgba(251,207,232,0.4)}
+ html.dark .sm-shoot-1{--sm-star:0,229,255}
+ html.dark .sm-shoot-2{--sm-star:255,215,0}
+ html.dark .sm-shoot-3{--sm-star:163,230,53}
+ html.dark .sm-shoot-4{--sm-star:255,127,80}
+ html.dark .sm-shoot-5{--sm-star:167,139,250}
+ html.dark .sm-shoot-6{--sm-star:56,189,248}
+ html.dark .sm-shoot-7{--sm-star:251,191,36}
+ html.dark .sm-shoot-8{--sm-star:244,114,182}
+ html.dark .sm-shoot-star .trail{
+   background:linear-gradient(90deg,transparent 0%,rgba(var(--sm-star),0.04) 22%,rgba(var(--sm-star),0.35) 62%,rgba(255,255,255,0.88) 92%,#fff 100%)
+ }
+ html.dark .sm-shoot-star .head{
+   background:radial-gradient(circle,#fff 0 22%,rgba(var(--sm-star),0.9) 48%,rgba(var(--sm-star),0) 78%);
+   box-shadow:0 0 10px 2px rgba(var(--sm-star),var(--sm-head-glow)),0 0 22px 5px rgba(var(--sm-star),var(--sm-halo))
+ }
+ /* On phones, keep the sky calm: fewer concurrent meteors and lower density. */
+ @media (max-width:640px){
+   .sm-starfield{opacity:0.82}
+   html.dark .sm-starfield{opacity:0.92}
+   .sm-shoot-wrap:nth-last-of-type(-n+3){display:none}
+ }
+ /* Accessibility: honour the OS setting instead of forcing ambient motion. */
+ @media (prefers-reduced-motion:reduce){
+   .sm-starfield,.sm-ambient-orb{display:none !important}
+ }
 
  .sm-header{padding:12px 16px 10px}
  @media(min-width:640px){.sm-header{padding:14px 24px 12px}}
