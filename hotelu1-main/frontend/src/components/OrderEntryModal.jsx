@@ -1,18 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authFetch, getAPI_URL } from '../utils/api';
 import { enrichOrderWithTotals, fetchAndCacheGlobalSettings, calculateOrderTotals, getGlobalTaxDiscount } from '../utils/orderTotals';
 import Notification from './Notification';
 import MenuImage from './MenuImage';
 import useCurrency from '../hooks/useCurrency';
 import { Users } from 'lucide-react';
-import {
- loadRestaurantInfo,
- buildKitchenSlipHtml,
- buildCustomerReceiptHtml,
- calculateTotals as calcReceiptTotals,
- loadTaxDiscountSettings,
- openReceiptForPrint,
-} from '../utils/receiptPrint';
 
 const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, nextOrderId, setNextOrderId, orderType, initialOrder }) => {
  const { format: fmt } = useCurrency(locationSettings);
@@ -22,8 +14,12 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  const [selectedCategory, setSelectedCategory] = useState('All');
  const [searchTerm, setSearchTerm] = useState('');
  const [categories, setCategories] = useState(['All']);
- const [showReceipt, setShowReceipt] = useState(false);
- const [confirmedOrder, setConfirmedOrder] = useState(null);
+ // BUGFIX (takeaway): this modal used to open its OWN "Order Confirmed"
+ // card while the parent page opened a SECOND identical card, and it also
+ // auto-opened a print window (window.print()) which froze the whole
+ // screen. There is now exactly ONE receipt, owned by the parent page.
+ const [paymentBusy, setPaymentBusy] = useState(false);
+ const paymentInFlight = useRef(false);
  const [showMobileCart, setShowMobileCart] = useState(false);
  const [paymentMethod, setPaymentMethod] = useState('cash');
  const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,58 +149,37 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  setTimeout(() => setNotification(null), 3000);
  };
 
- // Print kitchen token + customer bill (thermal 80mm) for the
- // just-paid takeaway order. Called automatically after the
- // payment is marked complete.
- const printTakeawayBill = async (order, methodLabel) => {
- try {
- const info = loadRestaurantInfo();
- const taxDiscount = loadTaxDiscountSettings();
- const totals = calcReceiptTotals(order, taxDiscount);
- const kitchenHtml = buildKitchenSlipHtml(order, info);
- const paymentLabel = String(methodLabel || 'Cash').toUpperCase();
- const customerHtml = buildCustomerReceiptHtml(order, totals, info, {
- qrCodeDataUrl: '',
- paymentLabel,
- });
- openReceiptForPrint(
- `${kitchenHtml}${customerHtml}`,
- `Takeaway Bill #${order.id}`
- );
- } catch (e) {
- console.error('Print failed:', e);
- }
- };
+// Printing is now strictly user-initiated from the single receipt card on
+// the parent page. Auto-opening a print window here used to steal focus and
+// leave the app behind a frozen print dialog right after payment.
 
- // Handle payment completion for takeaway orders
+ // Handle payment completion for takeaway orders.
+ // BUGFIX (duplicate cards + frozen screen): this used to
+ //   1. open its own "Order Confirmed / token" card,
+ //   2. call onOrderPlaced(), which made the parent open a SECOND one,
+ //   3. auto-open a print window whose window.print() froze the UI,
+ //   4. and show a "confirmed" card even when the payment FAILED.
+ // Now there is exactly ONE receipt (owned by the parent), printing is
+ // manual, and a failed payment leaves the payment card open for a retry.
  const handlePaymentComplete = async () => {
- if (!pendingOrder) return;
-
+ if (!pendingOrder || paymentInFlight.current) return;
+ paymentInFlight.current = true;
+ setPaymentBusy(true);
  try {
- // Complete payment + close the order on the server.
- // BUGFIX: this used to call /api/orders/:id/status — an endpoint that
- // does not exist — so the request always 404'd and the warn() below
- // hid it. The order stayed "pending"/unpaid while a receipt claiming
- // "PAID" was printed. /complete-payment sets status completed,
- // payment paid and closes the bill in one go.
+ // /complete-payment sets status completed, payment paid and closes the
+ // bill in one go. An old /api/orders/:id/status call 404'd silently
+ // while a receipt claiming "PAID" was printed.
  const response = await authFetch(`/api/orders/${pendingOrder.id}/complete-payment`, {
  method: 'PUT',
  headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({
- payment_method: paymentMethod
- })
+ body: JSON.stringify({ payment_method: paymentMethod }),
  });
 
  if (!response.ok) {
- // BUGFIX: this used to "succeed" silently — the receipt printed as PAID
- // while the server kept the order pending forever, dead-ending the
- // takeaway board on "Waiting for kitchen". Now we surface the error
- // and keep the payment modal open so the cashier can retry; nothing
- // else is closed until the server confirms the payment.
  const errData = await response.json().catch(() => ({}));
  setNotification({ message: errData.message || 'Payment could not be completed — please try again', type: 'error' });
  setTimeout(() => setNotification(null), 5000);
- return;
+ return; // keep the payment card open so the cashier can retry
  }
 
  const data = await response.json().catch(() => ({}));
@@ -212,33 +187,19 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  finalOrder.status = 'completed';
  finalOrder.payment_status = 'paid';
 
- // Close payment modal
  setShowPaymentModal(false);
-
- // Show token receipt
- setConfirmedOrder(finalOrder);
- setShowReceipt(true);
-
- // Call onOrderPlaced to add to active orders
+ setPendingOrder(null);
+ // The parent shows the single token receipt and refreshes its board.
  onOrderPlaced(finalOrder);
-
- // Auto-open the printable bill (kitchen token + customer
- // receipt). User can hit Cancel in the print dialog if
- // they don't want a paper copy.
- printTakeawayBill(finalOrder, paymentMethod);
-
- // Close main order modal
  onClose();
-
  } catch (error) {
  console.error('Payment error:', error);
- // Even if error, show receipt
- setShowPaymentModal(false);
- setConfirmedOrder(pendingOrder);
- setShowReceipt(true);
- onOrderPlaced(pendingOrder);
- printTakeawayBill(pendingOrder, paymentMethod);
- onClose();
+ // No fake confirmation on failure — the order is still unpaid.
+ setNotification({ message: 'Payment could not be completed — please try again', type: 'error' });
+ setTimeout(() => setNotification(null), 5000);
+ } finally {
+ paymentInFlight.current = false;
+ setPaymentBusy(false);
  }
  };
 
@@ -771,111 +732,6 @@ const OrderEntryModal = ({ table, onClose, onOrderPlaced, locationSettings, next
  </div>
  </div>
 
- {/* Takeaway Order Receipt Modal - Orange Theme - z-[100] to stay above Notification toasts */}
- {showReceipt && confirmedOrder && (
- <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
- {/* BUGFIX: constrain the card to the viewport so it's scrollable on small phones instead of clipping */}
- <div className="bg-white dark:bg-[#141C2E] rounded-2xl shadow-2xl max-w-md w-full max-h-[92vh] overflow-hidden flex flex-col animate-scale-in border border-indigo-100 dark:bg-[#141C2E] dark:border-slate-700/60">
- {/* Header - Orange */}
- <div className="bg-indigo-600 p-6 text-center">
- <div className="w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-3">
- <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
- </svg>
- </div>
- <h2 className="text-2xl font-bold text-white">Order Confirmed!</h2>
- <p className="text-indigo-100 text-sm mt-1">Your takeaway order has been placed</p>
- </div>
-
- {/* Receipt Content */}
- <div className="p-6">
- {/* Order Token - Main highlight */}
-<div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-800/50 rounded-xl p-4 mb-6 text-center">
-<p className="text-amber-700 dark:text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Your Order Token</p>
-<p className="text-3xl sm:text-4xl font-bold text-amber-800 dark:text-amber-300 tracking-wider break-all">{confirmedOrder.token}</p>
-<p className="text-amber-600 dark:text-amber-500 text-xs mt-2">Show this token when collecting your order</p>
- </div>
-
- {/* Order Details */}
- <div className="space-y-3 mb-6">
- <div className="flex justify-between text-sm">
-<span className="text-gray-500 dark:text-slate-400">Order ID</span>
-<span className="font-semibold text-gray-900 dark:text-white">#{confirmedOrder.id}</span>
-</div>
-<div className="flex justify-between text-sm">
-<span className="text-gray-500 dark:text-slate-400">Date & Time</span>
-<span className="font-semibold text-gray-900 dark:text-white">{new Date(confirmedOrder.timestamp).toLocaleString()}</span>
-</div>
-<div className="flex justify-between text-sm">                        <span className="text-gray-500 dark:text-slate-400">Status</span>
-                        {/* REAL payment state — a paid takeaway used to read
-                            "Pending" while the board said waiting-for-kitchen */}
-                        {confirmedOrder.payment_status === 'paid' || confirmedOrder.status === 'completed' ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                            Paid — Order Complete
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400">
-                            Pending
-                          </span>
-                        )}
- </div>
- </div>
-
- {/* Items */}
- <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mb-4">
- <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Order Items</h3>
- <div className="space-y-2 max-h-32 overflow-y-auto">
- {(confirmedOrder.items || []).map((item, idx) => (
- <div key={idx} className="flex justify-between text-sm">
- <span className="text-gray-700 dark:text-slate-300">{item.qty || item.quantity}x {item.name}</span>
- <span className="font-medium text-gray-900 dark:text-slate-200">{fmt(item.price * (item.qty || item.quantity || 1))}</span>
- </div>
- ))}
- </div>
- </div>
-
- {/* Total */}
-<div className="border-t-2 border-gray-200 dark:border-slate-700 pt-4 mb-6">
-<div className="flex justify-between items-center">
-<span className="text-lg font-bold text-gray-900 dark:text-white">Total Amount</span>
-<span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{fmt(confirmedOrder.total)}</span>
- </div>
- </div>
-
- {/* Instructions */}
-<div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 mb-6">
-<p className="text-sm text-blue-800 dark:text-blue-300 text-center">
- <strong>Important:</strong> Please show your token <strong>{confirmedOrder.token}</strong> at the counter to collect your order.
- </p>
- </div>
-
- {/* Actions */}
- <div className="flex gap-3">
- <button
- onClick={() => {
- window.print();
- }}
- className="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg text-sm font-semibold text-gray-700 dark:text-slate-300 bg-white dark:bg-[#1A2336] hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-800 focus:ring-blue-500"
- >
- <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
- <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
- </svg>
- Print
- </button>
- <button
- onClick={() => {
- setShowReceipt(false);
- onClose();
- }}
- className="flex-1 inline-flex items-center justify-center px-4 py-2.5 border border-transparent rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
- >
- Done
- </button>
- </div>
- </div>
- </div>
- </div>
- )}
  {/* Floating Cart Button for Mobile - z-[100] so it stays above Notification toasts (z-[90]) */}
  <div className="md:hidden fixed bottom-4 right-4 z-[100]">
  <button
@@ -1194,18 +1050,21 @@ className="w-8 h-8 bg-green-100 dark:bg-green-900/30 hover:bg-green-200 dark:hov
  <div className="flex gap-3 pt-4 flex-shrink-0">
  <button
  onClick={() => {
+ if (paymentBusy) return;
  setShowPaymentModal(false);
  setPendingOrder(null);
  }}
- className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors dark:bg-[#141C2E] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336] min-h-[44px]"
+ disabled={paymentBusy}
+ className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-60 dark:bg-[#141C2E] dark:border-slate-600 dark:text-slate-300 dark:hover:bg-[#1A2336] min-h-[44px]"
  >
  Cancel
  </button>
  <button
  onClick={handlePaymentComplete}
- className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-sm hover:from-green-600 hover:to-green-700 transition-all shadow-lg min-h-[44px]"
+ disabled={paymentBusy}
+ className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold text-sm hover:from-green-600 hover:to-green-700 transition-all shadow-lg min-h-[44px] disabled:opacity-60 disabled:cursor-not-allowed"
  >
- Complete Payment
+ {paymentBusy ? 'Completing…' : 'Complete Payment'}
  </button>
  </div>
  </div>

@@ -177,8 +177,16 @@ const TakeawayManagement = ({ locationSettings, nextOrderId, setNextOrderId }) =
  const handleQuickOrder = () => setShowOrderModal(true);
 
  const handleOrderPlaced = (orderData) => {
- setActiveOrders((prev) => [...prev, orderData]);
- if (orderData.token) {
+ // BUGFIX (duplicate card): an order paid inside OrderEntryModal is
+ // already completed/paid on the server. Pushing it back onto the live
+ // board creates a phantom second card until the 2s poll removes it.
+ const alreadyClosed =
+ String(orderData?.status || '').toLowerCase() === 'completed' ||
+ String(orderData?.payment_status || '').toLowerCase() === 'paid';
+ if (!alreadyClosed) setActiveOrders((prev) => [...prev, orderData]);
+ if (orderData.token || alreadyClosed) {
+ // This is the ONE and ONLY confirmation card. OrderEntryModal no longer
+ // opens its own receipt or auto-opens a print dialog.
  setConfirmedOrder(orderData);
  setReceiptViewOnly(false);
  setShowReceipt(true);
@@ -903,11 +911,18 @@ const OrderCard = ({
 
 const ReceiptModal = ({ order, fmt, onClose, viewOnly = false }) => {
  const t = enrichOrderWithTotals(order);
- const statusText = viewOnly
- ? (String(order.payment_status || '').toLowerCase() === 'paid'
+ const orderPaid =
+ String(order.payment_status || '').toLowerCase() === 'paid' ||
+ String(order.status || '').toLowerCase() === 'completed';
+ const statusText = orderPaid
  ? 'Paid'
- : String(order.status || 'pending').replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()))
- : 'Pending';
+ : String(order.status || 'pending').replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+ const title = viewOnly
+ ? 'Order Receipt'
+ : (orderPaid ? 'Payment Complete' : 'Order Confirmed');
+ const subtitle = viewOnly
+ ? `Takeaway order #${order.id}`
+ : (orderPaid ? 'Payment received — order closed' : 'Your takeaway order has been placed');
  return (
 	<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-2 sm:p-4">
  <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[92dvh] sm:max-h-[88vh] overflow-hidden flex flex-col animate-scale-in dark:bg-[#141C2E] dark:border dark:border-slate-700/60">
@@ -923,15 +938,14 @@ const ReceiptModal = ({ order, fmt, onClose, viewOnly = false }) => {
  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/30 flex items-center justify-center mx-auto mb-2">
  <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
  </div>
- <h2 className="text-lg sm:text-xl font-bold">{viewOnly ? 'Order Receipt' : 'Order Confirmed'}</h2>
- <p className="text-indigo-100 text-xs mt-0.5">
- {viewOnly ? `Takeaway order #${order.id}` : 'Your takeaway order has been placed'}
- </p>
+ <h2 className="text-lg sm:text-xl font-bold">{title}</h2>
+ <p className="text-indigo-100 text-xs mt-0.5">{subtitle}</p>
  </div>
 
  {/* Body */}
  <div className="p-3 sm:p-5 overflow-y-auto flex-1 space-y-3 sm:space-y-4">
- {/* Token */}
+ {/* Token — only when this order actually has one */}
+ {order.token && (
  <div className="bg-amber-50 border border-amber-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center dark:bg-amber-950/40 dark:border-amber-800/60">
  <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
  Order Token
@@ -943,6 +957,7 @@ const ReceiptModal = ({ order, fmt, onClose, viewOnly = false }) => {
  Show this token to collect your order
  </p>
  </div>
+ )}
 
  {/* Meta */}
  <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs">
@@ -1019,10 +1034,12 @@ const ReceiptModal = ({ order, fmt, onClose, viewOnly = false }) => {
  </div>
 
  {/* Info note */}
+ {order.token && (
  <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-700 dark:bg-blue-950/40 dark:border-blue-800/60 dark:text-blue-300">
  <strong>Important:</strong> Please show token{' '}
  <strong>{order.token}</strong> at the counter to collect your order.
  </div>
+ )}
  </div>
 
  {/* Footer actions */}
