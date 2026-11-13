@@ -61,11 +61,17 @@ export const setSoundVolume = (volume) => {
 
 let audioCtx = null;
 let unlocked = false;
-// Entries are { fn, at }. Orders that arrive before the first user gesture
-// are queued, but stale ones must NOT all flush at once on that first click —
-// otherwise staff hear a burst of old bells after opening the dashboard.
+// Entries are { fn, at, label }. Orders that arrive before the first user gesture
+// are queued. On unlock we replay all fresh ones (staggered) instead of just
+// the newest — every order deserves a bell, not just the last one.
 let pendingPlays = [];
 const PENDING_TTL_MS = 20000;
+const PENDING_MAX = 8;
+// How often we retry queued bells without waiting for a user gesture.
+// Browsers will sometimes let resume() succeed after a socket event if the
+// tab was recently active, so this periodic retry catches that case.
+const RETRY_MS = 3000;
+let retryTimer = null;
 
 /** Browsers suspend the AudioContext when a tab is backgrounded. Resume it
  *  before every play so an order that arrives after 20 minutes is still
@@ -111,25 +117,67 @@ const getAudioCtx = () => {
 };
 
 const unlockAudio = async () => {
-  if (unlocked) return;
+  if (unlocked) {
+    // Already unlocked but there may be bells queued from a suspended-context
+    // fallback. Flush them now if the context is running.
+    flushPending();
+    return;
+  }
   unlocked = true;
   // A gesture reached this handler, so resume() is allowed to succeed. Await it
   // so the replayed bell is scheduled against a live clock (not a frozen one).
   const ctx = await ensureRunning(getAudioCtx());
   if (!ctx) return;
+  flushPending();
+};
+
+/**
+ * Replay all fresh queued bells, staggered by 400ms so they don't overlap
+ * into an indistinguishable noise burst. Stale entries (older than TTL) are
+ * silently dropped. If the context still isn't running, the newest entry is
+ * kept for the next attempt.
+ */
+const flushPending = () => {
+  if (pendingPlays.length === 0) return;
+  const ctx = getAudioCtx();
+  if (!ctx || !isRunning(ctx)) return;
   const queued = pendingPlays.splice(0);
   const fresh = queued.filter((p) => Date.now() - p.at < PENDING_TTL_MS);
-  // At most one queued bell is replayed — the newest. Replaying all of them
-  // would produce an alarming (and misleading) burst of duplicate alerts.
-  const latest = fresh[fresh.length - 1];
-  if (latest) {
-    try {
-      if (isRunning(ctx)) latest.fn();
-      else pendingPlays.push(latest); // context not ready yet; retry on next gesture
-    } catch {
-      /* noop */
+  if (fresh.length === 0) return;
+  // Replay all fresh bells, staggered so each is audible.
+  fresh.forEach((p, i) => {
+    setTimeout(() => {
+      try {
+        const c = getAudioCtx();
+        if (c && isRunning(c)) p.fn();
+      } catch { /* noop */ }
+    }, i * 400);
+  });
+};
+
+/**
+ * Periodically retry queued bells. Browsers sometimes allow resume() to
+ * succeed from a timer (not just a user gesture) if the tab was recently
+ * active. This catches the case where a staff member is watching the
+ * dashboard but hasn't clicked in a while.
+ */
+const startRetryTimer = () => {
+  if (retryTimer) return;
+  retryTimer = setInterval(async () => {
+    if (pendingPlays.length === 0) return;
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    // Try to resume — may succeed even without a user gesture in some browsers.
+    if (!isRunning(ctx)) {
+      try { await ctx.resume(); } catch { /* noop */ }
     }
-  }
+    if (isRunning(ctx)) {
+      // Context is running. If we're already unlocked, flush immediately.
+      // If not unlocked, this resume might have worked — try flushing anyway
+      // since the browser allowed it.
+      flushPending();
+    }
+  }, RETRY_MS);
 };
 
 if (typeof window !== 'undefined') {
@@ -138,6 +186,29 @@ if (typeof window !== 'undefined') {
   window.addEventListener('touchstart', handler, { passive: true });
   window.addEventListener('keydown', handler, { passive: true });
   window.addEventListener('pointerdown', handler, { passive: true });
+
+  // When the tab becomes visible again, try to resume the AudioContext and
+  // flush any bells that were queued while it was backgrounded. Browsers
+  // suspend AudioContext for backgrounded tabs, so bells arriving during
+  // that time are silently queued. This ensures they replay on refocus.
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      // visibilitychange is NOT a user gesture, but resume() often succeeds
+      // here because the tab was previously interacted with.
+      const ctx = getAudioCtx();
+      if (ctx) {
+        ensureRunning(ctx).then(() => {
+          flushPending();
+          // If resume worked, mark as unlocked so future bells play immediately.
+          if (!unlocked && isRunning(ctx)) {
+            unlocked = true;
+          }
+        });
+      }
+    }
+  });
+
+  startRetryTimer();
 }
 
 /* ------------------------------------------------------------------ */
@@ -270,10 +341,10 @@ const playWaiterPattern = (settings) => {
 const schedule = async (label, fn) => {
   if (!unlocked) {
     console.warn(
-      `[notificationSound] "${label}" queued — waiting for first user interaction`
+      `[notificationSound] "${label}" queued — waiting for user interaction or retry`
     );
-    pendingPlays.push({ fn, at: Date.now() });
-    if (pendingPlays.length > 3) pendingPlays.shift();
+    pendingPlays.push({ fn, at: Date.now(), label });
+    if (pendingPlays.length > PENDING_MAX) pendingPlays.shift();
     return;
   }
   try {
@@ -285,9 +356,9 @@ const schedule = async (label, fn) => {
     if (!isRunning(ctx)) {
       // Browser refused to start audio (no recent user gesture in THIS tab, e.g.
       // it has been backgrounded). Queue it so it replays on the next gesture
-      // instead of being silently dropped.
-      pendingPlays.push({ fn, at: Date.now() });
-      if (pendingPlays.length > 3) pendingPlays.shift();
+      // or retry timer instead of being silently dropped.
+      pendingPlays.push({ fn, at: Date.now(), label });
+      if (pendingPlays.length > PENDING_MAX) pendingPlays.shift();
       return;
     }
     fn();
@@ -318,14 +389,23 @@ export const playWaiterBell = () => {
 };
 
 /**
- * Warm up / resume the AudioContext WITHOUT claiming a user gesture.
- * Called on provider mount and from visible buttons. Browsers still refuse
- * to start audio until a real click/tap/keypress, so we deliberately do
- * NOT flip `unlocked` here — otherwise the first bell would be silently
- * scheduled into a suspended context and never heard. resume() is async.
+ * Warm up / resume the AudioContext WITHOUT requiring a user gesture.
+ * Called on provider mount and from socket events.
+ *
+ * Browsers will often allow resume() to succeed here if the tab was recently
+ * active (even without a fresh click). When it does succeed, we flip `unlocked`
+ * so the bell in schedule() plays immediately instead of being queued.
+ * If resume() fails (truly no prior gesture), `unlocked` stays false and the
+ * bell is queued for the retry timer or next user interaction.
  */
 export const primeAudio = async () => {
-  await ensureRunning(getAudioCtx());
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  await ensureRunning(ctx);
+  if (isRunning(ctx) && !unlocked) {
+    unlocked = true;
+    flushPending();
+  }
 };
 
 /**

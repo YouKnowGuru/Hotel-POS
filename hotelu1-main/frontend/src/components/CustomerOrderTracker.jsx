@@ -48,7 +48,7 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
  transports: ['websocket', 'polling'],
  reconnection: true,
  });
- socket.on('order_status_updated', (payload) => {
+ socket.on('order_status_updated', async (payload) => {
  if (!payload) return;
  const matchedId =
  Number(payload.orderId ?? payload.id) === Number(orderId);
@@ -61,6 +61,8 @@ const CustomerOrderTracker = ({ orderId, tableId, locationSettings: locationSett
  payload.order?.status ??
  null;
  if (matchedId && newStatus === 'ready') {
+ // Await primeAudio so the AudioContext is running before the bell.
+ await primeAudio();
  handleOrderReady();
  }
  });

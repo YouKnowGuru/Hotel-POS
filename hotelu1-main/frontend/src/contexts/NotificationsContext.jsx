@@ -615,9 +615,12 @@ export const NotificationsProvider = ({ user, children }) => {
       socket.on('connect_error', () => { if (alive) setConnection('polling'); });
 
       /* EVERY order creation path emits this. Bell is instant. */
-      socket.on('order_placed', (payload) => {
+      socket.on('order_placed', async (payload) => {
         if (!alive) return;
-        primeAudio(); // pre-resume the AudioContext so the bell isn't scheduled on a frozen clock
+        // Await primeAudio so it can resume the AudioContext and flip `unlocked`
+        // BEFORE the bell is scheduled. Without this await, the bell fires
+        // while unlocked is still false and gets queued instead of played.
+        await primeAudio();
         announceOrder(payload || {});
         refreshAll();
       });
@@ -665,9 +668,9 @@ export const NotificationsProvider = ({ user, children }) => {
         refreshAll();
       });
 
-      socket.on('waiter_called', (p) => {
+      socket.on('waiter_called', async (p) => {
         if (!alive) return;
-        primeAudio();
+        await primeAudio();
         announceWaiter(p || {});
         refreshAll();
       });
