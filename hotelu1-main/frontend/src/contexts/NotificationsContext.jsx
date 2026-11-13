@@ -617,6 +617,7 @@ export const NotificationsProvider = ({ user, children }) => {
       /* EVERY order creation path emits this. Bell is instant. */
       socket.on('order_placed', (payload) => {
         if (!alive) return;
+        primeAudio(); // pre-resume the AudioContext so the bell isn't scheduled on a frozen clock
         announceOrder(payload || {});
         refreshAll();
       });
@@ -666,6 +667,7 @@ export const NotificationsProvider = ({ user, children }) => {
 
       socket.on('waiter_called', (p) => {
         if (!alive) return;
+        primeAudio();
         announceWaiter(p || {});
         refreshAll();
       });

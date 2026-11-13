@@ -69,13 +69,21 @@ const PENDING_TTL_MS = 20000;
 
 /** Browsers suspend the AudioContext when a tab is backgrounded. Resume it
  *  before every play so an order that arrives after 20 minutes is still
- *  audible, not silently dropped. */
-const ensureRunning = (ctx) => {
+ *  audible, not silently dropped.
+ *
+ *  CRITICAL: resume() is ASYNC. Callers MUST `await` it and only schedule
+ *  once the context is actually "running". If we schedule against a suspended
+ *  (frozen) ctx.currentTime, every gain envelope is already in the past by the
+ *  time the clock advances, so the bell plays silently. That race is exactly
+ *  what made the order/waiter sounds work "sometimes". */
+const ensureRunning = async (ctx) => {
   if (ctx && ctx.state === 'suspended') {
-    try { ctx.resume().catch(() => {}); } catch { /* noop */ }
+    try { await ctx.resume(); } catch { /* noop */ }
   }
   return ctx;
 };
+
+const isRunning = (ctx) => !!(ctx && ctx.state === 'running');
 
 export const getAudioState = () => ({
   unlocked,
@@ -102,10 +110,12 @@ const getAudioCtx = () => {
   return audioCtx;
 };
 
-const unlockAudio = () => {
+const unlockAudio = async () => {
   if (unlocked) return;
   unlocked = true;
-  const ctx = ensureRunning(getAudioCtx());
+  // A gesture reached this handler, so resume() is allowed to succeed. Await it
+  // so the replayed bell is scheduled against a live clock (not a frozen one).
+  const ctx = await ensureRunning(getAudioCtx());
   if (!ctx) return;
   const queued = pendingPlays.splice(0);
   const fresh = queued.filter((p) => Date.now() - p.at < PENDING_TTL_MS);
@@ -114,7 +124,8 @@ const unlockAudio = () => {
   const latest = fresh[fresh.length - 1];
   if (latest) {
     try {
-      latest.fn();
+      if (isRunning(ctx)) latest.fn();
+      else pendingPlays.push(latest); // context not ready yet; retry on next gesture
     } catch {
       /* noop */
     }
@@ -256,7 +267,7 @@ const playWaiterPattern = (settings) => {
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
 
-const schedule = (label, fn) => {
+const schedule = async (label, fn) => {
   if (!unlocked) {
     console.warn(
       `[notificationSound] "${label}" queued — waiting for first user interaction`
@@ -266,7 +277,19 @@ const schedule = (label, fn) => {
     return;
   }
   try {
-    ensureRunning(getAudioCtx());
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    // Wait for the context to actually be running before scheduling. Without
+    // this await the bell is placed on a frozen clock and plays silently.
+    if (!isRunning(ctx)) await ensureRunning(ctx);
+    if (!isRunning(ctx)) {
+      // Browser refused to start audio (no recent user gesture in THIS tab, e.g.
+      // it has been backgrounded). Queue it so it replays on the next gesture
+      // instead of being silently dropped.
+      pendingPlays.push({ fn, at: Date.now() });
+      if (pendingPlays.length > 3) pendingPlays.shift();
+      return;
+    }
     fn();
   } catch (e) {
     console.warn(`[notificationSound] Failed to play "${label}"`, e);
@@ -299,19 +322,22 @@ export const playWaiterBell = () => {
  * Called on provider mount and from visible buttons. Browsers still refuse
  * to start audio until a real click/tap/keypress, so we deliberately do
  * NOT flip `unlocked` here — otherwise the first bell would be silently
- * scheduled into a suspended context and never heard.
+ * scheduled into a suspended context and never heard. resume() is async.
  */
-export const primeAudio = () => {
-  ensureRunning(getAudioCtx());
+export const primeAudio = async () => {
+  await ensureRunning(getAudioCtx());
 };
 
 /**
  * Manual test — same sound as a new order but always plays, even if
  * the user has muted via setSoundEnabled. Used by the "Test bell"
  * button so kitchen staff can verify their browser/speakers before service.
+ * The click that triggered this IS a user gesture, so we force-unlock and
+ * await resume to guarantee the test is audible.
  */
-export const playTestBell = () => {
-  unlockAudio();
+export const playTestBell = async () => {
+  unlocked = true;
+  await ensureRunning(getAudioCtx());
   const settings = { ...loadSettings(), enabled: true, volume: 1.0 };
   schedule('test', () => playNewOrderPattern(settings));
 };
