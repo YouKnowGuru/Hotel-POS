@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Smartphone, X, Check } from 'lucide-react';
 
-export default function PwaInstallButton({ className = '', showBanner = false }) {
+export default function PwaInstallButton({ className = '', showBanner = false, variant = 'default' }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -68,16 +68,24 @@ export default function PwaInstallButton({ className = '', showBanner = false })
   // If already running inside installed standalone app, don't show install button
   if (isInstalled) return null;
 
-  // Header / inline button version
+  const quiet = variant === 'quiet';
+
+  // Header / inline button version.
+  // `quiet` is used on the sign-in screen, where the amber CTA would
+  // compete with the form; the default variant (app header) is unchanged.
   return (
     <>
       <button
         onClick={handleInstallClick}
         title="Install Hotel POS App on this device"
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 ${className}`}
+        className={
+          quiet
+            ? `inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-transparent border border-white/10 text-slate-400 hover:text-white hover:border-white/25 transition-colors ${className}`
+            : `flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-md hover:shadow-lg transition-all transform active:scale-95 ${className}`
+        }
       >
-        <Download className="w-3.5 h-3.5 animate-bounce" />
-        <span className="hidden sm:inline">Install App</span>
+        <Download className={`w-3.5 h-3.5 ${quiet ? '' : 'animate-bounce'}`} />
+        <span className={quiet ? '' : 'hidden sm:inline'}>Install App</span>
       </button>
 
       {/* iOS Safari Guide Modal */}
