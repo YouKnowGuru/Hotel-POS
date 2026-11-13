@@ -1,10 +1,8 @@
-# robots.txt — allow public pages, block admin/staff areas
+# robots.txt — https://paradisetomza.com
+# Public pages are crawlable by default; only staff / API areas are blocked.
+# NOTE: never put a '#' inside a rule value — Google treats it as a comment
+# and everything after it is ignored (Disallow: /*# becomes Disallow: /*).
 User-agent: *
-Allow: /
-Allow: /order
-Allow: /about
-Allow: /privacy
-Allow: /terms
 Disallow: /login
 Disallow: /dashboard
 Disallow: /orders
@@ -12,7 +10,5 @@ Disallow: /menu
 Disallow: /dinein
 Disallow: /settings
 Disallow: /api/
-Disallow: /*?
-Disallow: /*#
 
 Sitemap: https://paradisetomza.com/sitemap.xml

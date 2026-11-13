@@ -6873,12 +6873,11 @@ const SITE_URL = (() => {
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send(`User-agent: *
-Allow: /
-Allow: /order
-Allow: /about
-Allow: /privacy
-Allow: /terms
+  res.send(`# robots.txt — ${SITE_URL}
+# Public pages are crawlable by default; only staff / API areas are blocked.
+# NOTE: never put a '#' inside a rule value — Google treats it as a comment
+# and everything after it is ignored (Disallow: /*# becomes Disallow: /*).
+User-agent: *
 Disallow: /login
 Disallow: /dashboard
 Disallow: /orders
@@ -6886,8 +6885,6 @@ Disallow: /menu
 Disallow: /dinein
 Disallow: /settings
 Disallow: /api/
-Disallow: /*?
-Disallow: /*#
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `);
