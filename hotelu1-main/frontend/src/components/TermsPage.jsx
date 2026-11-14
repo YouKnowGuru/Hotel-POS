@@ -40,8 +40,6 @@ const SECTIONS = [
         <li>The rider collects the delivery charge directly in cash at your door. It is a separate
             handover between you and the rider: it is not added to your order total, not charged
             through our online payment, and not recorded in our system (bills, receipts or reports).</li>
-        <li>Orders of 3 or more packs (Tomza or equivalent) qualify for free delivery, in which case
-            no delivery charge is collected.</li>
         <li>You are responsible for ensuring someone is available at the delivery address to receive the order.</li>
       </ul>
     ),

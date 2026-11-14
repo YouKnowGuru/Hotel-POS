@@ -276,7 +276,7 @@ const PublicShell = ({ active = '', children }) => {
         <div className="pw-container flex items-center justify-center gap-2 h-9 px-4">
           <span className="pw-announce-dot" aria-hidden="true" />
           <p className="text-[12px] sm:text-[12.5px] font-bold tracking-wide text-center">
-            Free delivery on 3+ packs
+            Delivery across Thimphu
             <span className="mx-2 opacity-50 hidden sm:inline" aria-hidden="true">•</span>
             <span className="hidden sm:inline">Mon–Sat 9 AM – 9 PM</span>
             <a href={`tel:${RESTAURANT_PHONE.replace(/\s+/g, '')}`}

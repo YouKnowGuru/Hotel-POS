@@ -284,8 +284,8 @@ const HomeLanding = () => {
                   <p className="hl-stat-label">Delivery</p>
                 </div>
                 <div className="hl-stat">
-                  <p className="hl-stat-num">0<small>Nu.</small></p>
-                  <p className="hl-stat-label">On 3+ packs</p>
+                  <p className="hl-stat-num">2</p>
+                  <p className="hl-stat-label">Payment options</p>
                 </div>
               </div>
             </div>
@@ -746,7 +746,7 @@ const HomeLanding = () => {
                   sour buttermilk (daw) — both served here.
                 </p>
                 <div className="flex flex-wrap gap-2 mb-8">
-                  {['Banana-leaf wrapped', 'Shakam Tomza ~BTN 350', 'Free delivery on 3+ packs'].map(t => (
+                  {['Banana-leaf wrapped', 'Shakam Tomza ~BTN 350', 'Delivery across Thimphu'].map(t => (
                     <span key={t} className="pw-chip" style={{ background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.3)', color: '#FBBF24' }}>
                       {t}
                     </span>
@@ -761,7 +761,7 @@ const HomeLanding = () => {
                 {[
                   { icon: <Sparkles size={18} />, title: 'What’s inside',       desc: 'Red rice, paa, Ema Datshi, egg & ezay' },
                   { icon: <Star size={18} fill="#F59E0B" color="#F59E0B" />, title: 'BTN 200 – 1,000', desc: 'Shakam Tomza around BTN 350' },
-                  { icon: <Truck size={18} />,    title: 'Free delivery on 3+', desc: 'Across Thimphu, wrapped hot' },
+                  { icon: <Truck size={18} />,    title: 'Delivery by location', desc: 'Charge collected by the rider' },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-4 p-4 sm:p-5 rounded-2xl"
                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
@@ -791,7 +791,7 @@ const HomeLanding = () => {
               { val: '4.5★',      label: 'Google rating · 40+ reviews' },
               { val: '200–1,000', label: 'BTN price range' },
               { val: '9 AM–9 PM', label: 'Mon – Sat' },
-              { val: '3+',        label: 'Packs = free delivery' },
+              { val: 'Cash / QR', label: 'Ways to pay' },
             ].map(({ val, label }) => (
               <div key={label}>
                 <p className="font-black mb-1.5 tabular-nums"

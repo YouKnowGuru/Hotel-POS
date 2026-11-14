@@ -165,7 +165,7 @@ These are minor cosmetic/readability issues that don't cause overflow:
 
 ### 19. PublicShell.jsx
 **Issues Fixed:**
-- **Dangling separator** (line ~259): Added `hidden sm:inline` to the `•` separator — on mobile, only "Free delivery on 3+ packs" showed but the bullet separator was still visible, creating a dangling punctuation mark.
+- **Dangling separator** (line ~259): Added `hidden sm:inline` to the `•` separator — on mobile, only the primary announcement text showed but the bullet separator was still visible, creating a dangling punctuation mark.
 
 ### 20. AboutPage.jsx
 **Issues Fixed:**

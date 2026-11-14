@@ -195,7 +195,6 @@ The Paradise Tomza palette is **more distinctive and appetite-stimulating** than
 | Kitchen open/closed status | Hero eyebrow with live dot | Excellent — reduces ordering anxiety |
 | Delivery time (~20 min) | Hero badge, hero copy, how-it-works | Excellent — repeated 3 times |
 | Price range (BTN 200-1,000) | Stats strip, Tomza section | Good — sets expectations |
-| Free delivery threshold (3+ packs) | Hero stat, Tomza section, stats strip | Good — encourages larger orders |
 | Real address | Footer, About page | Good — physical location builds trust |
 | Phone number (clickable) | Closing CTA, footer, About page | Good — direct contact option |
 | Owner name (Tashi Chezom) | Footer, About page | Good — humanizes brand |

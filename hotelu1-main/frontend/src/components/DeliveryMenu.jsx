@@ -1193,7 +1193,7 @@ const DeliveryMenu = () => {
           <ul className="flex flex-wrap gap-2.5 mt-6">
             {[
               { icon: <Clock size={13} />,      text: '~20 min delivery' },
-              { icon: <Truck size={13} />,      text: 'Free delivery on 3+ packs' },
+              { icon: <Truck size={13} />,      text: 'Delivery charge by location' },
               { icon: <CreditCard size={13} />, text: 'Cash on delivery or QR' },
             ].map(({ icon, text }) => (
               <li key={text} className="pw-chip">
