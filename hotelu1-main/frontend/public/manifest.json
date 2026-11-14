@@ -26,8 +26,8 @@
       "sizes": "180x180"
     }
   ],
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "https://paradisetomza.com/login",
+  "scope": "https://paradisetomza.com/",
   "display": "standalone",
   "orientation": "any",
   "theme_color": "#0f172a",
