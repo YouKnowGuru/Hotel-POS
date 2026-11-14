@@ -25,7 +25,8 @@ const SECTIONS = [
            cancel any order at our discretion — for example, if items are unavailable or we suspect
            fraudulent activity.</p>
         <p>Menu prices are shown in Bhutanese Ngultrum (Nu.) and include applicable taxes and service
-           charges as displayed at checkout.</p>
+           charges as displayed at checkout. The delivery charge is not included in these prices and
+           is not recorded in our system.</p>
       </>
     ),
   },
@@ -35,7 +36,12 @@ const SECTIONS = [
       <ul>
         <li>We deliver within Thimphu and selected nearby areas.</li>
         <li>Delivery times are estimates — traffic, weather, and order volume can affect them.</li>
-        <li>Free delivery applies to orders of 3 or more packs (Tomza or equivalent). Otherwise a delivery fee applies.</li>
+        <li>The delivery charge is not a fixed amount — it depends on your delivery location.</li>
+        <li>The rider collects the delivery charge directly in cash at your door. It is a separate
+            handover between you and the rider: it is not added to your order total, not charged
+            through our online payment, and not recorded in our system (bills, receipts or reports).</li>
+        <li>Orders of 3 or more packs (Tomza or equivalent) qualify for free delivery, in which case
+            no delivery charge is collected.</li>
         <li>You are responsible for ensuring someone is available at the delivery address to receive the order.</li>
       </ul>
     ),
@@ -44,8 +50,10 @@ const SECTIONS = [
     id: 'payment', title: 'Payment',
     body: (
       <>
-        <p>We accept cash on delivery/pickup and bank-QR transfer as offered at checkout. Prices are
-           final at the time of order placement.</p>
+        <p>We accept cash on delivery/pickup and bank-QR transfer as offered at checkout. The food
+           prices are final at the time of order placement. The delivery charge is separate: it is
+           agreed with and paid directly to the rider in cash, and is not part of the amount you pay
+           online or the amount we record.</p>
         <p>For QR payments you upload a screenshot of your transfer. Our staff verify it manually —
            online payment orders are prepared/collected only after your payment is approved. If a
            screenshot can't be verified, we'll reject it with a reason and you can retry or pay cash.</p>

@@ -33,6 +33,14 @@ import useViewScrollReset from '../hooks/useViewScrollReset';
 
 const CURRENCY = 'Nu. ';
 
+/* Delivery charge is intentionally NOT a fixed, system-recorded amount.
+   It varies with the drop-off location and is collected in cash directly by
+   the rider at the door. It is deliberately excluded from the cart/checkout
+   total, the order record, bills, receipts and reports — the system never
+   records it. Every customer-facing surface states this explicitly. */
+const DELIVERY_FEE_NOTE =
+  'Delivery charge is not a fixed amount — it depends on your location. The rider collects it in cash at your door. It is not included in the total shown here and is not recorded in our system.';
+
 /* React writes inline colours through element.style, and the browser then
    serialises the style attribute as `rgb(r, g, b)` / `rgba(r, g, b, a)` —
    NOT as the original `#RRGGBB`. Attribute selectors written against the hex
@@ -786,11 +794,13 @@ const DeliveryMenu = () => {
                       {ps === 'cash_pending' && st !== 'delivered' && (
                         <p className="pay-note" style={{ color: '#047857', borderColor: 'rgba(52,211,153,0.3)', background: 'rgba(16,185,129,0.1)' }}>
                           Pay <strong>{CURRENCY}{Number(o.total).toFixed(2)}</strong> in cash when your order arrives at your door.
+                          <span className="block mt-1">Any delivery charge is separate — the rider sets it by location and collects it directly.</span>
                         </p>
                       )}
                       {st === 'delivered' && ps === 'cash_pending' && (
                         <p className="pay-note" style={{ color: '#92400E', borderColor: 'rgba(245,158,11,0.4)', background: 'rgba(245,158,11,0.1)' }}>
                           Your food has been delivered. Please hand <strong>{CURRENCY}{Number(o.total).toFixed(2)}</strong> in cash to the delivery staff.
+                          <span className="block mt-1">Any location-based delivery charge is paid to the rider separately — it is not on this order.</span>
                         </p>
                       )}
                       {st === 'delivered' && ps !== 'cash_pending' && (
@@ -834,7 +844,7 @@ const DeliveryMenu = () => {
               {[
                 { icon: <Clock size={15} />,      text: 'Live status updates' },
                 { icon: <Phone size={15} />,      text: 'Rider may call you' },
-                { icon: <CreditCard size={15} />, text: 'All taxes + service included' },
+                { icon: <Truck size={15} />,      text: 'Delivery charge paid to rider' },
               ].map(({ icon, text }) => (
                 <div key={text} className="pw-chip justify-center">
                   <span style={{ color: '#C2410C' }} aria-hidden="true">{icon}</span> {text}
@@ -919,9 +929,12 @@ const DeliveryMenu = () => {
                   <dt>Total</dt><dd style={{ color: '#C2410C' }} className="tabular-nums">{CURRENCY}{totals.total.toFixed(2)}</dd>
                 </div>
               </dl>
-              <p className="pw-muted text-[11.5px] mt-2 text-right">
-                All prices include the {SERVICE_CHARGE_PERCENT}% service charge and GST — nothing extra at your door.
-              </p>
+              <div className="mt-3 flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-[11.5px] leading-relaxed pw-muted"
+                   role="note"
+                   style={{ background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                <Truck size={15} className="shrink-0 mt-0.5" aria-hidden="true" />
+                <span>All prices include the {SERVICE_CHARGE_PERCENT}% service charge and GST. {DELIVERY_FEE_NOTE}</span>
+              </div>
             </section>
 
             {/* Delivery details + payment choice */}
@@ -1069,6 +1082,13 @@ const DeliveryMenu = () => {
                       An admin approves your order, the kitchen starts, and you pay in cash at your door.
                     </p>
                   )}
+                  {/* Applies to BOTH payment methods: the rider's location-based
+                      delivery charge is a separate cash handover, never a line
+                      item in the order we store. */}
+                  <p className="dm-payhint pw-muted">
+                    <MapPin size={13} aria-hidden="true" />
+                    {DELIVERY_FEE_NOTE}
+                  </p>
                 </fieldset>
               </div>
 
@@ -1455,6 +1475,9 @@ const DeliveryMenu = () => {
                 </button>
                 <p className="pw-muted text-center text-[11.5px] mt-2.5 leading-relaxed">
                   Delivery details, payment method &amp; order tracking at the next step.
+                </p>
+                <p className="pw-muted text-center text-[11px] mt-1.5 leading-relaxed">
+                  {DELIVERY_FEE_NOTE}
                 </p>
               </div>
             )}

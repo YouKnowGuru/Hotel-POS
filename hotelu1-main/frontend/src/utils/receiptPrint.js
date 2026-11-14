@@ -364,6 +364,12 @@ export const buildCustomerReceiptHtml = (order, totals, info, options = {}) => {
           : ''
       }
 
+      ${
+        isDelivery
+          ? `<div class="dashed"></div>
+             <div class="center small">Delivery charge is set by location and paid<br/>directly to the rider — not included above.</div>`
+          : ''
+      }
       <div class="center thanks">Thank You | Visit Again.</div>
     </div>
   `;

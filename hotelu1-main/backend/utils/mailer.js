@@ -21,6 +21,14 @@
 
 const nodemailer = require('nodemailer');
 
+/* Delivery charge is NOT a fixed, system-recorded amount. It depends on the
+   drop-off location and is collected in cash directly by the rider at the
+   door. It is never added to order.total, never stored, and never shown on
+   the bill — so every customer email clarifies that the amount below does
+   not include it. */
+const DELIVERY_FEE_NOTE =
+  'The delivery charge is not fixed — it depends on your location. The rider collects it in cash at your door; it is not included in the amount below and is not recorded in our system.';
+
 // Lazy-loaded to avoid a circular require at module-evaluation time
 // (server.js loads mailer before models finish initialising).
 let _Settings = null;
@@ -329,7 +337,7 @@ async function sendOrderPlacedEmail(order) {
       `Total: ${formatMoney(order.total)}`,
       `Payment: ${order.payment_method === 'cash' ? 'Cash on delivery' : order.payment_status === 'verification_pending' ? 'QR payment, pending admin approval' : 'NA'}`,
     ],
-    footerNote: 'You will get an email when your payment is approved and again when your food is delivered.',
+    footerNote: 'You will get an email when your payment is approved and again when your food is delivered. ' + DELIVERY_FEE_NOTE,
     preheader: `Order #${order.id} confirmed — total ${formatMoney(order.total)}`,
   });
 }
@@ -360,7 +368,7 @@ async function sendPaymentApprovedEmail(order) {
       `${isCod ? 'Order' : 'Payment for order'} #${order.id} has been approved.`,
       `Amount: ${formatMoney(order.total)}`,
     ],
-    footerNote: isCod ? 'Keep the exact cash amount ready for the rider.' : undefined,
+    footerNote: (isCod ? 'Keep the exact cash amount ready for the rider. ' : '') + DELIVERY_FEE_NOTE,
     preheader: `${isCod ? 'Order' : 'Payment'} approved for #${order.id} — ${formatMoney(order.total)}`,
   });
 }
@@ -388,9 +396,9 @@ async function sendDeliveredEmail(order) {
       `Order #${order.id} was delivered.`,
       `Total: ${formatMoney(order.total)}`,
     ],
-    footerNote: isCash
-      ? 'Once our staff hands over the cash and the admin signs it off, you will receive a payment confirmation email.'
-      : 'No further action needed — your payment has already been recorded.',
+    footerNote: (isCash
+      ? 'Once our staff hands over the cash and the admin signs it off, you will receive a payment confirmation email. '
+      : 'No further action needed — your payment has already been recorded. ') + DELIVERY_FEE_NOTE,
     preheader: isPaid
       ? `Order #${order.id} delivered — bill total ${formatMoney(order.total)} (paid ✓)`
       : `Order #${order.id} delivered — please pay ${formatMoney(order.total)} in cash`,

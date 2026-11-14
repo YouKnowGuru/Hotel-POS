@@ -261,6 +261,14 @@ const Ticket = ({ order, fmt, index, isLoaded, onServed, isDelivering }) => {
             </span>
           </div>
         )}
+        {/* Delivery charge is off-system: the rider sets it by location and
+            collects it in cash separately. Only order.total is recorded. */}
+        {isDelivery && (
+          <p className="text-[10px] leading-snug text-gray-500 text-center px-1">
+            Delivery charge is set by location and collected separately in cash by the rider —
+            it is not recorded here. Only {fmt(order.total)} is on this order.
+          </p>
+        )}
         {isCashPending ? (
           <>
             <button
