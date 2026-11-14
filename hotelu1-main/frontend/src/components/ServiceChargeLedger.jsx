@@ -31,6 +31,11 @@ const monthLabel = (key) => {
  return `${MONTH_NAMES[parseInt(m,10)-1]} ${y}`;
 };
 const TEAL = '#1a5c3e';
+// Module-scope constant so fetchDistribution stays stable across renders.
+const EMPTY_DISTRIBUTION = {
+  waiters: [], waiterCount: 0, totalOrders: 0,
+  totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time',
+};
 
 /**
  * Compute service charge & GST from a paid order's total.
@@ -157,6 +162,9 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  period: 'all-time',
  });
  const [distLoading, setDistLoading] = useState(true);
+ // Surface real API failures. Previously a 403/500 was silently turned into
+ // the "No active waiters found" empty state, which hid the actual bug.
+ const [distError, setDistError] = useState(null);
 
  const loadSettings = useCallback(() => {
  try {
@@ -196,15 +204,20 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  // Fetch waiter distribution whenever year/month filter changes
  const fetchDistribution = useCallback(async () => {
  setDistLoading(true);
+ setDistError(null);
  try {
  const qs = [
  selectedYear !== 'all' ? `year=${selectedYear}` : '',
  selectedMonth !== 'all' ? `month=${selectedMonth}` : '',
  ].filter(Boolean).join('&');
  const res = await authFetch(`/api/service-charge/distribution${qs ? '?' + qs : ''}`);
- const data = await res.json();
- // Guard: ensure the response has the expected shape
- if (data && typeof data === 'object' && !data.message) {
+ const data = await res.json().catch(() => ({}));
+ // A 403/500 or an unexpected payload must be reported, not disguised as
+ // "no waiters" — that empty state used to hide real server errors.
+ if (!res.ok || (data && data.message)) {
+ setDistError(data?.message || `Request failed (HTTP ${res.status}). Check the server logs.`);
+ setDistribution(EMPTY_DISTRIBUTION);
+ } else if (data && typeof data === 'object') {
  setDistribution({
  ...data,
  waiters: Array.isArray(data.waiters) ? data.waiters : [],
@@ -215,11 +228,12 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  period: data.period || 'all-time',
  });
  } else {
- // API returned an error message or unexpected shape — show empty state
- setDistribution({ waiters: [], waiterCount: 0, totalOrders: 0, totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time' });
+ setDistError('Unexpected response from the server.');
+ setDistribution(EMPTY_DISTRIBUTION);
  }
- } catch {
- setDistribution({ waiters: [], waiterCount: 0, totalOrders: 0, totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time' });
+ } catch (err) {
+ setDistError(`Could not reach the server: ${err?.message || 'network error'}`);
+ setDistribution(EMPTY_DISTRIBUTION);
  } finally {
  setDistLoading(false);
  }
@@ -638,6 +652,20 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  {distLoading ? (
  <div className="p-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
  {[1,2,3,4].map((i) => <div key={i} className="h-24 rounded-xl bg-gray-100 animate-pulse" />)}
+ </div>
+ ) : distError ? (
+ <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+ <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-400 mb-3">
+ <AlertCircle className="w-6 h-6" />
+ </div>
+ <p className="text-sm font-semibold text-gray-700 mb-1">Could not load waiter distribution</p>
+ <p className="text-xs text-red-500 mb-4 max-w-md">{distError}</p>
+ <button
+ onClick={fetchDistribution}
+ className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs font-medium transition"
+ >
+ <RefreshCw className="w-3.5 h-3.5" /> Retry
+ </button>
  </div>
  ) : !distribution || (distribution.waiterCount === 0 && (!distribution.waiters || distribution.waiters.length === 0)) ? (
  <div className="flex flex-col items-center justify-center py-12 text-center px-4">

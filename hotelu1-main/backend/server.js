@@ -6420,6 +6420,25 @@ app.post('/api/payroll', authenticate, async (req, res) => {
 // ─── Service Charge Distribution ─────────────────────────────────────────────
 // GET /api/service-charge/distribution?year=2026&month=10
 // Returns total service charge collected in a period and the per-waiter share.
+
+/* `bill_status` / `paid_at` live on the bills table, not orders. Collect the
+   order ids of paid bills once so both the distribution report and payroll
+   generation can treat those orders as paid without querying columns that
+   do not exist on `orders`. */
+async function getPaidBillOrderIds() {
+  try {
+    const paidBills = await Bill.findAll({
+      where: { bill_status: 'paid' },
+      attributes: ['orderId'],
+      raw: true,
+    });
+    return paidBills.map((b) => b.orderId).filter(Boolean);
+  } catch (err) {
+    console.error('[service-charge] Could not load paid bills:', err.message);
+    return [];
+  }
+}
+
 app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
   try {
     if (!['admin', 'manager'].includes(req.user.role))
@@ -6428,24 +6447,39 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
     const { year, month } = req.query;
     const SC_PERCENT  = 10; // fixed 10%
 
-    // Build date range filter (optional — if not supplied, return all-time)
+    /* Period filter uses `orders.timestamp`.
+       BUGFIX: this used to filter on `orders.paid_at`, but no such column
+       exists — the Order model never mapped it and the `order.paid_at = ...`
+       assignments elsewhere are in-memory only (never persisted). Every
+       month/year request threw "Unknown column 'Order.paid_at'".
+       `timestamp` exists on 100% of rows and is the same date the Reports
+       page uses. Local Date objects also avoid the UTC day-shift that
+       .toISOString() caused for timezones ahead of UTC. */
     let dateFilter = {};
-    if (year && month) {
-      const startDate = `${year}-${String(month).padStart(2,'0')}-01`;
-      const endDate   = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
-      dateFilter = { paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] } };
-    } else if (year) {
-      const startDate = `${year}-01-01`;
-      const endDate   = `${year}-12-31`;
-      dateFilter = { paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] } };
+    const y = Number.parseInt(year, 10);
+    const m = Number.parseInt(month, 10);
+    if (Number.isFinite(y) && y > 1900 && y < 3000) {
+      const rangeStart = Number.isFinite(m) && m >= 1 && m <= 12
+        ? new Date(y, m - 1, 1, 0, 0, 0, 0)
+        : new Date(y, 0, 1, 0, 0, 0, 0);
+      const rangeEnd = Number.isFinite(m) && m >= 1 && m <= 12
+        ? new Date(y, m, 0, 23, 59, 59, 999)
+        : new Date(y, 11, 31, 23, 59, 59, 999);
+      dateFilter = { timestamp: { [Op.between]: [rangeStart, rangeEnd] } };
     }
+
+    /* `bill_status` is a bills column, not an orders column. Referencing it
+       directly made this endpoint 500 ("Unknown column
+       'Order.bill_status'") on every request, including all-time. */
+    const paidBillOrderIds = await getPaidBillOrderIds();
 
     // Fetch all paid orders in the period
     const paidOrders = await Order.findAll({
       where: {
         [Op.or]: [
           { status: 'completed' }, { status: 'paid' },
-          { payment_status: 'paid' }, { bill_status: 'paid' },
+          { payment_status: 'paid' },
+          ...(paidBillOrderIds.length ? [{ id: { [Op.in]: paidBillOrderIds } }] : []),
         ],
         ...dateFilter,
       },
@@ -6497,15 +6531,19 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
     });
     totalServiceCharge = Math.round(totalServiceCharge * 100) / 100;
 
-    // Fetch all waiter-role users (is_active column may not exist — skip that filter)
+    /* Fetch all waiter-role users. The users table has no `is_active` and
+       no `email` column. BUGFIX: selecting `email` used to throw "Unknown
+       column 'email' in SELECT"; the empty catch then silently produced
+       waiterCount = 0, so the UI reported "No active waiters found" even
+       though waiter accounts existed. */
     let waiters = [];
     try {
       waiters = await User.findAll({
         where: { role: 'waiter' },
-        attributes: ['id', 'username', 'name', 'email'],
+        attributes: ['id', 'username', 'name'],
       });
-    } catch (_) {
-      waiters = [];
+    } catch (err) {
+      console.error('[service-charge] Could not load waiter accounts:', err.message);
     }
 
     const waiterCount = waiters.length;
@@ -6524,7 +6562,7 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
       waiters: waiters.map(w => ({
         id:    w.id,
         name:  w.name || w.username,
-        email: w.email,
+        email: w.email || null,
         share: sharePerWaiter,
       })),
     });
@@ -6571,10 +6609,17 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
     const SC_PERCENT_PAYROLL = 10;
     let totalSCForPeriod = 0;
     try {
+      /* Same schema fix as the distribution endpoint: `orders` has no
+         `paid_at` column, so this query always threw and the swallowed error
+         left the waiter service-charge pool (tips_shared) at 0. */
+      const paidBillIds = await getPaidBillOrderIds();
       const paidInPeriod = await Order.findAll({
         where: {
-          [Op.or]: [{ status: 'completed' }, { status: 'paid' }, { payment_status: 'paid' }],
-          paid_at: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] },
+          [Op.or]: [
+            { status: 'completed' }, { status: 'paid' }, { payment_status: 'paid' },
+            ...(paidBillIds.length ? [{ id: { [Op.in]: paidBillIds } }] : []),
+          ],
+          timestamp: { [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59')] },
         },
       });
       let taxPct = 5;
@@ -6585,7 +6630,9 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
         const paid = parseFloat(o.total) || 0;
         if (paid > 0) totalSCForPeriod += (paid / (scF * gF)) * (SC_PERCENT_PAYROLL / 100);
       });
-    } catch (_) {}
+    } catch (err) {
+      console.error('[payroll] Could not compute service charge pool:', err.message);
+    }
     // Count waiter-role users in the attendance data
     const waiterUserIds = Object.entries(byUser)
       .filter(([, recs]) => recs[0]?.user_role === 'waiter')
