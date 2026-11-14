@@ -74,6 +74,102 @@ const SPLASH_CSS = `
  @keyframes menuIn { from{opacity:0} to{opacity:1} }
 `;
 
+/* ─── Footer attribution ─────────────────────────────────────────── */
+/* Single source of truth for the credit line. Set `url` if the brand
+   should link somewhere; leave it empty for plain text (no invented URL). */
+const POWERED_BY = {
+  label: 'phojaa95 Real Estate',
+  url: '',
+};
+
+const QR_FOOTER_CSS = `
+ .qr-footer {
+   --qrf-muted: #64748B;
+   --qrf-brand: #92400E;
+   --qrf-rule:  rgba(15,23,42,0.10);
+   --qrf-dot:   #D4A017;
+   margin-top: auto;
+   flex-shrink: 0;
+   padding: 16px 16px calc(22px + env(safe-area-inset-bottom, 0px));
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 10px;
+   text-align: center;
+   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+   -webkit-font-smoothing: antialiased;
+ }
+ html.dark .qr-footer {
+   --qrf-muted: #94A3B8;
+   --qrf-brand: #E6B800;
+   --qrf-rule:  rgba(255,255,255,0.12);
+   --qrf-dot:   #D4A017;
+ }
+ .qr-footer__rule {
+   width: min(190px, 48%);
+   height: 1px;
+   background: linear-gradient(90deg, transparent, var(--qrf-rule) 16%, var(--qrf-dot) 50%, var(--qrf-rule) 84%, transparent);
+   opacity: 0.75;
+ }
+ .qr-footer__line {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   flex-wrap: wrap;
+   gap: 9px;
+   line-height: 1.45;
+ }
+ .qr-footer__label {
+   font-size: 10px;
+   font-weight: 600;
+   letter-spacing: 0.16em;
+   text-transform: uppercase;
+   color: var(--qrf-muted);
+ }
+ .qr-footer__dot {
+   width: 3px;
+   height: 3px;
+   border-radius: 50%;
+   background: var(--qrf-dot);
+   opacity: 0.8;
+   flex: none;
+ }
+ .qr-footer__brand {
+   font-size: 12.5px;
+   font-weight: 700;
+   letter-spacing: 0.01em;
+   color: var(--qrf-brand);
+   text-decoration: none;
+   transition: opacity 0.2s ease, text-decoration-color 0.2s ease;
+ }
+ a.qr-footer__brand:hover { opacity: 0.82; text-decoration: underline; text-underline-offset: 3px; }
+ .qr-footer__brand:focus-visible {
+   outline: 2px solid var(--qrf-dot);
+   outline-offset: 3px;
+   border-radius: 3px;
+ }
+ .qr-footer__meta {
+   font-size: 10px;
+   font-weight: 500;
+   letter-spacing: 0.02em;
+   color: var(--qrf-muted);
+   opacity: 0.85;
+ }
+ /* SimpleMenu's floating cart bar is position:fixed at the bottom and
+    would otherwise cover the credit line while items are in the cart.
+    :has() is ignored by older browsers (graceful fallback below). */
+ body:has(.sm-float-bar) .qr-footer {
+   padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+ }
+ @media (max-width: 360px) {
+   .qr-footer__label { font-size: 9px; letter-spacing: 0.12em; }
+   .qr-footer__brand { font-size: 11.5px; }
+ }
+ @media (prefers-reduced-motion: reduce) {
+   .qr-footer__brand { transition: none; }
+ }
+`;
+
 /* ─── SVG noise texture (subtle film grain) ─────────────────────── */
 const NOISE_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='128' height='128'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='128' height='128' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E")`;
 
@@ -582,8 +678,29 @@ const QRCodeOrdering = ({ locationSettings, onOrderPlacedWithId, tableId: propTa
  </main>
  )}
 
- <footer className="py-4 text-center text-[10px]" style={{ color:'#94A3B8' }}>
- Powered by {branding.siteName}
+ {/* ── Footer: attribution ── */}
+ <style>{QR_FOOTER_CSS}</style>
+ <footer className="qr-footer" role="contentinfo" aria-label="Site attribution">
+ <div className="qr-footer__rule" aria-hidden="true" />
+ <div className="qr-footer__line">
+ <span className="qr-footer__label">Powered by</span>
+ <span className="qr-footer__dot" aria-hidden="true" />
+ {POWERED_BY.url ? (
+ <a
+ className="qr-footer__brand"
+ href={POWERED_BY.url}
+ target="_blank"
+ rel="noopener noreferrer"
+ >
+ {POWERED_BY.label}
+ </a>
+ ) : (
+ <span className="qr-footer__brand">{POWERED_BY.label}</span>
+ )}
+ </div>
+ <span className="qr-footer__meta">
+ &copy; {new Date().getFullYear()} {branding.siteName}
+ </span>
  </footer>
  </div>
  );
