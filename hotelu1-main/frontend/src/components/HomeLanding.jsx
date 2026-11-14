@@ -284,8 +284,8 @@ const HomeLanding = () => {
                   <p className="hl-stat-label">Delivery</p>
                 </div>
                 <div className="hl-stat">
-                  <p className="hl-stat-num">2</p>
-                  <p className="hl-stat-label">Payment options</p>
+                  <p className="hl-stat-num">1</p>
+                  <p className="hl-stat-label">Cash on delivery</p>
                 </div>
               </div>
             </div>
@@ -791,7 +791,7 @@ const HomeLanding = () => {
               { val: '4.5★',      label: 'Google rating · 40+ reviews' },
               { val: '200–1,000', label: 'BTN price range' },
               { val: '9 AM–9 PM', label: 'Mon – Sat' },
-              { val: 'Cash / QR', label: 'Ways to pay' },
+              { val: 'COD',       label: 'Cash on delivery' },
             ].map(({ val, label }) => (
               <div key={label}>
                 <p className="font-black mb-1.5 tabular-nums"

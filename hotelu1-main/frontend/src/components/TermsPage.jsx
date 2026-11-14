@@ -39,7 +39,8 @@ const SECTIONS = [
         <li>The delivery charge is not a fixed amount — it depends on your delivery location.</li>
         <li>The rider collects the delivery charge directly in cash at your door. It is a separate
             handover between you and the rider: it is not added to your order total, not charged
-            through our online payment, and not recorded in our system (bills, receipts or reports).</li>
+            through our website, and not recorded in our system (bills, receipts or reports).</li>
+        <li>Home delivery orders are paid in cash only.</li>
         <li>You are responsible for ensuring someone is available at the delivery address to receive the order.</li>
       </ul>
     ),
@@ -48,13 +49,15 @@ const SECTIONS = [
     id: 'payment', title: 'Payment',
     body: (
       <>
-        <p>We accept cash on delivery/pickup and bank-QR transfer as offered at checkout. The food
-           prices are final at the time of order placement. The delivery charge is separate: it is
-           agreed with and paid directly to the rider in cash, and is not part of the amount you pay
-           online or the amount we record.</p>
-        <p>For QR payments you upload a screenshot of your transfer. Our staff verify it manually —
-           online payment orders are prepared/collected only after your payment is approved. If a
-           screenshot can't be verified, we'll reject it with a reason and you can retry or pay cash.</p>
+        <p><strong>Home delivery is cash on delivery only</strong> — we do not accept online or
+           bank-QR payment for delivery orders. You pay the rider in cash when your food arrives.
+           Food prices are final at the time of order placement. The delivery charge is separate:
+           it is agreed with and paid directly to the rider in cash, and is not part of the amount
+           we record.</p>
+        <p>For table QR ordering and pickup, cash and bank-QR transfer are available as offered at
+           checkout. For bank-QR payments you upload a screenshot of your transfer; our staff verify
+           it manually and the order is prepared only after approval. If a screenshot can't be
+           verified, we'll reject it with a reason and you can retry or pay cash.</p>
       </>
     ),
   },

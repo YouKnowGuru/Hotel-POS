@@ -26,7 +26,7 @@ const SECTIONS = [
           <li>Your name and delivery address</li>
           <li>Phone number (to confirm delivery) and, if provided, your email for order updates</li>
           <li>Order details and payment method</li>
-          <li>For online payments: a screenshot of your payment transfer, uploaded by you so our staff can verify it</li>
+          <li>For table QR ordering paid by bank QR transfer: a screenshot of your payment transfer, uploaded by you so our staff can verify it. Home delivery is cash only, so no payment screenshot is collected.</li>
         </ul>
       </>
     ),
@@ -38,7 +38,7 @@ const SECTIONS = [
         <p>We use your information to:</p>
         <ul>
           <li>Process and deliver your orders</li>
-          <li>Verify your payments when you pay by bank QR transfer</li>
+          <li>Verify your payments when you pay by bank QR transfer (table QR ordering only)</li>
           <li>Contact you with order updates by phone or email</li>
           <li>Keep accurate business records for tax and accounting</li>
         </ul>

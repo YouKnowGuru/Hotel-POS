@@ -560,7 +560,7 @@ const mockOrders = [
     total: 63.47,
     timestamp: new Date(),
     type: "DELIVERY",
-    payment_method: "qr",
+    payment_method: "cash",
     payment_status: "paid",
     paid_at: new Date(),
     items: [
@@ -2186,7 +2186,12 @@ app.post("/api/orders", strictLimiter, optionalToken, async (req, res) => {
     }
     const settings = await getTaxDiscountSettings();
     const paymentFirst = req.body.payment_first === true;
-    const isCashPayment = req.body.payment_method === 'cash';
+    // Home delivery is CASH ON DELIVERY ONLY. Ignore any client-sent
+    // payment_method for DELIVERY so a crafted request can never create a
+    // parked pay-first QR delivery order. Dine-in / takeaway keep their
+    // existing cash + QR choices.
+    const isCashPayment =
+      normalizedType === "DELIVERY" || req.body.payment_method === 'cash';
     // A pay-first QR order is only a PARKED DRAFT until the customer uploads
     // a payment screenshot. It must not ring the staff bell, appear in the
     // admin alert feed, or trigger the "order confirmed" email before then.

@@ -1,18 +1,16 @@
 /**
  * DeliveryMenu — public home-delivery ordering page (route: /order)
  *
- * Flow (mirrors the QR SimpleMenu experience, adapted for home delivery):
+ * Flow:
  *  1. Live menu (auto-fetched from the admin system) → cart
  *  2. Checkout: delivery details (name, phone, email, address) + totals
  *     with the 10% service charge and GST spelled out
- *  3. Payment choice: Cash on delivery ·  Pay online via the restaurant QR
- *     → QR customers upload a payment screenshot that an admin reviews
- *       before the kitchen starts and a staff member delivers
- *  4. Wireless placed screen: live order + payment status tracking with
- *     "Pay now" retry if a payment was rejected or abandoned
+ *  3. Payment: CASH ON DELIVERY ONLY — no online / QR payment option
+ *  4. Placed screen: live order + delivery status tracking
  *
- * Everything posts to POST /api/orders with type=DELIVERY; totals are
- * recomputed server-side, so what the customer sees always matches the bill.
+ * Everything posts to POST /api/orders with type=DELIVERY and
+ * payment_method='cash'; totals are recomputed server-side, so what the
+ * customer sees always matches the bill.
  */
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -25,7 +23,6 @@ import {
 } from 'lucide-react';
 import PublicShell from './PublicShell';
 import MenuImage from './MenuImage';
-import DeliveryPaymentModal from './DeliveryPaymentModal';
 import { getAPI_URL } from '../utils/api';
 import { calculateOrderTotals, fetchAndCacheGlobalSettings } from '../utils/orderTotals';
 import { SERVICE_CHARGE_PERCENT } from '../utils/receiptPrint';
@@ -170,25 +167,11 @@ const DeliveryMenu = () => {
   const [orderErr,   setOrderErr]   = useState('');
   const [orders,     setOrders]     = useState([]);        // this device's delivery orders
 
-  /* Payment choice + QR modal */
-  const [payMethod,       setPayMethod]       = useState('cash'); // 'cash' | 'qr'
-  const [paymentOrder,    setPaymentOrder]    = useState(null);
-  const [paymentQr,       setPaymentQr]       = useState('');
-  const [proofImage,      setProofImage]      = useState('');
-  const [paymentError,    setPaymentError]    = useState('');
-  const [submittingProof, setSubmittingProof] = useState(false);
-  /* QR payment sheet state. qrError is kept separate from paymentError so a
-     missing/unreachable QR never masquerades as a proof-upload problem. */
-  const [qrError,         setQrError]         = useState('');
-  const [qrNonce,         setQrNonce]         = useState(0);
-  const [proofSubmitted,  setProofSubmitted]  = useState(false);
-  const [proofFileName,   setProofFileName]   = useState('');
-  const [paymentOpenError,setPaymentOpenError]= useState('');
-  /* Orders whose proof we submitted locally but the 4s poll has not caught
-     up with yet. Without this, a stale `awaiting_payment` poll puts the
-     "Pay now" button back on screen and customers pay twice. */
-  const proofPendingIds = useRef(new Set());
-  const proofInFlight   = useRef(false);
+  /* Home delivery is CASH ON DELIVERY ONLY. There is deliberately no
+     payment-method choice, no payment-QR fetch and no proof-upload state:
+     every order is created with payment_method='cash' and the rider collects
+     the money at the door. The status labels below still understand legacy
+     QR orders so old records keep rendering correctly (read-only). */
 
   /* Delivery-details form state */
   const [errs,      setErrs]      = useState({});
@@ -339,7 +322,7 @@ const DeliveryMenu = () => {
           delivery_address: addressBlock,
           items: cart.map(i => ({ menuItemId: i.id, name: i.name, quantity: i.qty, price: i.price })),
           payment_first: true,
-          payment_method: payMethod === 'cash' ? 'cash' : 'qr',
+          payment_method: 'cash',
         }),
       });
       const data = await res.json().catch(() => null);
@@ -349,143 +332,13 @@ const DeliveryMenu = () => {
       addStoredOrderId(data.id);
       setCart([]);
       setStep('placed');
-      // Cash COD orders go straight to admin approval → kitchen → delivery.
-      // QR orders need the customer to pay now: open the payment dialog.
-      if (payMethod === 'qr') {
-        setProofImage('');
-        setPaymentQr('');
-        setPaymentOrder(data);
-      }
+      // Cash on delivery: admin approval dispatches the order to the kitchen,
+      // then the rider collects the cash at the door. No payment step here.
     } catch (err) {
       setOrderErr(err.message || 'Network problem — could not place the order. Please try again.');
       setTimeout(() => errRef.current?.focus(), 0);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  /* ── Payment QR modal data ── */
-  /* A fresh payment session starts with a clean form. Kept separate from the
-     QR fetch so "Try again" does not wipe an already-selected screenshot. */
-  useEffect(() => {
-    if (!paymentOrder) return;
-    setPaymentError('');
-    setProofImage('');
-    setProofFileName('');
-    setProofSubmitted(false);
-  }, [paymentOrder]);
-
-  useEffect(() => {
-    if (!paymentOrder) return undefined;
-    let alive = true;
-    setPaymentQr('');
-    setQrError('');
-    fetch(`${getAPI_URL()}/api/settings?key=payment_qr_image`)
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (!alive) return;
-        const val = data?.value;
-        if (val && (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,/i.test(val) || /^(https?:\/\/|\/)/i.test(val))) {
-          setPaymentQr(val);
-        } else {
-          setQrError('The restaurant has not configured a payment QR yet. Please contact the restaurant so they can share it with you.');
-        }
-      })
-      .catch(() => {
-        if (alive) setQrError('Could not load the payment QR. Check your connection and try again.');
-      });
-    return () => { alive = false; };
-  }, [paymentOrder, qrNonce]);
-
-  const selectProof = (file) => {
-    setPaymentError('');
-    if (!file) return;
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 3 * 1024 * 1024) {
-      setPaymentError('Please choose a PNG, JPG, or WebP screenshot smaller than 3 MB.');
-      return;
-    }
-    setProofFileName(file.name || 'Payment screenshot');
-    const reader = new FileReader();
-    reader.onload = () => setProofImage(String(reader.result));
-    reader.readAsDataURL(file);
-  };
-
-  const removeProof = () => {
-    setProofImage('');
-    setProofFileName('');
-    setPaymentError('');
-  };
-
-  const submitPaymentProof = async () => {
-    // Ref guard: React state has not flushed yet on a fast double tap.
-    if (proofInFlight.current) return;
-    if (!proofImage || !paymentOrder) {
-      setPaymentError('Upload your payment screenshot before submitting.');
-      return;
-    }
-    proofInFlight.current = true;
-    setSubmittingProof(true); setPaymentError('');
-    try {
-      const res = await fetch(`${getAPI_URL()}/api/orders/${paymentOrder.id}/payment-proof`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentAccessToken: paymentOrder.paymentAccessToken, proofImage }),
-      });
-      const data = await res.json().catch(() => null);
-      // 409 means the proof was already accepted/verified (double tap,
-      // second tab, or a retry after a dropped response) — close the card
-      // instead of asking the customer to pay again.
-      if (!res.ok && res.status !== 409) throw new Error(data?.message || 'Could not submit payment proof');
-      const submittedId = Number(paymentOrder.id);
-      const finalStatus = String(data?.payment_status || 'verification_pending');
-      // Keep the sheet open and show a real success state. Closing it
-      // instantly made the whole step feel like it failed and tempted
-      // customers to pay a second time.
-      setProofSubmitted(true);
-      setPaymentError('');
-      // Mark locally so the tracker stops asking for payment until a fresh
-      // poll confirms the admin's decision.
-      proofPendingIds.current.add(submittedId);
-      setOrders(p => p.map(o => Number(o.id) === submittedId
-        ? { ...o, payment_status: finalStatus === 'paid' ? 'paid' : 'verification_pending' }
-        : o));
-    } catch (err) {
-      setPaymentError(err.message || 'Could not submit payment proof');
-    } finally {
-      proofInFlight.current = false;
-      setSubmittingProof(false);
-    }
-  };
-
-  /* Re-open the payment dialog after a refresh or a rejection: the server
-     restores the one-time token only while payment is still due (same
-     flow the QR table menu uses). */
-  const openPayment = async (order) => {
-    // A proof we just submitted is still under review even if a stale poll
-    // says otherwise — never reopen the payment sheet for that order.
-    if (proofPendingIds.current.has(Number(order.id))) return;
-    setPaymentError('');
-    setPaymentOpenError('');
-    setProofImage('');
-    try {
-      let token = Number(paymentOrder?.id) === Number(order.id) ? paymentOrder.paymentAccessToken : null;
-      if (!token) {
-        if (order.payment_access_token) {
-          token = order.payment_access_token;
-        } else {
-          const response = await fetch(`${getAPI_URL()}/api/orders/${order.id}/payment-session?tableId=${encodeURIComponent(order.table_name || '')}`);
-          const session = await response.json();
-          if (!response.ok || !session.paymentAccessToken) {
-            throw new Error(session.message || 'Payment session is unavailable. Refresh and try again.');
-          }
-          token = session.paymentAccessToken;
-        }
-      }
-      setPaymentOrder({ ...order, paymentAccessToken: token });
-    } catch (err) {
-      // The sheet is not mounted on this path, so an error inside the sheet
-      // would be invisible. Surface it on the tracking page instead.
-      setPaymentOpenError(err.message || 'Could not open payment. Please refresh and try again.');
     }
   };
 
@@ -511,21 +364,9 @@ const DeliveryMenu = () => {
         if (!res.ok) return;
         const data = await res.json();
         if (!Array.isArray(data) || !alive) return;
-        // A poll that was already in flight when the customer submitted their
-        // proof can still report `awaiting_payment`. Without reconciliation it
-        // resurrects the "Pay now" button and invites a second payment.
         const mine = data
           .filter(o => ids.has(Number(o.id)))
-          .sort((a, b) => Number(b.id) - Number(a.id))
-          .map(o => {
-            const id = Number(o.id);
-            if (!proofPendingIds.current.has(id)) return o;
-            const ps = String(o.payment_status || '').toLowerCase();
-            if (ps !== 'awaiting_payment') proofPendingIds.current.delete(id);
-            return ps === 'awaiting_payment'
-              ? { ...o, payment_status: 'verification_pending' }
-              : o;
-          });
+          .sort((a, b) => Number(b.id) - Number(a.id));
         // Only re-render when guest-visible state actually changed.
         const sig = mine.map(o => [
           o.id, o.status, o.payment_status || '',
@@ -613,10 +454,7 @@ const DeliveryMenu = () => {
   /* Reset back to the menu for a fresh order */
   const startNewOrder = () => {
     setStep('menu'); setName(''); setPhone(''); setEmail(''); setAddress(''); setNotes('');
-    setErrs({}); setTouched({}); setNotesOpen(false); setOrderErr(''); setPayMethod('cash');
-    setPaymentOrder(null); setProofImage(''); setPaymentError(''); setPaymentOpenError('');
-    proofPendingIds.current.clear();
-    proofInFlight.current = false;
+    setErrs({}); setTouched({}); setNotesOpen(false); setOrderErr('');
     // BUGFIX: stale orders/signature previously leaked into the next order's
     // placed screen (old cards resurfaced next to the new one).
     setOrders([]);
@@ -645,20 +483,8 @@ const DeliveryMenu = () => {
               </p>
             </div>
 
-            {/* Live order + payment tracking */}
+            {/* Live order + delivery tracking */}
             <div className="mt-8 space-y-4">
-              {paymentOpenError && (
-                <div role="alert" className="pw-card flex items-start gap-3 p-4 pw-reveal dm-payopen-err">
-                  <AlertCircle size={18} className="shrink-0 mt-0.5" aria-hidden="true" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold text-[14px] leading-snug">Couldn&apos;t open the payment sheet</p>
-                    <p className="pw-muted text-[12.5px] mt-1 leading-relaxed">{paymentOpenError}</p>
-                    <button type="button" className="pw-btn-ghost-lg mt-3" onClick={() => setPaymentOpenError('')}>
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
-              )}
               {orders.length === 0 && (
                 <div className="pw-card p-6 text-center pw-reveal" role="status">
                   <Loader2 size={22} className="mx-auto mb-3 animate-spin" style={{ color: '#C2410C' }} aria-hidden="true" />
@@ -692,7 +518,7 @@ const DeliveryMenu = () => {
                 const payCfg =
                   ps === 'awaiting_payment'      ? { label: 'Payment required',     Icon: QrCode,      c: '#C2410C' } :
                   ps === 'verification_pending'  ? { label: 'Payment under review', Icon: Hourglass,   c: '#B45309' } :
-                  ps === 'rejected'              ? { label: 'Payment rejected — try again', Icon: Ban, c: '#DC2626' } :
+                  ps === 'rejected'              ? { label: 'Payment rejected', Icon: Ban, c: '#DC2626' } :
                   isPaid || o.payment_method === 'qr_payment'
                                                  ? { label: 'Payment approved ✓',   Icon: CheckCircle, c: '#059669' } :
                   ps === 'cash_pending'          ? { label: 'Cash on delivery',     Icon: Banknote,    c: '#059669' } :
@@ -717,7 +543,6 @@ const DeliveryMenu = () => {
                   st === 'preparing'           ? { label: 'In the kitchen',            Icon: Flame,        c: '#7C3AED', pct: 45 } :
                                                  pendingStage;
 
-                const needsPayment = ['awaiting_payment', 'rejected'].includes(ps);
                 const PayIcon = payCfg.Icon;
                 const StageIcon = stageCfg.Icon;
 
@@ -769,21 +594,24 @@ const DeliveryMenu = () => {
                         </div>
                       </div>
 
-                      {/* Explanations per state */}
+                      {/* Legacy QR-order status notes. New home-delivery orders
+                          are always cash, but old records can still carry
+                          these payment states — keep them readable without
+                          pointing customers at a payment flow we removed. */}
                       {ps === 'awaiting_payment' && isQr && (
                         <p className="pay-note" style={{ color: '#B91C1C', borderColor: 'rgba(248,113,113,0.35)', background: 'rgba(248,113,113,0.09)' }}>
-                          This order is waiting for your payment. Once an admin approves your payment, the kitchen starts and a staff member delivers your food.
+                          This order is awaiting payment confirmation. Please contact the restaurant so we can help you complete it.
                         </p>
                       )}
                       {ps === 'verification_pending' && (
                         <p className="pay-note" style={{ color: '#92400E', borderColor: 'rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.1)' }}>
-                          Your payment screenshot has been sent to the admin for approval. Cooking starts right after the approval.
+                          Your payment proof has been sent to the admin for approval. Cooking starts right after the approval.
                         </p>
                       )}
                       {ps === 'rejected' && (
                         <p className="pay-note" style={{ color: '#B91C1C', borderColor: 'rgba(248,113,113,0.4)', background: 'rgba(248,113,113,0.1)' }}>
                           {o.payment_rejection_reason ||
-                            (isQr ? 'Your payment could not be verified. Please pay again or contact the restaurant.' : 'Your payment is pending review.')}
+                            (isQr ? 'Your payment could not be verified. Please contact the restaurant.' : 'Your payment is pending review.')}
                         </p>
                       )}
                       {isPaid && !['delivered', 'completed'].includes(st) && (
@@ -807,13 +635,6 @@ const DeliveryMenu = () => {
                         <p className="pay-note" style={{ color: '#1D4ED8', borderColor: 'rgba(96,165,250,0.35)', background: 'rgba(96,165,250,0.1)' }}>
                           Your food has been delivered. Bon appétit — thanks for ordering with us!
                         </p>
-                      )}
-
-                      {/* Pay / retry action */}
-                      {needsPayment && (
-                        <button type="button" className="pw-btn-primary w-full mt-4" onClick={() => openPayment(o)}>
-                          {ps === 'rejected' ? <><Ban size={17} aria-hidden="true" /> Submit corrected payment</> : <><QrCode size={17} aria-hidden="true" /> Pay now — {CURRENCY}{Number(o.total).toFixed(2)}</>}
-                        </button>
                       )}
 
                       {/* Item recap */}
@@ -853,25 +674,6 @@ const DeliveryMenu = () => {
             </div>
           </div>
         </div>
-
-        {/* QR payment sheet — portaled to document.body so it is never
-            dimmed/clobbered by the shell's dark-mode overrides. */}
-        {paymentOrder && <DeliveryPaymentModal
-          paymentOrder={paymentOrder}
-          paymentQr={paymentQr}
-          qrError={qrError}
-          onRetryQr={() => setQrNonce(n => n + 1)}
-          proofImage={proofImage}
-          proofFileName={proofFileName}
-          paymentError={paymentError}
-          submittingProof={submittingProof}
-          proofSubmitted={proofSubmitted}
-          close={() => setPaymentOrder(null)}
-          selectProof={selectProof}
-          removeProof={removeProof}
-          submit={submitPaymentProof}
-          currency={CURRENCY}
-        />}
 
         <style>{placedCSS}</style>
       </PublicShell>
@@ -1030,61 +832,29 @@ const DeliveryMenu = () => {
                   </Field>
                 )}
 
-                {/* ── Payment method choice ── */}
+                {/* ── Payment: cash on delivery is the ONLY option ── */}
                 <fieldset className="dm-payset">
-                  <legend className="dm-paylegend">How would you like to pay?</legend>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {[
-                      {
-                        id: 'cash', label: 'Cash on delivery', Icon: Banknote,
-                        desc: 'Pay our staff member in cash at your door. Admin approves the order and cash is signed off on delivery.',
-                        active: payMethod === 'cash',
-                        color: '52,211,153',
-                      },
-                      {
-                        id: 'qr', label: 'Pay online (QR)', Icon: QrCode,
-                        desc: 'Scan our QR, upload the payment screenshot, and an admin reviews it before the kitchen starts.',
-                        active: payMethod === 'qr',
-                        color: '245,158,11',
-                      },
-                    ].map(({ id, label, Icon, desc, active, color }) => (
-                      <button key={id} type="button"
-                              onClick={() => setPayMethod(id)}
-                              aria-pressed={active}
-                              className="dm-payopt"
-                              style={active
-                                ? { borderColor: `rgb(${color})`, background: `rgba(${color},0.09)`, boxShadow: `0 10px 26px -16px rgba(${color},0.85)` }
-                                : undefined}>
-                        <span className="flex items-center gap-2.5 w-full">
-                          <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                style={{ background: `rgba(${color},0.13)`, color: `rgb(${color})` }} aria-hidden="true">
-                            <Icon size={17} />
-                          </span>
-                          <span className="pw-ink font-bold text-[14px] text-left leading-tight">{label}</span>
-                          <span className="dm-paycheck ml-auto"
-                                style={active
-                                  ? { background: `rgb(${color})`, color: '#08120B', opacity: 1 } : undefined}
-                                aria-hidden="true"><CheckCircle size={14} /></span>
-                        </span>
-                        <span className="dm-paydesc">{desc}</span>
-                      </button>
-                    ))}
+                  <legend className="dm-paylegend">Payment method — cash on delivery</legend>
+                  <div className="dm-payopt"
+                       style={{ cursor: 'default', borderColor: 'rgb(52,211,153)', background: 'rgba(52,211,153,0.09)', boxShadow: '0 10px 26px -16px rgba(52,211,153,0.85)' }}>
+                    <span className="flex items-center gap-2.5 w-full">
+                      <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ background: 'rgba(52,211,153,0.13)', color: 'rgb(52,211,153)' }} aria-hidden="true">
+                        <Banknote size={17} />
+                      </span>
+                      <span className="pw-ink font-bold text-[14px] text-left leading-tight">Cash on delivery</span>
+                      <span className="dm-paycheck ml-auto"
+                            style={{ background: 'rgb(52,211,153)', color: '#08120B', opacity: 1 }}
+                            aria-hidden="true"><CheckCircle size={14} /></span>
+                    </span>
+                    <span className="dm-paydesc">
+                      Pay our staff member in cash at your door. Admin approves the order and cash is signed off on delivery.
+                    </span>
                   </div>
-                  {payMethod === 'qr' && (
-                    <p className="dm-payhint" style={{ color: '#92400E' }}>
-                      <ShieldCheck size={13} aria-hidden="true" />
-                      Your food is prepared only after an admin approves your payment screenshot.
-                    </p>
-                  )}
-                  {payMethod === 'cash' && (
-                    <p className="dm-payhint" style={{ color: '#047857' }}>
-                      <Truck size={13} aria-hidden="true" />
-                      An admin approves your order, the kitchen starts, and you pay in cash at your door.
-                    </p>
-                  )}
-                  {/* Applies to BOTH payment methods: the rider's location-based
-                      delivery charge is a separate cash handover, never a line
-                      item in the order we store. */}
+                  <p className="dm-payhint" style={{ color: '#047857' }}>
+                    <Truck size={13} aria-hidden="true" />
+                    An admin approves your order, the kitchen starts, and you pay in cash at your door.
+                  </p>
                   <p className="dm-payhint pw-muted">
                     <MapPin size={13} aria-hidden="true" />
                     {DELIVERY_FEE_NOTE}
@@ -1098,9 +868,7 @@ const DeliveryMenu = () => {
                         className="pw-btn-primary w-full disabled:opacity-60">
                   {submitting
                     ? <><Loader2 size={18} className="animate-spin" aria-hidden="true" /> Placing order…</>
-                    : payMethod === 'cash'
-                      ? <><Banknote size={18} aria-hidden="true" /> Place order — pay {CURRENCY}{totals.total.toFixed(2)} on delivery</>
-                      : <><QrCode size={18} aria-hidden="true" /> Place order — pay {CURRENCY}{totals.total.toFixed(2)} by QR</>}
+                    : <><Banknote size={18} aria-hidden="true" /> Place order — pay {CURRENCY}{totals.total.toFixed(2)} on delivery</>}
                 </button>
                 <p className="df-fineprint">
                   By placing this order you agree to our{' '}
@@ -1194,7 +962,7 @@ const DeliveryMenu = () => {
             {[
               { icon: <Clock size={13} />,      text: '~20 min delivery' },
               { icon: <Truck size={13} />,      text: 'Delivery charge by location' },
-              { icon: <CreditCard size={13} />, text: 'Cash on delivery or QR' },
+              { icon: <CreditCard size={13} />, text: 'Cash on delivery' },
             ].map(({ icon, text }) => (
               <li key={text} className="pw-chip">
                 <span style={{ color: '#C2410C', display: 'inline-flex' }} aria-hidden="true">{icon}</span>
@@ -1485,7 +1253,7 @@ const DeliveryMenu = () => {
         </div>
       )}
       </div>, document.body)}
-      {/* (QR payment dialog is rendered on the placed screen when needed) */}
+      {/* Cash on delivery: no payment dialog is rendered anywhere. */}
 
       {/* ── Page styles ── */}
       <style>{`

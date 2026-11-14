@@ -3,7 +3,10 @@
 // Customers receive automatic emails at every milestone of a home-delivery
 // order:
 //   1. Order placed            → sendOrderPlacedEmail
-//   2. Payment approved        → sendPaymentApprovedEmail  (QR or COD admin sign-off)
+//   2. Payment approved        → sendPaymentApprovedEmail  (COD admin sign-off)
+//      NOTE: home delivery is CASH ON DELIVERY ONLY. Branches that still
+//      understand verification_pending / rejection exist purely so legacy
+//      QR delivery orders keep producing sensible emails.
 //   3. Food delivered          → sendDeliveredEmail  — now carries the FULL bill
 //                                                 (items + subtotal + SC + GST
 //                                                 + total), so the customer gets
@@ -285,8 +288,9 @@ function paymentRow(order) {
     return { label: 'Payment', value: 'Cash on delivery' };
   }
   if (order.payment_status === 'paid') return { label: 'Payment', value: 'Paid ✓', strong: true };
+  // Legacy QR delivery orders only — new orders are always cash on delivery.
   if (order.payment_status === 'verification_pending') {
-    return { label: 'Payment', value: 'QR payment — pending admin approval' };
+    return { label: 'Payment', value: 'Payment under review' };
   }
   return { label: 'Payment', value: String(order.payment_status || 'pending') };
 }
@@ -335,9 +339,9 @@ async function sendOrderPlacedEmail(order) {
     textLines: [
       `Order #${order.id} has been received.`,
       `Total: ${formatMoney(order.total)}`,
-      `Payment: ${order.payment_method === 'cash' ? 'Cash on delivery' : order.payment_status === 'verification_pending' ? 'QR payment, pending admin approval' : 'NA'}`,
+      `Payment: ${order.payment_status === 'verification_pending' ? 'Payment under review (legacy order)' : 'Cash on delivery'}`,
     ],
-    footerNote: 'You will get an email when your payment is approved and again when your food is delivered. ' + DELIVERY_FEE_NOTE,
+    footerNote: 'You will get an email when your order is approved and again when your food is delivered. ' + DELIVERY_FEE_NOTE,
     preheader: `Order #${order.id} confirmed — total ${formatMoney(order.total)}`,
   });
 }
@@ -360,7 +364,7 @@ async function sendPaymentApprovedEmail(order) {
     rows: [
       { label: 'Order #', value: `#${order.id}` },
       { label: 'Amount', value: formatMoney(order.total) },
-      { label: 'Method', value: isCod ? 'Cash on delivery' : String(order.payment_method || 'QR payment') },
+      { label: 'Method', value: isCod ? 'Cash on delivery' : String(order.payment_method || 'Cash on delivery') },
       { label: 'Status', value: 'Approved & being prepared', strong: true },
     ],
     bigTotal: { label: isCod ? 'Please have ready' : 'Paid amount', value: formatMoney(order.total) },
@@ -429,11 +433,11 @@ async function sendPaymentReceivedEmail(order) {
 function sendRejectionEmail(order, reason) {
   return sendMail({
     to: order.customer_email,
-    subject: `Payment for order #${order.id} needs another attempt`,
+    subject: `Payment for order #${order.id} needs attention`,
     heading: 'Payment could not be approved',
     accent: '#e11d48',
     subheading:
-      'Our admin reviewed your payment proof and could not approve it. Please make the payment again and upload a clear screenshot. Reason:',
+      'Our admin reviewed your payment and could not approve it. Please contact the restaurant to arrange payment. Reason:',
     rows: [
       { label: 'Order #', value: `#${order.id}` },
       { label: 'Amount', value: formatMoney(order.total) },
