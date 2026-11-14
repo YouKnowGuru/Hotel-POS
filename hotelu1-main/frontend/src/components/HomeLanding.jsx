@@ -153,16 +153,20 @@ const HomeLanding = () => {
     [dishes],
   );
 
-  /* Kitchen hours: 10 AM – 9 PM — re-check every 60 s so the status
+  /* Kitchen hours: 9 AM – 9 PM, Mon – Sat — re-check every 60 s so the status
      stays correct if the tab stays open across the boundary. */
   const [kitchenOpen, setKitchenOpen] = useState(() => {
-    const h = new Date().getHours();
-    return h >= 10 && h < 21;
+    const now = new Date();
+    const h = now.getHours();
+    const day = now.getDay(); // 0 = Sunday
+    return day !== 0 && h >= 9 && h < 21;
   });
   useEffect(() => {
     const check = () => {
-      const h = new Date().getHours();
-      setKitchenOpen(h >= 10 && h < 21);
+      const now = new Date();
+      const h = now.getHours();
+      const day = now.getDay();
+      setKitchenOpen(day !== 0 && h >= 9 && h < 21);
     };
     const t = setInterval(check, 60_000);
     return () => clearInterval(t);
@@ -786,7 +790,7 @@ const HomeLanding = () => {
             {[
               { val: '4.5★',      label: 'Google rating · 40+ reviews' },
               { val: '200–1,000', label: 'BTN price range' },
-              { val: '10 AM–9 PM', label: 'Open every day' },
+              { val: '9 AM–9 PM', label: 'Mon – Sat' },
               { val: '3+',        label: 'Packs = free delivery' },
             ].map(({ val, label }) => (
               <div key={label}>

@@ -15,7 +15,7 @@ import PublicShell from './PublicShell';
 const FACTS = [
   { label: 'Specialty',   val: 'Tomza' },
   { label: 'Location',    val: 'Norzin Lam 1, Thimphu' },
-  { label: 'Hours',       val: '10 AM – 9 PM daily' },
+  { label: 'Hours',       val: '9 AM – 9 PM · Mon–Sat' },
   { label: 'Price range', val: 'BTN 200 – 1,000' },
 ];
 

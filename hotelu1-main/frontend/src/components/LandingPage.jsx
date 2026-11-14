@@ -297,10 +297,8 @@ const LandingPage = () => {
                 <h4 style={{ color: '#fff', fontWeight: 700, fontSize: 15, marginBottom: 20, letterSpacing: 0.5 }}>Opening Hours</h4>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {[
-                    { day: 'Mon – Fri', hours: '11:00 AM – 11:00 PM', open: true },
-                    { day: 'Saturday', hours: '10:00 AM – 12:00 AM', open: true },
-                    { day: 'Sunday', hours: '10:00 AM – 12:00 AM', open: true },
-                    { day: 'Holidays', hours: '12:00 PM – 11:00 PM', open: true },
+                    { day: 'Mon – Sat', hours: '9:00 AM – 9:00 PM', open: true },
+                    { day: 'Sunday', hours: 'Closed', open: false },
                   ].map(({ day, hours, open }) => (
                     <li key={day} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                       <span style={{ color: '#d1d5db', fontSize: 13 }}>{day}</span>

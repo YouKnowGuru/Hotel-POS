@@ -40,7 +40,8 @@ const QUICK_LINKS = [
 ];
 
 const HOURS = [
-  { day: 'Mon – Sun', hours: '10 AM – 9 PM' },
+  { day: 'Mon – Sat', hours: '9 AM – 9 PM' },
+  { day: 'Sunday', hours: 'Closed' },
 ];
 
 /* ── Inline brand logo (respects admin branding) ──
@@ -277,7 +278,7 @@ const PublicShell = ({ active = '', children }) => {
           <p className="text-[12px] sm:text-[12.5px] font-bold tracking-wide text-center">
             Free delivery on 3+ packs
             <span className="mx-2 opacity-50 hidden sm:inline" aria-hidden="true">•</span>
-            <span className="hidden sm:inline">Open daily 10 AM – 9 PM</span>
+            <span className="hidden sm:inline">Mon–Sat 9 AM – 9 PM</span>
             <a href={`tel:${RESTAURANT_PHONE.replace(/\s+/g, '')}`}
                className="hidden sm:inline underline underline-offset-2 hover:opacity-80">
               {RESTAURANT_PHONE}
@@ -350,7 +351,7 @@ const PublicShell = ({ active = '', children }) => {
                 <Phone size={14} aria-hidden="true" /> {RESTAURANT_PHONE}
               </a>
               <p className="flex items-center gap-2 pw-muted">
-                <Clock size={14} aria-hidden="true" /> Open daily · 10 AM – 9 PM
+                <Clock size={14} aria-hidden="true" /> Mon–Sat · 9 AM – 9 PM
               </p>
             </div>
           </div>
