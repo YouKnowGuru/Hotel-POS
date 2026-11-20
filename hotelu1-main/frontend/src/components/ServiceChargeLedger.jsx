@@ -35,6 +35,8 @@ const TEAL = '#1a5c3e';
 const EMPTY_DISTRIBUTION = {
   waiters: [], waiterCount: 0, totalOrders: 0,
   totalServiceCharge: 0, sharePerWaiter: 0, period: 'all-time',
+  waiterSharePercent: 60, companySharePercent: 40,
+  waiterPool: 0, companyShare: 0,
 };
 
 /**
@@ -152,15 +154,19 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  const [selectedMonth, setSelectedMonth] = useState('all');
  const [orderType, setOrderType] = useState('all');
  const [searchQuery, setSearchQuery] = useState('');
- // Waiter distribution
- const [distribution, setDistribution] = useState({
- waiters: [],
- waiterCount: 0,
- totalOrders: 0,
- totalServiceCharge: 0,
- sharePerWaiter: 0,
- period: 'all-time',
- });
+  // Waiter distribution
+  const [distribution, setDistribution] = useState({
+    waiters: [],
+    waiterCount: 0,
+    totalOrders: 0,
+    totalServiceCharge: 0,
+    sharePerWaiter: 0,
+    period: 'all-time',
+    waiterSharePercent: 60,
+    companySharePercent: 40,
+    waiterPool: 0,
+    companyShare: 0,
+  });
  const [distLoading, setDistLoading] = useState(true);
  // Surface real API failures. Previously a 403/500 was silently turned into
  // the "No active waiters found" empty state, which hid the actual bug.
@@ -218,15 +224,19 @@ const ServiceChargeLedger = ({ locationSettings }) => {
  setDistError(data?.message || `Request failed (HTTP ${res.status}). Check the server logs.`);
  setDistribution(EMPTY_DISTRIBUTION);
  } else if (data && typeof data === 'object') {
- setDistribution({
- ...data,
- waiters: Array.isArray(data.waiters) ? data.waiters : [],
- waiterCount: Number(data.waiterCount) || 0,
- totalOrders: Number(data.totalOrders) || 0,
- totalServiceCharge: Number(data.totalServiceCharge) || 0,
- sharePerWaiter: Number(data.sharePerWaiter) || 0,
- period: data.period || 'all-time',
- });
+      setDistribution({
+        ...data,
+        waiters: Array.isArray(data.waiters) ? data.waiters : [],
+        waiterCount: Number(data.waiterCount) || 0,
+        totalOrders: Number(data.totalOrders) || 0,
+        totalServiceCharge: Number(data.totalServiceCharge) || 0,
+        sharePerWaiter: Number(data.sharePerWaiter) || 0,
+        period: data.period || 'all-time',
+        waiterSharePercent:  Number(data.waiterSharePercent)  || 60,
+        companySharePercent: Number(data.companySharePercent) || 40,
+        waiterPool:   Number(data.waiterPool)   || 0,
+        companyShare: Number(data.companyShare) || 0,
+      });
  } else {
  setDistError('Unexpected response from the server.');
  setDistribution(EMPTY_DISTRIBUTION);
@@ -631,7 +641,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  </div>
  <div>
  <h2 className="text-base font-bold text-gray-800">Waiter Service Charge Distribution</h2>
- <p className="text-[11px] text-gray-400">Total pool divided equally among all active waiters</p>
+ <p className="text-[11px] text-gray-400">{distribution.waiterSharePercent || 60}% to waiters · {distribution.companySharePercent || 40}% to company</p>
  </div>
  </div>
  <div className="flex items-center gap-2">
@@ -682,12 +692,20 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  <div className="flex items-center gap-2">
  <DivideSquare className="w-4 h-4" style={{ color: TEAL }} />
  <span className="text-sm font-semibold" style={{ color: TEAL }}>
- {fmt(distribution.totalServiceCharge)} ÷ {distribution.waiterCount} waiters
+ Total SC: {fmt(distribution.totalServiceCharge)}
  </span>
  </div>
  <span className="text-gray-300">•</span>
+ <span className="text-sm font-semibold text-gray-600">
+ Waiter Pool ({distribution.waiterSharePercent || 60}%): <span style={{ color: TEAL }}>{fmt(distribution.waiterPool)}</span>
+ </span>
+ <span className="text-gray-300">•</span>
+ <span className="text-sm font-semibold text-gray-600">
+ Company ({distribution.companySharePercent || 40}%): <span className="text-gray-800 font-bold">{fmt(distribution.companyShare)}</span>
+ </span>
+ <span className="text-gray-300">•</span>
  <span className="text-sm font-bold text-gray-800">
- Each waiter gets: <span style={{ color: TEAL }}>{fmt(distribution.sharePerWaiter)}</span>
+ {fmt(distribution.waiterPool)} ÷ {distribution.waiterCount} = <span style={{ color: TEAL }}>{fmt(distribution.sharePerWaiter)}</span>/waiter
  </span>
  <span className="text-gray-300">•</span>
  <span className="text-xs text-gray-500">
@@ -722,7 +740,7 @@ tfoot td{font-weight:bold;border-top:2px solid #000;background:#f0fdf4}
  </div>
 
  <p className="mt-4 text-[11px] text-gray-400 text-center">
- 💡 This share is automatically added to each waiter's <strong>tips_shared</strong> when payroll is generated for this period.
+ 💡 {distribution.waiterSharePercent || 60}% of the service charge pool ({fmt(distribution.waiterPool)}) is split equally among all waiters. The remaining {distribution.companySharePercent || 40}% ({fmt(distribution.companyShare)}) goes to the company. The waiter share is automatically added to each waiter's <strong>tips_shared</strong> when payroll is generated for this period.
  </p>
  </div>
  )}

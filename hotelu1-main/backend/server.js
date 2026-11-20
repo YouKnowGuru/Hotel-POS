@@ -6551,9 +6551,15 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
       console.error('[service-charge] Could not load waiter accounts:', err.message);
     }
 
+    // Service charge split: 60% to waiters, 40% to the company.
+    const WAITER_SC_SHARE_PERCENT = 60;
+    const COMPANY_SC_SHARE_PERCENT = 40;
+
     const waiterCount = waiters.length;
+    const waiterPool   = totalServiceCharge * (WAITER_SC_SHARE_PERCENT / 100);
+    const companyShare = totalServiceCharge * (COMPANY_SC_SHARE_PERCENT / 100);
     const sharePerWaiter = waiterCount > 0
-      ? Math.round((totalServiceCharge / waiterCount) * 100) / 100
+      ? Math.round((waiterPool / waiterCount) * 100) / 100
       : 0;
 
     res.json({
@@ -6564,6 +6570,10 @@ app.get('/api/service-charge/distribution', authenticate, async (req, res) => {
       sharePerWaiter,
       scPercent:        SC_PERCENT,
       taxPercent,
+      waiterSharePercent:  WAITER_SC_SHARE_PERCENT,
+      companySharePercent: COMPANY_SC_SHARE_PERCENT,
+      waiterPool:   Math.round(waiterPool   * 100) / 100,
+      companyShare: Math.round(companyShare * 100) / 100,
       waiters: waiters.map(w => ({
         id:    w.id,
         name:  w.name || w.username,
@@ -6611,7 +6621,9 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
 
     // ── Service charge distribution for this pay period ─────────────────
     // Sum SC from all orders paid during the period, divide by active waiter count.
+    // Split: 60% of the SC pool goes to waiters (shared equally), 40% to the company.
     const SC_PERCENT_PAYROLL = 10;
+    const WAITER_SC_SHARE_PERCENT_PAYROLL = 60;
     let totalSCForPeriod = 0;
     try {
       /* Same schema fix as the distribution endpoint: `orders` has no
@@ -6643,7 +6655,9 @@ app.post('/api/payroll/generate', authenticate, async (req, res) => {
       .filter(([, recs]) => recs[0]?.user_role === 'waiter')
       .map(([uid]) => uid);
     const waiterCount = waiterUserIds.length || 1;
-    const scSharePerWaiter = parseFloat((totalSCForPeriod / waiterCount).toFixed(2));
+    // Only 60% of the SC pool is distributed to waiters; 40% is retained by the company.
+    const waiterPoolForPeriod = totalSCForPeriod * (WAITER_SC_SHARE_PERCENT_PAYROLL / 100);
+    const scSharePerWaiter = parseFloat((waiterPoolForPeriod / waiterCount).toFixed(2));
     // ─────────────────────────────────────────────────────────────────────
 
     for (const [userId, records] of Object.entries(byUser)) {
