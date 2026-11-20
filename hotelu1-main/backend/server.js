@@ -906,6 +906,9 @@ function emitStaffOnly(event, payload) {
 /* ------------------------------------------------------------------ */
 
 const mockNotifications = [];
+/* Demo-mode-only dedupe guard. DB-backed alerts MUST NOT be gated on this —
+   it goes stale when clear-transactions.js truncates the notifications table
+   and AUTO_INCREMENT restarts from 1 (reused order-placed-1 keys, etc.). */
 const recordedNotificationKeys = new Set();
 let mockNotificationId = 0;
 
@@ -928,9 +931,7 @@ async function recordNotification({
   title, message, orderId = null, tableLabel = null, subfranchiseId = null,
 }) {
   const key = String(dedupeKey || '').slice(0, 160);
-  if (!key || recordedNotificationKeys.has(key)) return null;
-  recordedNotificationKeys.add(key);
-  if (recordedNotificationKeys.size > 5000) recordedNotificationKeys.clear();
+  if (!key) return null;
 
   const row = {
     dedupe_key: key,
@@ -948,15 +949,28 @@ async function recordNotification({
 
   let created = null;
   if (dbConnected) {
+    // The DB is the source of truth for dedupe. The in-memory Set below used
+    // to gate this path, and stayed stale after clear-transactions.js wiped
+    // the table: new orders reuse IDs (order-placed-1, ...) whose keys were
+    // still cached, so alerts were silently dropped. The UNIQUE index on
+    // dedupe_key is the real duplicate guard.
     try {
       const existing = await Notification.findOne({ where: { dedupe_key: key } });
       if (existing) return null;
       created = await Notification.create(row);
     } catch (e) {
+      // A parallel request may have inserted the same key between findOne
+      // and create — that is a successful dedupe, not a failure.
+      if (e && (e.name === 'SequelizeUniqueConstraintError' ||
+                /duplicate key/i.test(String(e.message)))) return null;
       console.warn(`[notifications] could not persist alert: ${e.message}`);
     }
   }
   if (!created) {
+    // No DB (demo mode): the in-memory set is the only dedupe guard available.
+    if (recordedNotificationKeys.has(key)) return null;
+    recordedNotificationKeys.add(key);
+    if (recordedNotificationKeys.size > 5000) recordedNotificationKeys.clear();
     created = { id: ++mockNotificationId, ...row, created_at: new Date() };
     mockNotifications.unshift(created);
     if (mockNotifications.length > 300) mockNotifications.length = 300;

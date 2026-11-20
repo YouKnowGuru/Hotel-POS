@@ -361,6 +361,7 @@ export const NotificationsProvider = ({ user, children }) => {
   useEffect(() => { desktopRef.current = desktopEnabled; }, [desktopEnabled]);
 
   const seenServerIdsRef = useRef(null); // null until the first feed load is primed
+  const maxSeenServerIdRef = useRef(0);   // detects AUTO_INCREMENT reset after a data clear
 
   /* Login/logout inside the SPA does NOT remount this provider. Re-run the
      connection effect when the user object changes, and also when another
@@ -426,7 +427,10 @@ export const NotificationsProvider = ({ user, children }) => {
    */
   const announceOrder = useCallback((payload = {}) => {
     const orderId = payload.orderId ?? payload.order_id ?? payload.id ?? null;
-    if (!ringOnce(`order-${orderId || Date.now()}`)) return;
+    // Include the order timestamp: a data clear resets order IDs, so the
+    // "order-1" marker from the previous run must not mute the new order-1.
+    const stamp = payload.timestamp || payload.created_at || payload.createdAt || '';
+    if (!ringOnce(`order-${orderId || Date.now()}-${stamp}`)) return;
     const title = payload.title || 'New Order Placed';
     const message = payload.message ||
       (orderId ? `Order #${orderId} just arrived.` : 'A new order just arrived.');
@@ -511,8 +515,20 @@ export const NotificationsProvider = ({ user, children }) => {
       if (!Array.isArray(rows)) return;
       setServerNotifications(rows);
 
-      const seen = seenServerIdsRef.current;
       const currentIds = new Set(rows.map((r) => String(r.id)));
+      const maxServerId = rows.reduce(
+        (m, r) => Math.max(m, Number(r.serverId) || 0), 0
+      );
+      const prevMax = maxSeenServerIdRef.current;
+      // A data clear truncates `notifications` and resets AUTO_INCREMENT.
+      // Server IDs moving backwards means the feed was rebuilt — re-prime so
+      // reused IDs are announced again instead of being read as old history.
+      if (prevMax > 0 && maxServerId > 0 && maxServerId < prevMax) {
+        seenServerIdsRef.current = new Set();
+      }
+      maxSeenServerIdRef.current = Math.max(prevMax, maxServerId);
+
+      const seen = seenServerIdsRef.current;
       if (seen === null) {
         seenServerIdsRef.current = currentIds;
         return;
@@ -525,13 +541,14 @@ export const NotificationsProvider = ({ user, children }) => {
         if (r.type === 'new-order') {
           announceOrder({
             orderId: r.orderId,
+            timestamp: r.timestamp,
             title: r.title,
             message: r.message,
             severity: r.severity,
           });
         } else if (r.type === 'payment-review' || r.type === 'bill-request') {
           announceAlert({
-            id: r.dedupeKey || sid,
+            id: `${r.dedupeKey || sid}-${r.timestamp || ''}`,
             type: r.type,
             severity: r.severity,
             title: r.title,
@@ -562,6 +579,7 @@ export const NotificationsProvider = ({ user, children }) => {
     if (!token) {
       setConnection('offline');
       seenServerIdsRef.current = null;
+      maxSeenServerIdRef.current = 0;
       return undefined;
     }
 
